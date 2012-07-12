@@ -7,6 +7,7 @@ import unittest
 from myclips.parser.Parser import Parser
 import myclips.parser.types as types
 from pyparsing import ParseException
+from unittest.case import expectedFailure
 
 class ParserTest(unittest.TestCase):
 
@@ -242,6 +243,124 @@ class ParserTest(unittest.TestCase):
         
         self.assertIsInstance(res[0].templateSlots[0], types.SingleFieldRhsSlot)
         self.assertIsInstance(res[0].templateSlots[0].slotValue, types.FunctionCall)
+
+
+    def test_DefRuleConstructParser_Minimal(self):
+        res = self._testImpl('DefRuleConstructParser', r"""
+        (defrule rulename
+            => 
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.DefRuleConstruct)
+        self.assertEqual(res[0].defruleName, "rulename")
+
+    def test_DefRuleConstructParser_WithComment(self):
+        res = self._testImpl('DefRuleConstructParser', r"""
+        (defrule rulename "comment"
+            => 
+        )
+        """).asList()
+        
+        self.assertEqual(res[0].defruleComment, "comment")
+
+    def test_DefRuleConstructParser_WithRHS(self):
+        res = self._testImpl('DefRuleConstructParser', r"""
+        (defrule rulename
+            => 
+            (assert (A b C))
+        )
+        """).asList()
+        
+        self.assertEqual(len(res[0].rhs), 1)
+        self.assertIsInstance(res[0].rhs[0], types.FunctionCall)
+
+    def test_DefRuleConstructParser_WithRHSs(self):
+        res = self._testImpl('DefRuleConstructParser', r"""
+        (defrule rulename
+            => 
+            (assert (A b C))
+            (retract (A ?a c) ?c)
+        )
+        """).asList()
+        
+        self.assertEqual(len(res[0].rhs), 2)
+        self.assertIsInstance(res[0].rhs[0], types.FunctionCall)
+        self.assertIsInstance(res[0].rhs[1], types.FunctionCall)
+        #print res[0].rhs[1]
+
+    def test_DefRuleConstructParser_WithDeclarations(self):
+        res = self._testImpl('DefRuleConstructParser', r"""
+        (defrule rulename
+            (declare 
+                (salience 9001)
+                (auto-focus TRUE)
+            )
+            => 
+        )
+        """).asList()
+        
+        self.assertEqual(len(res[0].defruleDeclaration), 2)
+        self.assertIsInstance(res[0].defruleDeclaration[0], types.RuleProperty)
+        self.assertIsInstance(res[0].defruleDeclaration[1], types.RuleProperty)
+
+    @expectedFailure
+    def test_DefRuleConstructParser_WithLHS(self):
+        res = self._testImpl('DefRuleConstructParser', r"""
+        (defrule rulename
+            (A B C) 
+            => 
+        )
+        """).asList()
+        
+        self.assertEqual(len(res[0].lhs), 1)
+
+
+    def test_RulePropertyParser_Salience(self):
+        res = self._testImpl('RulePropertyParser', r"""
+        (salience 100)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.RuleProperty)
+        self.assertEqual(res[0].propertyValue, 100)
+
+    def test_RulePropertyParser_NegativeSalience(self):
+        res = self._testImpl('RulePropertyParser', r"""
+        (salience -100)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.RuleProperty)
+        self.assertEqual(res[0].propertyValue, -100)
+
+    def test_RulePropertyParser_InvalidFloatSalience(self):
+        self.assertRaises(ParseException, self._testImpl, 'RulePropertyParser', r"""
+        (salience -100.34)
+        """)
+        
+    def test_RulePropertyParser_InvalidSymbolSalience(self):
+        self.assertRaises(ParseException, self._testImpl, 'RulePropertyParser', r"""
+        (salience ciao)
+        """)
+
+    def test_RulePropertyParser_TrueAutoFocus(self):
+        res = self._testImpl('RulePropertyParser', r"""
+        (auto-focus TRUE)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.RuleProperty)
+
+    def test_RulePropertyParser_FalseAutoFocus(self):
+        res = self._testImpl('RulePropertyParser', r"""
+        (auto-focus FALSE)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.RuleProperty)
+
+    @expectedFailure
+    def test_RulePropertyParser_InvalidAutoFocus(self):
+        self.assertRaises(ParseException, self._testImpl, 'RulePropertyParser', r"""
+        (auto-focus ciao)
+        """)
 
         
 if __name__ == "__main__":

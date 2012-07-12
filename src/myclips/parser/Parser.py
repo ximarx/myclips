@@ -75,6 +75,8 @@ class Parser(object):
         self.subparsers["NumberParser"] = (self.getSParser("FloatParser") ^ self.getSParser("IntegerParser"))\
                 .setParseAction(forwardParsed())
         
+        #self.subparsers["InstanceNameParser"]
+        
         self.subparsers["LexemeParser"] = (self.getSParser("StringParser") ^ self.getSParser("SymbolParser"))\
                 .setParseAction(forwardParsed())
         
@@ -126,17 +128,43 @@ class Parser(object):
         self.subparsers["RhsPatternParser"] = (self._sb("TemplateRhsPatternParser") ^ self._sb("OrderedRhsPatternParser"))\
                 .setParseAction(forwardParsed(key=0))
 
-        
-
         ### DEFFACTS
         
         self.subparsers['DefFactsNameParser'] = self._sb("SymbolParser")        
         
-        self.subparsers["DefFactsConstructParser"] = (LPAR + pp.Keyword("deffacts").suppress() + self._sb("DefFactsNameParser").setResultsName("DefFactsNameParser") + 
-                                                        pp.Optional(self._sb("CommentParser")).setName("comment").setResultsName("comment") + 
+        self.subparsers["DefFactsConstructParser"] = (LPAR + pp.Keyword("deffacts").suppress() + 
+                                                        self._sb("DefFactsNameParser").setResultsName("DefFactsNameParser") + 
+                                                            pp.Optional(self._sb("CommentParser")).setName("comment").setResultsName("comment") + 
                                                         pp.Group(pp.OneOrMore(self._sb("RhsPatternParser"))).setName("rhs").setResultsName("rhs") + RPAR)\
                 .setParseAction(types.makeInstanceDict(types.DefFactsConstruct, {"deffactsName" : 'DefFactsNameParser', "deffactsComment" : "comment", "rhs" : "rhs"}))
 
+
+        ### DEFRULE
+        
+        self.subparsers['RulePropertyParser'] = (LPAR + 
+                                                 ( 
+                                                     (pp.Keyword('salience') + self._sb("IntegerParser")) |
+                                                     (pp.Keyword('auto-focus') + self._sb("SymbolParser")) #|
+                                                     #(pp.Keyword('specificity') + self._sb("IntegerParser")) #|
+                                                     #(self._sb("SymbolParser") + self._sb("SymbolParser")) 
+                                                 ) +
+                                                RPAR)\
+                .setParseAction(types.makeInstanceDict(types.RuleProperty, {"propertyName" : 0, "propertyValue" : 1}))
+        
+        self.subparsers['DeclarationParser'] = (LPAR + pp.Keyword("declare").suppress() +
+                                                    pp.Group(pp.OneOrMore(self._sb("RulePropertyParser") )) +
+                                                RPAR)\
+                .setParseAction(forwardParsed(key=0))
+        
+        self.subparsers['DefRuleConstructParser'] = (LPAR + pp.Keyword("defrule").suppress() + 
+                                                        self._sb("SymbolParser").setResultsName('rulename') +
+                                                            pp.Optional(self._sb("CommentParser")).setName("defruleComment").setResultsName("comment") +
+                                                            pp.Optional(self._sb("DeclarationParser")).setName("defruleDeclaration").setResultsName("declaration") +
+                                                        #pp.Group(pp.ZeroOrMore(self._sb("ConditionalElementParser"))).setResultsName("lhs") +
+                                                        pp.Literal("=>").suppress() +
+                                                        pp.Group(pp.ZeroOrMore(self._sb("ActionParser"))).setResultsName("rhs") +
+                                                     RPAR)\
+                .setParseAction(types.makeInstanceDict(types.DefRuleConstruct, {"defruleName" : 'rulename', "defruleComment" : "comment", "defruleDeclaration" : "declaration", "lhs" : "lhs", "rhs" : "rhs"}))
         
         ### HIGH-LEVEL PARSERS
 

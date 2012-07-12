@@ -135,6 +135,34 @@ class SingleFieldRhsSlot(FieldRhsSlot):
                                         self.slotValue)
 
 
+class DefRuleConstruct(ParsedType):
+    def __init__(self, defruleName, defruleComment=None, defruleDeclaration=None, lhs=None, rhs=None):
+        ParsedType.__init__(self, defruleName)
+        self.defruleName = defruleName.evaluate() if isinstance(defruleName, ParsedType) else defruleName
+        self.defruleComment = defruleComment.evaluate().strip('"') if isinstance(defruleComment, ParsedType) else None
+        self.defruleDeclaration = defruleDeclaration if defruleDeclaration != None else []
+        self.lhs = lhs if lhs != None else [] 
+        self.rhs = rhs if rhs != None else []
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}, {3}, {4} => {5}>".format(self.__class__.__name__,
+                                        self.defruleName,
+                                        self.defruleComment,
+                                        self.defruleDeclaration,
+                                        self.lhs,
+                                        self.rhs )
+        
+class RuleProperty(ParsedType):
+    def __init__(self, propertyName, propertyValue):
+        ParsedType.__init__(self, propertyName)
+        self.propertyName = propertyName.evaluate() if isinstance(propertyName, ParsedType) else propertyName
+        self.propertyValue = propertyValue.evaluate() if isinstance(propertyValue, ParsedType) else propertyValue
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1} = {2}>".format(self.__class__.__name__,
+                                        self.propertyName,
+                                        self.propertyValue )
+
 def makeInstance(cls, position=0):
     def makeAction(s,l,t):
         if position != None:
