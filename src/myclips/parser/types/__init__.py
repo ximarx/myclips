@@ -79,7 +79,28 @@ class FunctionCall(ParsedType):
     def __repr__(self, *args, **kwargs):
         return "<{0}, {1}, {2}>".format(self.__class__.__name__,
                                         self.funcName,
-                                        repr([repr(x) for x in self.funcArgs] ))
+                                        self.funcArgs )
+
+class DefFactsConstruct(ParsedType):
+    def __init__(self, deffactsName, deffactsComment=None, rhs=None):
+        ParsedType.__init__(self, deffactsName)
+        self.deffactsName = deffactsName.evaluate()
+        self.deffactsComment = deffactsComment.evaluate().strip('"') if deffactsComment != None else None
+        self.rhs = rhs if rhs != None else []
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}, {3}>".format(self.__class__.__name__,
+                                        self.deffactsName,
+                                        self.deffactsComment,
+                                        self.rhs )
+
+class OrderedRhsPattern(ParsedType):
+    converter = lambda self, t: [x.evaluate() if isinstance(x, ParsedType) else x for x in t]
+    pass
+
+class MultifieldRhsSlot(ParsedType):
+    def __init__(self):
+        pass
 
 def makeInstance(cls, position=0):
     def makeAction(s,l,t):
@@ -109,7 +130,11 @@ def makeInstanceDict(cls, args):
                 try:
                     targs[k] = t[v].asList()
                 except:
-                    targs[k] = t[v]
+                    try:
+                        targs[k] = t[v]
+                    except:
+                        if isinstance(k, int):
+                            raise
         return cls(**targs)
         
     return makeDictAction

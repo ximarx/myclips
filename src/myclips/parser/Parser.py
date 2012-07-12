@@ -18,17 +18,28 @@ def forwardParsed(bounds=None, key=None):
 
 class Parser(object):
     
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, funcNames=None):
         
         self.subparsers = {}
         self._initied = False
         self._debug = debug
+        self._funcNames = funcNames if funcNames != None else []
+        
+    def isInitied(self):
+        return self._initied
     
     def setDebug(self, status):
         if self._debug != status:
             self._debug = status
             if self._initied:
                 self._changeDebug()
+                
+    def setFuncNames(self, funcNames):
+        if self._initied:
+            return False
+        else:
+            self._funcNames = funcNames
+            return True
     
     def _initParsers(self):
         
@@ -36,6 +47,12 @@ class Parser(object):
             return
         
         self._initied = True
+
+
+        ### BASE PARSERS
+        
+        LPAR = pp.Literal("(").suppress()
+        RPAR = pp.Literal(")").suppress()
         
         self.subparsers["SymbolParser"] = pp.Word("".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]))\
                 .setParseAction(types.makeInstance(types.Symbol))\
@@ -68,7 +85,7 @@ class Parser(object):
                 .setParseAction(forwardParsed())\
                 .setDebug(self._debug)
         
-        self.subparsers["ConstantParser"] = (self.getSParser("LexemeParser") ^ self.getSParser("NumberParser"))\
+        self.subparsers["ConstantParser"] = (self.getSParser("NumberParser") ^ self.getSParser("LexemeParser"))\
                 .setParseAction(forwardParsed())\
                 .setDebug(self._debug)
         
@@ -88,20 +105,79 @@ class Parser(object):
                 .setParseAction(forwardParsed(key=0))\
                 .setDebug(self._debug)
         
+        ### CONSTRUCTS PARSERS        
+        
         self.subparsers["ExpressionParser"] = pp.Forward()
         
-        self.subparsers["FunctionCallParser"] = (pp.Literal("(").suppress() + self.getSParser("VariableSymbolParser") + pp.Group(pp.ZeroOrMore(self.getSParser("ExpressionParser"))) + pp.Literal(")").suppress())\
+        self.subparsers["FunctionCallParser"] = (LPAR + self.getSParser("VariableSymbolParser") + pp.Group(pp.ZeroOrMore(self.getSParser("ExpressionParser"))) + RPAR)\
                 .setParseAction(types.makeInstanceDict(types.FunctionCall, {'funcName': 0, 'funcArgs': 1}))\
                 .setDebug(self._debug)
         
         self.subparsers["ExpressionParser"] << (self.getSParser("ConstantParser") ^ self.getSParser("VariableParser") ^ self.getSParser("FunctionCallParser") )\
-                .setParseAction(forwardParsed()).setDebug()\
+                .setParseAction(forwardParsed())\
                 .setDebug(self._debug)
-            
+                
+        # expression alias    
+        self.subparsers["ActionParser"] = self.subparsers["ExpressionParser"]
+
+        self.subparsers["RhsFieldParser"] = self.subparsers["ExpressionParser"]
+
+        self.subparsers["MultiFieldRhsSlotParser"] = (LPAR + self._sb("SymbolParser") + pp.Group(pp.ZeroOrMore("RhsFieldParser")).setResultsName("content") + RPAR )\
+                .setParseAction(types.makeInstanceDict(types.MultifieldRhsSlot, {"name" : 0, "value" : "content"}))
+        
+        self.subparsers["RhsSlotParser"] = self.subparsers["ExpressionParser"]
+        
+        self.subparsers["OrderedRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("RhsFieldParser")) + RPAR)\
+                .setParseAction(types.makeInstance(types.OrderedRhsPattern, None))\
+                .setDebug(self._debug)
+
+        self.subparsers["TemplateRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("RhsSlotParser")) + RPAR)\
+                .setParseAction(types.makeInstance(types.OrderedRhsPattern, None))\
+                .setDebug(self._debug)
+
+        self.subparsers["RhsPatternParser"] = (self._sb("TemplateRhsPatternParser") ^ self._sb("OrderedRhsPatternParser"))\
+                .setParseAction(forwardParsed(key=0))\
+                .setDebug(self._debug)
+
+        ### DEFFACTS
+        
+        
+        
+        
+        self.subparsers['DefFactsNameParser'] = self._sb("SymbolParser")        
+        
+        self.subparsers["DefFactsConstructParser"] = (LPAR + pp.Keyword("deffacts").suppress() + self._sb("DefFactsNameParser").setResultsName("DefFactsNameParser") + 
+                                                        pp.Optional(self._sb("CommentParser")).setName("comment").setResultsName("comment") + 
+                                                        pp.Group(pp.OneOrMore(self._sb("RhsPatternParser"))).setName("rhs").setResultsName("rhs") + RPAR)\
+                .setParseAction(types.makeInstanceDict(types.DefFactsConstruct, {"deffactsName" : 'DefFactsNameParser', "deffactsComment" : "comment", "rhs" : "rhs"}))\
+                .setDebug(self._debug)
+
+        
+        ### HIGH-LEVEL PARSERS
+
+        self.subparsers["ConstructParser"] = (self._sb("DefFactsConstructParser") 
+                                                #| self._sb("DefTemplateConstructParser")
+                                                #| self._sb("DefGlobalContructParser")
+                                                #| self._sb("DefRuleConstructParser")
+                                                #| self._sb("DefFunctionConstructParser")
+                                                #| self._sb("DefModuleConstructParser")
+                                                )#\
+                #.setParseAction(forwardParsed())\
+                #.setDebug(self._debug)
+                  
+        
+        self.subparsers["CLIPSProgramParser"] = pp.OneOrMore( self.getSParser("ConstructParser") )
+
+        for k in self.subparsers.keys():
+            self.subparsers[k].setName(k).setDebug(self._debug)
+        
             
     def getSParser(self, name):
         self._initParsers()
         return self.subparsers[name]
+
+    # shortcut
+    _sb = getSParser
     
     def _changeDebug(self):
         for p in self.subparsers:
@@ -139,19 +215,23 @@ if __name__ == '__main__':
 
 
     complete_test = r"""
-    (sum ?uno due)
-    (bla)
-    (?due)
+    (deffacts nome1 "commento"
+        (1 2 3)
+        (coap coapw qw)
+    )
+    ( deffacts nome2
+        (2321 1)
+    )
     """
 
-    parser = Parser(debug=False)
+    parser = Parser(debug=True)
 
     #parser.getSParser("VariableSymbolParser").setDebug(True)
     #parser.getSParser("SingleFieldVariableParser").setDebug(True)
 
-    complete_P = pp.ZeroOrMore(
-                              parser.getSParser("FunctionCallParser")#.setDebug(True)
-                            )
+    complete_P = pp.OneOrMore(
+                    parser.getSParser("DefFactsConstructParser").setDebug(True)
+                )
 
 
     res = complete_P.parseString(complete_test).asList()
