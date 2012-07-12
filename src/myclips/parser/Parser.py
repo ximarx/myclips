@@ -55,102 +55,87 @@ class Parser(object):
         RPAR = pp.Literal(")").suppress()
         
         self.subparsers["SymbolParser"] = pp.Word("".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]))\
-                .setParseAction(types.makeInstance(types.Symbol))\
-                .setDebug(self._debug)
+                .setParseAction(types.makeInstance(types.Symbol))
         
         self.subparsers["StringParser"] = pp.QuotedString('"', '\\', None, True, True)\
-                .setParseAction(types.makeInstance(types.String))\
-                .setDebug(self._debug)
+                .setParseAction(types.makeInstance(types.String))
         # StringParser alias    
         self.subparsers["CommentParser"] = self.subparsers["StringParser"]
         
         self.subparsers["IntegerParser"] = pp.Combine(pp.Optional(pp.oneOf('+ -')) + pp.Word(pp.nums))\
-                .setParseAction(types.makeInstance(types.Integer))\
-                .setDebug(self._debug)
+                .setParseAction(types.makeInstance(types.Integer))
         
         # try to cast to Integer first, otherwise Float
         self.subparsers["FloatParser"] = pp.Regex(r'[+-]?\d+(\.\d*)?([eE]-?\d+)?')\
-                .setParseAction(types.tryInstance(types.Integer, types.Float))\
-                .setDebug(self._debug)
+                .setParseAction(types.tryInstance(types.Integer, types.Float))
                     
         self.subparsers["VariableSymbolParser"] = pp.Word(string.letters, "".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]))\
-                .setParseAction(types.makeInstance(types.Symbol))\
-                .setDebug(self._debug)    
+                .setParseAction(types.makeInstance(types.Symbol))    
                          
         self.subparsers["NumberParser"] = (self.getSParser("FloatParser") ^ self.getSParser("IntegerParser"))\
-                .setParseAction(forwardParsed())\
-                .setDebug(self._debug)
+                .setParseAction(forwardParsed())
         
         self.subparsers["LexemeParser"] = (self.getSParser("StringParser") ^ self.getSParser("SymbolParser"))\
-                .setParseAction(forwardParsed())\
-                .setDebug(self._debug)
+                .setParseAction(forwardParsed())
         
         self.subparsers["ConstantParser"] = (self.getSParser("NumberParser") ^ self.getSParser("LexemeParser"))\
-                .setParseAction(forwardParsed())\
-                .setDebug(self._debug)
+                .setParseAction(forwardParsed())
         
         self.subparsers["SingleFieldVariableParser"] = (pp.Literal("?") + self.getSParser("VariableSymbolParser"))\
-                .setParseAction(types.makeInstance(types.SingleFieldVariable, 1))\
-                .setDebug(self._debug)
+                .setParseAction(types.makeInstance(types.SingleFieldVariable, 1))
         
         self.subparsers["MultiFieldVariableParser"] = (pp.Literal("$?") + self.getSParser("VariableSymbolParser"))\
-                .setParseAction(types.makeInstance(types.MultiFieldVariable, 1))\
-                .setDebug(self._debug)
+                .setParseAction(types.makeInstance(types.MultiFieldVariable, 1))
             
         self.subparsers["GlobalVariableParser"] = (pp.Literal("?*") + self.getSParser("VariableSymbolParser"))\
-                .setParseAction(types.makeInstance(types.GlobalVariable, 1))\
-                .setDebug(self._debug)
+                .setParseAction(types.makeInstance(types.GlobalVariable, 1))
         
         self.subparsers["VariableParser"] = (self.getSParser("MultiFieldVariableParser") | self.getSParser("GlobalVariableParser") | self.getSParser("SingleFieldVariableParser"))\
-                .setParseAction(forwardParsed(key=0))\
-                .setDebug(self._debug)
+                .setParseAction(forwardParsed(key=0))
         
         ### CONSTRUCTS PARSERS        
         
         self.subparsers["ExpressionParser"] = pp.Forward()
         
         self.subparsers["FunctionCallParser"] = (LPAR + self.getSParser("VariableSymbolParser") + pp.Group(pp.ZeroOrMore(self.getSParser("ExpressionParser"))) + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.FunctionCall, {'funcName': 0, 'funcArgs': 1}))\
-                .setDebug(self._debug)
+                .setParseAction(types.makeInstanceDict(types.FunctionCall, {'funcName': 0, 'funcArgs': 1}))
         
         self.subparsers["ExpressionParser"] << (self.getSParser("ConstantParser") ^ self.getSParser("VariableParser") ^ self.getSParser("FunctionCallParser") )\
-                .setParseAction(forwardParsed())\
-                .setDebug(self._debug)
+                .setParseAction(forwardParsed())
                 
         # expression alias    
         self.subparsers["ActionParser"] = self.subparsers["ExpressionParser"]
 
         self.subparsers["RhsFieldParser"] = self.subparsers["ExpressionParser"]
 
-        self.subparsers["MultiFieldRhsSlotParser"] = (LPAR + self._sb("SymbolParser") + pp.Group(pp.ZeroOrMore("RhsFieldParser")).setResultsName("content") + RPAR )\
-                .setParseAction(types.makeInstanceDict(types.MultifieldRhsSlot, {"name" : 0, "value" : "content"}))
+        self.subparsers["MultiFieldRhsSlotParser"] = (LPAR + self._sb("SymbolParser") + pp.Group(pp.ZeroOrMore(self._sb("RhsFieldParser"))).setResultsName("content") + RPAR )\
+                .setParseAction(types.makeInstanceDict(types.MultiFieldRhsSlot, {"slotName" : 0, "slotValue" : "content"}))
+
+        self.subparsers["SingleFieldRhsSlotParser"] = (LPAR + self._sb("SymbolParser") + self._sb("RhsFieldParser") + RPAR )\
+                .setParseAction(types.makeInstanceDict(types.SingleFieldRhsSlot, {"slotName" : 0, "slotValue" : 1}))
         
-        self.subparsers["RhsSlotParser"] = self.subparsers["ExpressionParser"]
+        self.subparsers["RhsSlotParser"] = (self._sb('SingleFieldRhsSlotParser') ^ self._sb("MultiFieldRhsSlotParser"))\
+                .setParseAction(forwardParsed(key=0))
         
         self.subparsers["OrderedRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("RhsFieldParser")) + RPAR)\
-                .setParseAction(types.makeInstance(types.OrderedRhsPattern, None))\
-                .setDebug(self._debug)
+                .setParseAction(types.makeInstance(types.OrderedRhsPattern, None))
 
-        self.subparsers["TemplateRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("RhsSlotParser")) + RPAR)\
-                .setParseAction(types.makeInstance(types.OrderedRhsPattern, None))\
-                .setDebug(self._debug)
+        self.subparsers["TemplateRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.Group(pp.ZeroOrMore(self._sb("RhsSlotParser"))) + RPAR)\
+                .setParseAction(types.makeInstanceDict(types.TemplateRhsPattern, {'templateName': 0, 'templateSlots': 1}))
 
         self.subparsers["RhsPatternParser"] = (self._sb("TemplateRhsPatternParser") ^ self._sb("OrderedRhsPatternParser"))\
-                .setParseAction(forwardParsed(key=0))\
-                .setDebug(self._debug)
+                .setParseAction(forwardParsed(key=0))
+
+        
 
         ### DEFFACTS
-        
-        
-        
         
         self.subparsers['DefFactsNameParser'] = self._sb("SymbolParser")        
         
         self.subparsers["DefFactsConstructParser"] = (LPAR + pp.Keyword("deffacts").suppress() + self._sb("DefFactsNameParser").setResultsName("DefFactsNameParser") + 
                                                         pp.Optional(self._sb("CommentParser")).setName("comment").setResultsName("comment") + 
                                                         pp.Group(pp.OneOrMore(self._sb("RhsPatternParser"))).setName("rhs").setResultsName("rhs") + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefFactsConstruct, {"deffactsName" : 'DefFactsNameParser', "deffactsComment" : "comment", "rhs" : "rhs"}))\
-                .setDebug(self._debug)
+                .setParseAction(types.makeInstanceDict(types.DefFactsConstruct, {"deffactsName" : 'DefFactsNameParser', "deffactsComment" : "comment", "rhs" : "rhs"}))
 
         
         ### HIGH-LEVEL PARSERS

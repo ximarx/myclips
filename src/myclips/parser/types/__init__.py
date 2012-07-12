@@ -98,9 +98,42 @@ class OrderedRhsPattern(ParsedType):
     converter = lambda self, t: [x.evaluate() if isinstance(x, ParsedType) else x for x in t]
     pass
 
-class MultifieldRhsSlot(ParsedType):
-    def __init__(self):
-        pass
+class TemplateRhsPattern(ParsedType):
+    def __init__(self, templateName, templateSlots=None):
+        ParsedType.__init__(self, templateName)
+        self.templateName = templateName.evaluate() if isinstance(templateName, ParsedType) else templateName
+        self.templateSlots =  templateSlots if templateName != None else []
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+                                        self.templateName,
+                                        self.templateSlots)
+    
+class FieldRhsSlot(ParsedType):
+    pass
+
+class MultiFieldRhsSlot(FieldRhsSlot):
+    def __init__(self, slotName, slotValue=None):
+        ParsedType.__init__(self, slotName)
+        self.slotName = slotName.evaluate() if isinstance(slotName, ParsedType) else slotName 
+        self.slotValue = slotValue if slotValue != None else []
+
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+                                        self.slotName,
+                                        self.slotValue)
+
+class SingleFieldRhsSlot(FieldRhsSlot):
+    def __init__(self, slotName, slotValue):
+        ParsedType.__init__(self, slotName)
+        self.slotName = slotName.evaluate() if isinstance(slotName, ParsedType) else slotName 
+        self.slotValue = slotValue
+
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+                                        self.slotName,
+                                        self.slotValue)
+
 
 def makeInstance(cls, position=0):
     def makeAction(s,l,t):

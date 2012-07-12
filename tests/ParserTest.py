@@ -6,6 +6,7 @@ Created on 11/lug/2012
 import unittest
 from myclips.parser.Parser import Parser
 import myclips.parser.types as types
+from pyparsing import ParseException
 
 class ParserTest(unittest.TestCase):
 
@@ -77,6 +78,29 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].rhs[1], types.OrderedRhsPattern)
 
 
+    def test_DefFactsConstructParser_TemplateRhsPattern(self):
+        res = self._testImpl('DefFactsConstructParser', r"""
+        (deffacts nome1 "commento1"
+            (templateName (slot1k slot1v))
+        )
+        """).asList()
+        
+        self.assertEqual(len(res[0].rhs), 1)
+        self.assertIsInstance(res[0].rhs[0], types.TemplateRhsPattern)
+
+    def test_DefFactsConstructParser_TemplateRhsPatternAndOrderedRhsPattern(self):
+        res = self._testImpl('DefFactsConstructParser', r"""
+        (deffacts nome1 "commento1"
+            (templateName (slot1k slot1v))
+            (a b c)
+        )
+        """).asList()
+        
+        self.assertEqual(len(res[0].rhs), 2)
+        self.assertIsInstance(res[0].rhs[0], types.TemplateRhsPattern)
+        self.assertIsInstance(res[0].rhs[1], types.OrderedRhsPattern)
+
+
     def test_orderedrhspattern_Normal(self):
         res = self._testImpl('RhsPatternParser', r"""
         (A b c)
@@ -109,8 +133,117 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].content[0], types.Symbol)
         self.assertIsInstance(res[0].content[1], types.Integer)
         self.assertIsInstance(res[0].content[2], types.Symbol)
+        
+    def test_MultiFieldRhsSlot_SingleValue(self):
+        res = self._testImpl('MultiFieldRhsSlotParser', r"""
+        (slotName prova)
+        """).asList()
 
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], types.MultiFieldRhsSlot)
+        self.assertEqual(res[0].slotName, "slotName")
+        self.assertIsInstance(res[0].slotValue, list)
+        self.assertEqual(len(res[0].slotValue), 1)
+        
+    def test_MultiFieldRhsSlot_TwoValue(self):
+        res = self._testImpl('MultiFieldRhsSlotParser', r"""
+        (slotName prova ciao)
+        """).asList()
 
+        self.assertIsInstance(res[0], types.MultiFieldRhsSlot)
+        self.assertEqual(len(res[0].slotValue), 2)
+        
+    def test_MultiFieldRhsSlot_ZeroValue(self):
+        res = self._testImpl('MultiFieldRhsSlotParser', r"""
+        (slotName )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.MultiFieldRhsSlot)
+        self.assertEqual(res[0].slotValue, [])
+        
+    def test_SingleFieldRhsSlot_Normal(self):
+        res = self._testImpl('SingleFieldRhsSlotParser', r"""
+        (slotName slotValue)
+        """).asList()
+
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], types.SingleFieldRhsSlot)
+        self.assertEqual(res[0].slotName, "slotName")
+        self.assertIsInstance(res[0].slotValue, types.ParsedType )
+        
+    def test_SingleFieldRhsSlot_NotValid(self):
+        self.assertRaises(ParseException, self._testImpl, 'SingleFieldRhsSlotParser', r"""
+        (slotName )
+        """)
+        
+    def test_RhsSlotParser_Normal(self):
+        res = self._testImpl('RhsSlotParser', r"""
+        (slotName slotValue)
+        """).asList()
+        
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], (types.SingleFieldRhsSlot, types.MultiFieldRhsSlot))
+        self.assertEqual(res[0].slotName, "slotName")
+        
+    def test_RhsSlotParser_ForcedMultiField(self):
+        res = self._testImpl('RhsSlotParser', r"""
+        (slotName slotValue1 slotValue2)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.MultiFieldRhsSlot)
+    
+    def test_RhsSlotParser_GuessSingleField(self):
+        res = self._testImpl('RhsSlotParser', r"""
+        (slotName singleField)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.SingleFieldRhsSlot)
+
+    def test_RhsSlotParser_GuessMultiField(self):
+        res = self._testImpl('RhsSlotParser', r"""
+        (slotName )
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.MultiFieldRhsSlot)
+
+    def test_TemplateRhsPatternParser(self):
+        res = self._testImpl('TemplateRhsPatternParser', r"""
+        (templateName 
+            (slot1k slot1v) 
+            (slot2k) 
+            (slot3k slot3v1 slot3v2)
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.TemplateRhsPattern)
+        self.assertEqual(res[0].templateName, "templateName")
+        self.assertEqual(len(res[0].templateSlots), 3)
+        self.assertFalse(False in [isinstance(x, types.FieldRhsSlot) for x in res[0].templateSlots])
+
+    def test_TemplateRhsPatternParser_SlotsTypes(self):
+        res = self._testImpl('TemplateRhsPatternParser', r"""
+        (templateName 
+            (slot1k slot1v) 
+            (slot2k) 
+            (slot3k slot3v1 slot3v2)
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0].templateSlots[0], types.SingleFieldRhsSlot)
+        self.assertIsInstance(res[0].templateSlots[1], types.MultiFieldRhsSlot)
+        self.assertIsInstance(res[0].templateSlots[2], types.MultiFieldRhsSlot)
+
+    def test_TemplateRhsPatternParser_FunctionInSlot(self):
+        res = self._testImpl('TemplateRhsPatternParser', r"""
+        (templateName 
+            (slot1k (funzione 1 2 3)) 
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0].templateSlots[0], types.SingleFieldRhsSlot)
+        self.assertIsInstance(res[0].templateSlots[0].slotValue, types.FunctionCall)
+
+        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testObjectIsSymbol']
     unittest.main()
