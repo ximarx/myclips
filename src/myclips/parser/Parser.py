@@ -356,18 +356,17 @@ if __name__ == '__main__':
         
 
     start_time = time.time()
-    #res = 
-    complete_P.parseString(_complete_test)#.asList()
+    res = complete_P.parseString(_complete_test)#.asList()
     print time.time() - start_time, " seconds"
     
     #pprint.pprint(res)
     
-    start_time = time.time()
-    #res = []
-    for i in range(0,500):
-        #res += 
-        complete_P.parseString(complete_test)#.asList()
-    print time.time() - start_time, " seconds"
-    
+#    start_time = time.time()
+#    #res = []
+#    for i in range(0,500):
+#        #res += 
+#        complete_P.parseString(complete_test)#.asList()
+#    print time.time() - start_time, " seconds"
+#    
     
     
