@@ -210,8 +210,6 @@ class Constraint(ParsedType):
 class ConnectedConstraint(ParsedType):
     def __init__(self, constraint, connectedConstraints=None):
         if connectedConstraints is None:
-            import sys
-            print >> sys.stderr, "cC None, ", constraint
             raise ValueError()
         ParsedType.__init__(self, constraint)
         # constraint is Constraint for sure

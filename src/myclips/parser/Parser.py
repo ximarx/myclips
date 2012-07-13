@@ -3,6 +3,7 @@ import pyparsing as pp
 import string
 import myclips.parser.types as types
 from memoized import memoized
+import time
 
 def forwardParsed(bounds=None, key=None):
     def forwardAction(s,l,t):
@@ -340,19 +341,33 @@ if __name__ == '__main__':
             => 
         )
     """
+    _complete_test = complete_test
+    for i in range(1,500):
+        _complete_test += complete_test
 
-    parser = Parser(debug=True)
+    parser = Parser(debug=False)
 
     #parser.getSParser("VariableSymbolParser").setDebug(True)
     #parser.getSParser("SingleFieldVariableParser").setDebug(True)
 
     complete_P = pp.OneOrMore(
-                    parser.getSParser("DefRuleConstructParser").setDebug(True)
+                    parser.getSParser("DefRuleConstructParser").setDebug(False)
                 )
+        
 
-
-    res = complete_P.parseString(complete_test).asList()
-    pprint.pprint(res)
+    start_time = time.time()
+    #res = 
+    complete_P.parseString(_complete_test)#.asList()
+    print time.time() - start_time, " seconds"
+    
+    #pprint.pprint(res)
+    
+    start_time = time.time()
+    #res = []
+    for i in range(0,500):
+        #res += 
+        complete_P.parseString(complete_test)#.asList()
+    print time.time() - start_time, " seconds"
     
     
     
