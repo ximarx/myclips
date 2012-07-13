@@ -353,6 +353,8 @@ if __name__ == '__main__':
     complete_P = pp.OneOrMore(
                     parser.getSParser("DefRuleConstructParser").setDebug(False)
                 )
+    
+    complete_P.enablePackrat()
         
 
     start_time = time.time()
