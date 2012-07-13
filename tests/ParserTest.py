@@ -304,7 +304,6 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].defruleDeclaration[0], types.RuleProperty)
         self.assertIsInstance(res[0].defruleDeclaration[1], types.RuleProperty)
 
-    @expectedFailure
     def test_DefRuleConstructParser_WithLHS(self):
         res = self._testImpl('DefRuleConstructParser', r"""
         (defrule rulename
@@ -315,6 +314,16 @@ class ParserTest(unittest.TestCase):
         
         self.assertEqual(len(res[0].lhs), 1)
 
+    @expectedFailure
+    def test_ActionParser_MultifieldValueNested(self):
+        res = self._testImpl('ActionParser', r"""
+        (assert (A B C))
+        """).asList()
+        
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], types.FunctionCall)
+        self.assertNotIsInstance(res[0].funcArgs[0], types.FunctionCall)
+    
 
     def test_RulePropertyParser_Salience(self):
         res = self._testImpl('RulePropertyParser', r"""

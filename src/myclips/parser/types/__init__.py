@@ -66,6 +66,14 @@ class MultiFieldVariable(Variable):
     converter = lambda self, t: "?$"+self.content.evaluate()
     pass
 
+class UnnamedSingleFieldVariable(Variable):
+    converter = lambda self, t: "?"
+    pass
+
+class UnnamedMultiFieldVariable(Variable):
+    converter = lambda self, t: "?$"
+    pass
+
 class GlobalVariable(Variable):
     converter = lambda self, t: "?*"+self.content.evaluate()
     pass
@@ -114,7 +122,7 @@ class FieldRhsSlot(ParsedType):
 
 class MultiFieldRhsSlot(FieldRhsSlot):
     def __init__(self, slotName, slotValue=None):
-        ParsedType.__init__(self, slotName)
+        FieldRhsSlot.__init__(self, slotName)
         self.slotName = slotName.evaluate() if isinstance(slotName, ParsedType) else slotName 
         self.slotValue = slotValue if slotValue != None else []
 
@@ -125,7 +133,7 @@ class MultiFieldRhsSlot(FieldRhsSlot):
 
 class SingleFieldRhsSlot(FieldRhsSlot):
     def __init__(self, slotName, slotValue):
-        ParsedType.__init__(self, slotName)
+        FieldRhsSlot.__init__(self, slotName)
         self.slotName = slotName.evaluate() if isinstance(slotName, ParsedType) else slotName 
         self.slotValue = slotValue
 
@@ -162,6 +170,120 @@ class RuleProperty(ParsedType):
         return "<{0}:{1} = {2}>".format(self.__class__.__name__,
                                         self.propertyName,
                                         self.propertyValue )
+
+class PatternCE(ParsedType):
+    pass
+
+class OrderedPatternCE(PatternCE):
+    def __init__(self, content):
+        PatternCE.__init__(self, content)
+        self.constraints = content
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}>".format(self.__class__.__name__,
+                                    self.constraints
+                                    )
+
+class TemplatePatternCE(PatternCE):
+    def __init__(self, templateName, templateSlots=None):
+        PatternCE.__init__(self, templateName)
+        self.templateName = templateName.evaluate() if isinstance(templateName, ParsedType) else templateName
+        self.templateSlots = templateSlots if templateSlots != None else []
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+                                    self.templateName,
+                                    self.templateSlots
+                                    )
+
+
+class Constraint(ParsedType):
+    def __init__(self, constraint, connectedConstraints=None):
+        ParsedType.__init__(self, constraint)
+        self.constraint = constraint
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}>".format(self.__class__.__name__,
+                                    self.constraint
+                                    )
+
+class ConnectedConstraint(ParsedType):
+    def __init__(self, constraint, connectedConstraints=None):
+        if connectedConstraints is None:
+            import sys
+            print >> sys.stderr, "cC None, ", constraint
+            raise ValueError()
+        ParsedType.__init__(self, constraint)
+        # constraint is Constraint for sure
+        self.constraint = constraint
+        self.connectedConstraints = [] # define it here first
+        # connectedConstraint is [#CONNECTIVE, Constraint]
+        #     OR
+        # connectedConstraint is [#CONNECTIVE, ConnectedConstraint]
+        # i need to linearize all ConnectedConstraint as a single ConnectedConstraint
+        # with self.constraints = [#CONNECTIVE, Constraint]
+        connective, subconstraints = connectedConstraints
+        if isinstance(subconstraints, ConnectedConstraint):
+            # need to linearize it
+            self.connectedConstraints = [[connective, subconstraints.constraint]] + subconstraints.connectedConstraints
+            # now i need to sort it!
+            # priority: ~,&,|
+            #TODO sort function / nested connnected handling 
+        else:
+            self.connectedConstraints = [connectedConstraints]
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1},{2}>".format(self.__class__.__name__,
+                                    self.constraint,
+                                    self.connectedConstraints
+                                    )
+    
+class Term(ParsedType):
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}>".format(self.__class__.__name__,
+                                    self.term,
+                                    )
+
+class PositiveTerm(Term):
+    def __init__(self, term, isNot=None):
+        if isNot is not None:
+            raise ValueError()
+        Term.__init__(self, term)
+        self.term = term
+
+        
+class NegativeTerm(Term):
+    def __init__(self, term, isNot=None):
+        if isNot is None:
+            raise ValueError()
+        Term.__init__(self, term)
+        self.term = term
+    
+    
+class FieldLhsSlot(ParsedType):
+    pass
+
+class MultiFieldLhsSlot(FieldLhsSlot):
+    def __init__(self, slotName, slotValue=None):
+        FieldLhsSlot.__init__(self, slotName)
+        self.slotName = slotName.evaluate() if isinstance(slotName, ParsedType) else slotName 
+        self.slotValue = slotValue if slotValue != None else []
+
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+                                        self.slotName,
+                                        self.slotValue)
+
+class SingleFieldLhsSlot(FieldLhsSlot):
+    def __init__(self, slotName, slotValue):
+        FieldLhsSlot.__init__(self, slotName)
+        self.slotName = slotName.evaluate() if isinstance(slotName, ParsedType) else slotName 
+        self.slotValue = slotValue
+
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+                                        self.slotName,
+                                        self.slotValue)    
 
 def makeInstance(cls, position=0):
     def makeAction(s,l,t):
@@ -202,10 +324,14 @@ def makeInstanceDict(cls, args):
 
 def tryInstance(cls1, cls2, position=0):
     def tryMakeAction(s,l,t):
+        if isinstance(position, dict):
+            makeImpl = makeInstanceDict
+        else:
+            makeImpl = makeInstance
         try:
-            return makeInstance(cls1, position)(s,l,t)
+            return makeImpl(cls1, position)(s,l,t)
         except:
-            return makeInstance(cls2, position)(s,l,t)
+            return makeImpl(cls2, position)(s,l,t)
             
     return tryMakeAction
     
