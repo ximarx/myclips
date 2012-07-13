@@ -266,11 +266,11 @@ class Parser(object):
         self.subparsers["ConstructParser"] = (self._sb("DefFactsConstructParser") 
                                                 #| self._sb("DefTemplateConstructParser")
                                                 #| self._sb("DefGlobalContructParser")
-                                                #| self._sb("DefRuleConstructParser")
+                                                | self._sb("DefRuleConstructParser")
                                                 #| self._sb("DefFunctionConstructParser")
                                                 #| self._sb("DefModuleConstructParser")
-                                                )#\
-                #.setParseAction(forwardParsed())\
+                                                )\
+                .setParseAction(forwardParsed())#\
                 #.setDebug(self._debug)
                   
         
@@ -351,7 +351,7 @@ if __name__ == '__main__':
     #parser.getSParser("SingleFieldVariableParser").setDebug(True)
 
     complete_P = pp.OneOrMore(
-                    parser.getSParser("DefRuleConstructParser").setDebug(False)
+                    parser.getSParser("ConstructParser").setDebug(False)
                 )
     
     complete_P.enablePackrat()

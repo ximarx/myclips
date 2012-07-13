@@ -312,7 +312,7 @@ class ParserTest(unittest.TestCase):
         )
         """).asList()
         
-        self.assertEqual(len(res[0].lhs), 1)
+        self.assertNotEqual(len(res[0].lhs), 0)
 
     @expectedFailure
     def test_ActionParser_MultifieldValueNested(self):
@@ -371,6 +371,42 @@ class ParserTest(unittest.TestCase):
         (auto-focus ciao)
         """)
 
+    def test_PatternCEParser_OrderedPatternCE(self):
+        res = self._testImpl('PatternCEParser', r"""
+        (A B C)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.OrderedPatternCE)
+
+    def test_PatternCEParser_TemplatePatternCE(self):
+        res = self._testImpl('PatternCEParser', r"""
+        (template 
+            (s1 v1)
+            (s2 v1 v2 v3)
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.TemplatePatternCE)
+        self.assertEqual(len(res[0].templateSlots), 2)
+
+    def test_OrderedPatternCEParser(self):
+        res = self._testImpl('OrderedPatternCEParser', r"""
+        (A B C)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.OrderedPatternCE)
+        self.assertEqual(len(res[0].constraints), 3)
+
+    def test_OrderedPatternCEParser_InnerConnectedConstraint(self):
+        res = self._testImpl('OrderedPatternCEParser', r"""
+        (A G&3|:(eq 1 ?b)|3 C)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.OrderedPatternCE)
+        self.assertEqual(len(res[0].constraints), 3)
+        self.assertIsInstance(res[0].constraints[1], types.ConnectedConstraint)
+
+    
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testObjectIsSymbol']
