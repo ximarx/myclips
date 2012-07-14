@@ -91,7 +91,7 @@ class Parser(object):
         
         #self.subparsers["InstanceNameParser"]
         
-        self.subparsers["LexemeParser"] = (self.getSParser("StringParser") ^ self.getSParser("SymbolParser"))\
+        self.subparsers["LexemeParser"] = (self.getSParser("StringParser") | self.getSParser("SymbolParser"))\
                 .setParseAction(forwardParsed())
         
         self.subparsers["ConstantParser"] = (self.getSParser("NumberParser") ^ self.getSParser("LexemeParser"))\
@@ -116,7 +116,7 @@ class Parser(object):
         self.subparsers["FunctionCallParser"] = (LPAR + self.getSParser("VariableSymbolParser") + pp.Group(pp.ZeroOrMore(self.getSParser("ExpressionParser"))) + RPAR)\
                 .setParseAction(types.makeInstanceDict(types.FunctionCall, {'funcName': 0, 'funcArgs': 1}))
         
-        self.subparsers["ExpressionParser"] << (self.getSParser("ConstantParser") ^ self.getSParser("VariableParser") ^ self.getSParser("FunctionCallParser") )\
+        self.subparsers["ExpressionParser"] << (self.getSParser("VariableParser") | self.getSParser("FunctionCallParser") | self.getSParser("ConstantParser") )\
                 .setParseAction(forwardParsed())
                 
         # expression alias    
@@ -130,7 +130,7 @@ class Parser(object):
         self.subparsers["SingleFieldRhsSlotParser"] = (LPAR + self._sb("SymbolParser") + self._sb("RhsFieldParser") + RPAR )\
                 .setParseAction(types.makeInstanceDict(types.SingleFieldRhsSlot, {"slotName" : 0, "slotValue" : 1}))
         
-        self.subparsers["RhsSlotParser"] = (self._sb('SingleFieldRhsSlotParser') ^ self._sb("MultiFieldRhsSlotParser"))\
+        self.subparsers["RhsSlotParser"] = (self._sb('SingleFieldRhsSlotParser') | self._sb("MultiFieldRhsSlotParser"))\
                 .setParseAction(forwardParsed(key=0))
         
         self.subparsers["OrderedRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("RhsFieldParser")) + RPAR)\
@@ -139,7 +139,7 @@ class Parser(object):
         self.subparsers["TemplateRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.Group(pp.ZeroOrMore(self._sb("RhsSlotParser"))) + RPAR)\
                 .setParseAction(types.makeInstanceDict(types.TemplateRhsPattern, {'templateName': 0, 'templateSlots': 1}))
 
-        self.subparsers["RhsPatternParser"] = (self._sb("TemplateRhsPatternParser") ^ self._sb("OrderedRhsPatternParser"))\
+        self.subparsers["RhsPatternParser"] = (self._sb("TemplateRhsPatternParser") | self._sb("OrderedRhsPatternParser"))\
                 .setParseAction(forwardParsed(key=0))
 
         ### DEFFACTS
@@ -177,13 +177,14 @@ class Parser(object):
         self.subparsers['UnnamedMultiFieldVariableParser'] = pp.Keyword("$?")\
                 .setParseAction(types.makeInstance(types.UnnamedMultiFieldVariable))
         
-        self.subparsers['TermParser'] = (self._sb("SingleFieldVariableParser") ^ 
-                                         self._sb("MultiFieldVariableParser") ^ 
-                                         self._sb("ConstantParser") ^
+        self.subparsers['TermParser'] = (                                         
                                          (
                                             ((pp.Literal(':') | pp.Literal('=')) + self._sb("FunctionCallParser"))\
                                                 .setParseAction(forwardParsed(key=1))
-                                         )
+                                            )
+                                         | self._sb("SingleFieldVariableParser")
+                                         | self._sb("MultiFieldVariableParser") 
+                                         | self._sb("ConstantParser")
                                         )\
                 .setParseAction(forwardParsed(key=0))
         
@@ -192,8 +193,8 @@ class Parser(object):
                 .setParseAction(types.tryInstance(types.NegativeTerm, types.PositiveTerm, {"term" : "term", "isNot" : 'not' } ))
         
         self.subparsers['ConnectedConstraintParser'] = pp.Forward()
-        self.subparsers['ConnectedConstraintParser'] << (self._sb("SingleConstraintParser").setResultsName("constraint") + 
-                                                            pp.Optional(
+        self.subparsers['ConnectedConstraintParser'] << (self._sb("SingleConstraintParser").setResultsName("constraint") 
+                                                            + pp.Optional(
                                                                 pp.Group(
                                                                     ( pp.Literal("|") + self._sb("ConnectedConstraintParser")) |
                                                                     ( pp.Literal("&") + self._sb("ConnectedConstraintParser"))
@@ -203,9 +204,9 @@ class Parser(object):
                                                          )\
                 .setParseAction(types.tryInstance(types.ConnectedConstraint, types.Constraint, {"constraint" : "constraint", "connectedConstraints" : "connectedConstraint" }))
         
-        self.subparsers['ConstraintParser'] = (self._sb("UnnamedSingleFieldVariableParser") ^ 
-                                               self._sb("UnnamedMultiFieldVariableParser") ^ 
-                                               self._sb("ConnectedConstraintParser"))\
+        self.subparsers['ConstraintParser'] = (self._sb("UnnamedSingleFieldVariableParser")
+                                               | self._sb("UnnamedMultiFieldVariableParser") 
+                                               | self._sb("ConnectedConstraintParser"))\
                 .setParseAction(forwardParsed(key=0))
         
         self.subparsers["SingleFieldLhsSlotParser"] = (LPAR + 
@@ -221,7 +222,8 @@ class Parser(object):
                 .setParseAction(types.makeInstanceDict(types.MultiFieldLhsSlot, {"slotName" : 0, "slotValue" : "content"}))
         
         
-        self.subparsers['LhsSlotParser'] = (self._sb("SingleFieldLhsSlotParser") ^ self._sb("MultiFieldLhsSlotParser"))\
+        self.subparsers['LhsSlotParser'] = (self._sb("SingleFieldLhsSlotParser")
+                                            | self._sb("MultiFieldLhsSlotParser"))\
                 .setParseAction(forwardParsed(key=0))
         
         self.subparsers['OrderedPatternCEParser'] = (LPAR + self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("ConstraintParser")) + RPAR)\
@@ -232,7 +234,8 @@ class Parser(object):
                                                       RPAR)\
                 .setParseAction(types.makeInstanceDict(types.TemplatePatternCE, {"templateName" : "templateName", "templateSlots" : "templateSlots"}))
         
-        self.subparsers['PatternCEParser'] = (self._sb("OrderedPatternCEParser") ^ self._sb("TemplatePatternCEParser"))\
+        self.subparsers['PatternCEParser'] = (self._sb("OrderedPatternCEParser")
+                                              | self._sb("TemplatePatternCEParser"))\
                 .setParseAction(forwardParsed(key=0))
                 
         self.subparsers['AssignedPatternCEParser'] = (self._sb("SingleFieldVariableParser") 
@@ -264,10 +267,10 @@ class Parser(object):
                 .setParseAction(types.makeInstance(types.TestPatternCE, 1))
         
         self.subparsers['ConditionalElementParser'] << (self._sb("NotCEParser") # not before pattern, or not will be parsed as template name
-                                                        ^ self._sb("AndCEParser") # and before pattern, or not will be parsed as template name
-                                                        ^ self._sb("TestCEParser") # test before pattern, or test will be parsed as template name
-                                                        ^ self._sb("AssignedPatternCEParser") 
-                                                        ^ self._sb("PatternCEParser") 
+                                                        | self._sb("AndCEParser") # and before pattern, or not will be parsed as template name
+                                                        | self._sb("TestCEParser") # test before pattern, or test will be parsed as template name
+                                                        | self._sb("AssignedPatternCEParser") 
+                                                        | self._sb("PatternCEParser") 
                                                         #^ self._sb("OrCEParser")
                                                         #^ self._sb("LogicalCEParser") 
                                                         #^ self._sb("ExistsCEParser")
@@ -275,14 +278,14 @@ class Parser(object):
                                                         )\
                 .setParseAction(forwardParsed(key=0))
         
-        self.subparsers['DefRuleConstructParser'] = (LPAR + pp.Keyword("defrule").suppress() + 
-                                                        self._sb("SymbolParser").setResultsName('rulename') +
-                                                            pp.Optional(self._sb("CommentParser")).setName("defruleComment").setResultsName("comment") +
-                                                            pp.Optional(self._sb("DeclarationParser")).setName("defruleDeclaration").setResultsName("declaration") +
-                                                            pp.Optional(pp.Group(pp.ZeroOrMore(self._sb("ConditionalElementParser")))).setResultsName("lhs") +
-                                                        pp.Literal("=>").suppress() +
-                                                        pp.Group(pp.ZeroOrMore(self._sb("ActionParser"))).setResultsName("rhs") +
-                                                     RPAR)\
+        self.subparsers['DefRuleConstructParser'] = (LPAR + pp.Keyword("defrule").suppress()  
+                                                        + self._sb("SymbolParser").setResultsName('rulename')
+                                                            + pp.Optional(self._sb("CommentParser")).setName("defruleComment").setResultsName("comment")
+                                                            + pp.Optional(self._sb("DeclarationParser")).setName("defruleDeclaration").setResultsName("declaration")
+                                                            + pp.Optional(pp.Group(pp.ZeroOrMore(self._sb("ConditionalElementParser")))).setResultsName("lhs")
+                                                        + pp.Literal("=>").suppress()
+                                                        + pp.Group(pp.ZeroOrMore(self._sb("ActionParser"))).setResultsName("rhs")
+                                                     + RPAR)\
                 .setParseAction(types.makeInstanceDict(types.DefRuleConstruct, {"defruleName" : 'rulename', "defruleComment" : "comment", "defruleDeclaration" : "declaration", "lhs" : "lhs", "rhs" : "rhs"}))
         
         ### HIGH-LEVEL PARSERS
