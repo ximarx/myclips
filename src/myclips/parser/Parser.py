@@ -2,7 +2,6 @@
 import pyparsing as pp
 import string
 import myclips.parser.types as types
-from memoized import memoized
 import time
 
 def forwardParsed(bounds=None, key=None):
@@ -311,6 +310,60 @@ class Parser(object):
 
 
         ### DEFTEMPLATE
+
+        self.subparsers["DefaultAttributeParser"] = (LPAR + pp.Keyword("default").suppress()
+                                                        + ( pp.Keyword("?DERIVE")
+                                                            | pp.Keyword("?NONE")
+                                                            | self._sb("ExpressionParser")
+                                                           )
+                                                     + RPAR)\
+                .setParseAction(types.makeInstance(types.DefaultAttribute, 0))
+        
+        self.subparsers["TypeSpecificationParser"] = (pp.Group( 
+                                                        pp.OneOrMore(
+                                                            pp.oneOf( types.TYPES.keys() ))
+                                                        | pp.Keyword("?VARIABLE")
+                                                        )
+                                                      )\
+                .setParseAction(forwardParsed(0))
+        
+        self.subparsers["TypeAttributeParser"] = (LPAR + pp.Keyword("type").suppress()
+                                                    + self._sb("TypeSpecificationParser")
+                                                    + RPAR)\
+                .setParseAction(types.makeInstance(types.TypeAttribute, 0))                                                  
+        
+        self.subparsers["ConstraintAttributeParser"] = (self._sb("TypeAttributeParser").copy())\
+                .setParseAction(forwardParsed(key=0))
+        
+
+        self.subparsers["TemplateAttributeParser"] = (self._sb("DefaultAttributeParser")
+                                                        | self._sb("ConstraintAttributeParser")
+                                                        )\
+                .setParseAction(forwardParsed(key=0))
+
+        self.subparsers["SingleSlotDefinitionParser"] = (LPAR + pp.Keyword("slot").suppress()
+                                                            + self._sb("SymbolParser")
+                                                            + pp.Group( pp.ZeroOrMore( self._sb("TemplateAttributeParser") ))
+                                                         + RPAR)\
+                .setParseAction(types.makeInstanceDict(types.SingleSlotDefinition, {"slotName": 0, "attributes": 1}))
+
+        self.subparsers["MultiSlotDefinitionParser"] = (LPAR + pp.Keyword("multislot").suppress()
+                                                            + self._sb("SymbolParser")
+                                                            + pp.Group( pp.ZeroOrMore( self._sb("TemplateAttributeParser") ))
+                                                         + RPAR)\
+                .setParseAction(types.makeInstanceDict(types.MultiSlotDefinition, {"slotName": 0, "attributes": 1}))
+        
+        self.subparsers["SlotDefinitionParser"] = ( self._sb("MultiSlotDefinitionParser")
+                                                    | self._sb("SingleSlotDefinitionParser")
+                                                    )\
+                .setParseAction(forwardParsed())
+        
+        self.subparsers["DefTemplateConstructParser"] = (LPAR + pp.Keyword("deftemplate").suppress()  
+                                                        + self._sb("SymbolParser").setResultsName('templateName')
+                                                            + pp.Optional(self._sb("CommentParser")).setName("templateComment").setResultsName("templateComment")
+                                                        + pp.Group(pp.ZeroOrMore(self._sb("SlotDefinitionParser"))).setResultsName("slots")
+                                                        + RPAR)\
+                .setParseAction(types.makeInstanceDict(types.DefRuleConstruct, {"defruleName" : 'rulename', "defruleComment" : "comment", "defruleDeclaration" : "declaration", "lhs" : "lhs", "rhs" : "rhs"})) 
         
         ### HIGH-LEVEL PARSERS
         
@@ -324,7 +377,7 @@ class Parser(object):
                 
 
             self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
-                                                    #| self._sb("DefTemplateConstructParser")
+                                                    | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefGlobalContructParser")
                                                     | self._sb("DefRuleConstructParser")
                                                     #| self._sb("DefFunctionConstructParser")
@@ -333,7 +386,7 @@ class Parser(object):
                                                     )
         else:
             self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
-                                                    #| self._sb("DefTemplateConstructParser")
+                                                    | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefGlobalContructParser")
                                                     | self._sb("DefRuleConstructParser")
                                                     #| self._sb("DefFunctionConstructParser")
@@ -355,7 +408,8 @@ class Parser(object):
             self.subparsers["ConstructParser"].ignore(self._sb("ClipsCommentParser"))#\
                   
         
-        self.subparsers["CLIPSProgramParser"] = pp.OneOrMore( self.getSParser("ConstructParser") )
+        self.subparsers["CLIPSProgramParser"] = pp.OneOrMore( self.getSParser("ConstructParser") )\
+                .setParseAction(forwardParsed())
 
         for k in self.subparsers.keys():
             self.subparsers[k].setName(k).setDebug(self._debug)

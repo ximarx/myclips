@@ -36,19 +36,24 @@ class BaseParsedType(ParsedType):
     def __repr__(self, *args, **kwargs):
         return "<{0}, {1}:{2}>".format(self.__class__.__name__, self.content.__class__.__name__, self.content )
     
+class Number(BaseParsedType):
+    pass
 
-class Integer(BaseParsedType):
+class Lexeme(BaseParsedType):
+    pass
+
+class Integer(Number):
     converter = lambda self, t: int(t)
     pass
 
-class Symbol(BaseParsedType):
+class Symbol(Lexeme):
     pass
 
-class String(BaseParsedType):
+class String(Lexeme):
     converter = lambda self, t: '"'+str(t)+'"'
     pass
 
-class Float(BaseParsedType):
+class Float(Number):
     converter = float
     pass
 
@@ -103,7 +108,7 @@ class DefFactsConstruct(ParsedType):
                                         self.rhs )
 
 class OrderedRhsPattern(ParsedType):
-    converter = lambda self, t: [x.evaluate() if isinstance(x, ParsedType) else x for x in t]
+    #converter = lambda self, t: [x.evaluate() if isinstance(x, ParsedType) else x for x in t]
     pass
 
 class TemplateRhsPattern(ParsedType):
@@ -219,7 +224,6 @@ class NotPatternCE(PatternCE):
         
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1}>".format(self.__class__.__name__,
-                                    self.variable,
                                     self.pattern
                                     )
 
@@ -233,8 +237,7 @@ class AndPatternCE(PatternCE):
         
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1}>".format(self.__class__.__name__,
-                                    self.variable,
-                                    self.pattern
+                                    self.patterns
                                     )
 
 class TestPatternCE(PatternCE):
@@ -333,6 +336,77 @@ class SingleFieldLhsSlot(FieldLhsSlot):
         return "<{0}:{1}, {2}>".format(self.__class__.__name__,
                                         self.slotName,
                                         self.slotValue)    
+
+class SlotDefinition(ParsedType):
+    pass
+
+class SingleSlotDefinition(SlotDefinition):
+    def __init__(self, slotName, attributes=None):
+        SlotDefinition.__init__(self, slotName)
+        self.slotName = slotName.evaluate() if isinstance(slotName, ParsedType) else slotName 
+        self.attributes = attributes if attributes != None else []
+
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+                                        self.slotName,
+                                        self.slotValue)    
+
+class MultiSlotDefinition(SlotDefinition):
+    def __init__(self, slotName, attributes=None):
+        SlotDefinition.__init__(self, slotName)
+        self.slotName = slotName.evaluate() if isinstance(slotName, ParsedType) else slotName 
+        self.attributes = attributes if attributes != None else []
+
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+                                        self.slotName,
+                                        self.slotValue)    
+
+class Attribute(ParsedType):
+    pass
+
+class DefaultAttribute(Attribute):
+    def __init__(self, defaultValue):
+        Attribute.__init__(self, defaultValue)
+        self.defaultValue = defaultValue if isinstance(defaultValue, ParsedType) else SPECIAL_VALUES[defaultValue]
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}>".format(self.__class__.__name__,
+                                        self.defaultValue)    
+
+class TypeAttribute(Attribute):
+    def __init__(self, allowedTypes=None):
+        Attribute.__init__(self, allowedTypes)
+        self.allowedTypes = allowedTypes if allowedTypes != None else [SPECIAL_VALUES["?VARIABLE"]]
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}>".format(self.__class__.__name__,
+                                        self.allowedTypes)    
+
+
+SPECIAL_VALUES = {
+    "?NONE" 
+        : None,     # check isinstance vs ?NONE = FALSE
+    "?DERIVE"
+        : object,   # check isinstance vs ?DERIVE = TRUE
+    "?VARIABLE"
+        : object,   # check isinstance vs ?DERIVE = TRUE
+}
+    
+TYPES = {
+    "SYMBOL"
+        : Symbol,
+    "STRING"
+        : String,
+    "LEXEME"
+        : Lexeme,
+    "INTEGER"
+        : Integer,
+    "FLOAT"
+        : Float,
+    "NUMBER"
+        : Number
+}
 
 def makeInstance(cls, position=0):
     def makeAction(s,l,t):
