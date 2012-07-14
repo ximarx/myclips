@@ -240,19 +240,38 @@ class Parser(object):
                                                         + self._sb("PatternCEParser")
                                                     )\
                 .setParseAction(types.makeInstanceDict(types.AssignedPatternCE, {"variable": 0, "pattern": 1}))
-        
+
         # recursive parser in And/Not/Or
         self.subparsers['ConditionalElementParser'] = pp.Forward()
+
         
-        self.subparsers['ConditionalElementParser'] << (self._sb("PatternCEParser") ^ 
-                                                        self._sb("AssignedPatternCEParser") #^ 
-                                                        #self._sb("NotCEParser") ^
-                                                        #self._sb("AndCEParser") ^
-                                                        #self._sb("OrCEParser") ^
-                                                        #self._sb("LogicalCEParser") ^ 
-                                                        #self._sb("TestCEParser") #^
-                                                        #self._sb("ExistsCEParser") ^
-                                                        #self._sb("ForallCEParser")
+        self.subparsers['NotCEParser'] = (LPAR 
+                                            + pp.Keyword("not") 
+                                            + self._sb("ConditionalElementParser") 
+                                            + RPAR)\
+                .setParseAction(types.makeInstance(types.NotPatternCE, 1))
+
+        self.subparsers['AndCEParser'] = (LPAR 
+                                            + pp.Keyword("and") 
+                                            + pp.Group(pp.OneOrMore(self._sb("ConditionalElementParser"))) 
+                                            + RPAR)\
+                .setParseAction(types.makeInstance(types.AndPatternCE, 1))
+
+        self.subparsers['TestCEParser'] = (LPAR 
+                                            + pp.Keyword("test") 
+                                            + self._sb("FunctionCallParser") 
+                                            + RPAR)\
+                .setParseAction(types.makeInstance(types.TestPatternCE, 1))
+        
+        self.subparsers['ConditionalElementParser'] << (self._sb("NotCEParser") # not before pattern, or not will be parsed as template name
+                                                        ^ self._sb("AndCEParser") # and before pattern, or not will be parsed as template name
+                                                        ^ self._sb("TestCEParser") # test before pattern, or test will be parsed as template name
+                                                        ^ self._sb("AssignedPatternCEParser") 
+                                                        ^ self._sb("PatternCEParser") 
+                                                        #^ self._sb("OrCEParser")
+                                                        #^ self._sb("LogicalCEParser") 
+                                                        #^ self._sb("ExistsCEParser")
+                                                        #^ self._sb("ForallCEParser")
                                                         )\
                 .setParseAction(forwardParsed(key=0))
         

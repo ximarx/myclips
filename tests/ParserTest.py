@@ -6,16 +6,19 @@ Created on 11/lug/2012
 import unittest
 from myclips.parser.Parser import Parser
 import myclips.parser.types as types
-from pyparsing import ParseException
+from pyparsing import ParseException, ParseFatalException
 from unittest.case import expectedFailure
 
 class ParserTest(unittest.TestCase):
 
     def setUp(self):
-        self.parser = Parser()
+        if not hasattr(self, "parser"):
+            self.parser = Parser()
 
     def _testImpl(self, parsername, parsable, parseAll=False):
-        return self.parser.getSParser(parsername).parseString(parsable, parseAll)
+        p = self.parser.getSParser(parsername)
+        p.enablePackrat()
+        return p.parseString(parsable, parseAll)
 
     def test_deffact_Normal(self):
         res = self._testImpl('DefFactsConstructParser', r"""
@@ -513,7 +516,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].connectedConstraints[0][1].constraint, types.NegativeTerm)
         self.assertIsInstance(res[0].connectedConstraints[0][1].constraint.term, types.FunctionCall)
         
-    def test_ConditionalElementParser_AssignedPatternCEParser(self):
+    def test_ConditionalElementParser_AssignedPatternCE(self):
         res = self._testImpl('ConditionalElementParser', r"""
         ?var <- ( B A&~:(func 1 2) )
         """).asList()
@@ -523,7 +526,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].pattern, types.PatternCE)
         self.assertNotIsInstance(res[0].pattern, types.AssignedPatternCE)
 
-    def test_ConditionalElementParser_AssignedPatternCEParser_WithoutWS(self):
+    def test_ConditionalElementParser_AssignedPatternCE_WithoutWS(self):
         res = self._testImpl('ConditionalElementParser', r"""
         ?var<-( B A&~:(func 1 2) )
         """).asList()
@@ -552,6 +555,114 @@ class ParserTest(unittest.TestCase):
 
         self.assertIsInstance(res[0], types.TemplatePatternCE)
     
+    def test_ConditionalElementParser_NotPatternCE(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        (not (A B C))
+        """).asList()
+
+        self.assertIsInstance(res[0], types.NotPatternCE)
+        self.assertIsInstance(res[0].pattern, types.PatternCE)
+        self.assertNotIsInstance(res[0].pattern, types.AssignedPatternCE)
+
+    def test_ConditionalElementParser_NotPatternCE_WithWSBefore(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        ( not (A B C))
+        """).asList()
+
+        self.assertIsInstance(res[0], types.NotPatternCE)
+        self.assertIsInstance(res[0].pattern, types.PatternCE)
+        self.assertNotIsInstance(res[0].pattern, types.AssignedPatternCE)
+
+    def test_ConditionalElementParser_NotPatternCE_WithoutWSAfter(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        (not(A B C))
+        """).asList()
+
+        self.assertIsInstance(res[0], types.NotPatternCE)
+        self.assertIsInstance(res[0].pattern, types.PatternCE)
+        self.assertNotIsInstance(res[0].pattern, types.AssignedPatternCE)
+
+    def test_ConditionalElementParser_NotPatternCE_InnerAssignedPatternCENotAllowed(self):
+        self.assertRaises(ParseFatalException, self._testImpl, 'ConditionalElementParser', r"""
+        (not ?a <- (A B C))
+        """)
+        
+    def test_ConditionalElementParser_TestPatternCE(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        (test (func B C))
+        """).asList()
+
+        self.assertIsInstance(res[0], types.TestPatternCE)
+        self.assertIsInstance(res[0].function, types.FunctionCall)
+
+    def test_ConditionalElementParser_TestPatternCE_WithWSBefore(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        ( test (func B C))
+        """).asList()
+
+        self.assertIsInstance(res[0], types.TestPatternCE)
+        self.assertIsInstance(res[0].function, types.FunctionCall)
+
+    def test_ConditionalElementParser_TestPatternCE_WithoutWSAfter(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        (test(func B C))
+        """).asList()
+
+        self.assertIsInstance(res[0], types.TestPatternCE)
+        self.assertIsInstance(res[0].function, types.FunctionCall)
+
+    def test_ConditionalElementParser_AndPatternCE(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        (and 
+            (A B C)
+            (B C D)
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.AndPatternCE)
+        self.assertEqual(len(res[0].patterns), 2)
+
+    def test_ConditionalElementParser_AndPatternCE_WithWSBefore(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        ( and 
+            (A B C)
+            (B C D)
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.AndPatternCE)
+        self.assertEqual(len(res[0].patterns), 2)
+
+    def test_ConditionalElementParser_AndPatternCE_WithoutWSAfter(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        (and(A B C)
+            (B C D)
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.AndPatternCE)
+        self.assertEqual(len(res[0].patterns), 2)
+
+    def test_ConditionalElementParser_AndPatternCE_InnerAssignedPatternCEAsFirstNotAllowed(self):
+        self.assertRaises(ParseFatalException, self._testImpl, 'ConditionalElementParser', r"""
+        (and 
+            ?a <- (A B C) 
+            (B C D)
+        )
+        """)
+
+    def test_ConditionalElementParser_AndPatternCE_InnerAssignedPatternCENotAsFirstAllowed(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        (and 
+            (B C D)
+            ?a <- (A B C)
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.AndPatternCE)
+        self.assertEqual(len(res[0].patterns), 2)
+        self.assertIsInstance(res[0].patterns[1], types.AssignedPatternCE)
+
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testObjectIsSymbol']
