@@ -17,7 +17,7 @@ class ParserTest(unittest.TestCase):
 
     def _testImpl(self, parsername, parsable, parseAll=False):
         p = self.parser.getSParser(parsername)
-        p.enablePackrat()
+        #p.enablePackrat()
         return p.parseString(parsable, parseAll)
 
     def test_deffact_Normal(self):

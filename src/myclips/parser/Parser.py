@@ -381,7 +381,7 @@ if __name__ == '__main__':
                     parser.getSParser("ConstructParser").setDebug(False)
                 )
     
-    complete_P.enablePackrat()
+    #complete_P.enablePackrat()
         
 
     start_time = time.time()
