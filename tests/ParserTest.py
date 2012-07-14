@@ -397,15 +397,160 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.OrderedPatternCE)
         self.assertEqual(len(res[0].constraints), 3)
 
-    def test_OrderedPatternCEParser_InnerConnectedConstraint(self):
+    def test_OrderedPatternCEParser_Constraints(self):
         res = self._testImpl('OrderedPatternCEParser', r"""
-        (A G&3|:(eq 1 ?b)|3 C)
+        (A G&3|:(eq 1 ?b)|3 $?)
         """).asList()
         
         self.assertIsInstance(res[0], types.OrderedPatternCE)
         self.assertEqual(len(res[0].constraints), 3)
+        self.assertIsInstance(res[0].constraints[0], types.Symbol)
         self.assertIsInstance(res[0].constraints[1], types.ConnectedConstraint)
+        self.assertIsInstance(res[0].constraints[2], types.UnnamedMultiFieldVariable)
 
+    def test_TemplatePatternCEParser(self):
+        res = self._testImpl('TemplatePatternCEParser', r"""
+        (templateName (slot))
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.TemplatePatternCE)
+        self.assertEqual(res[0].templateName, "templateName")
+        self.assertEqual(len(res[0].templateSlots), 1)
+        self.assertIsInstance(res[0].templateSlots[0], types.MultiFieldLhsSlot)
+        self.assertEqual(res[0].templateSlots[0].slotName, "slot")
+
+    def test_TemplatePatternCEParser_SlotsType(self):
+        res = self._testImpl('TemplatePatternCEParser', r"""
+        (templateName 
+            (s1 v1) 
+            (s2 ) 
+            (s3 A ?b $?c)
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.TemplatePatternCE)
+        self.assertEqual(res[0].templateName, "templateName")
+        self.assertEqual(len(res[0].templateSlots), 3)
+        self.assertIsInstance(res[0].templateSlots[0], types.SingleFieldLhsSlot)
+        self.assertIsInstance(res[0].templateSlots[1], types.MultiFieldLhsSlot)
+        self.assertIsInstance(res[0].templateSlots[2], types.MultiFieldLhsSlot)
+        self.assertEqual(res[0].templateSlots[0].slotName, "s1")
+        self.assertIsInstance(res[0].templateSlots[0].slotValue, types.Constraint)
+        self.assertEqual(res[0].templateSlots[1].slotName, "s2")
+        self.assertEqual(len(res[0].templateSlots[1].slotValue), 0)
+        self.assertEqual(res[0].templateSlots[2].slotName, "s3")
+        self.assertEqual(len(res[0].templateSlots[2].slotValue), 3)
+        self.assertIsInstance(res[0].templateSlots[2].slotValue[0], types.Constraint)
+        self.assertIsInstance(res[0].templateSlots[2].slotValue[1], types.Constraint)
+        self.assertIsInstance(res[0].templateSlots[2].slotValue[2], types.Constraint)
+        
+
+    def test_ConstraintParser(self):
+        res = self._testImpl('ConstraintParser', r"""
+        A
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.Constraint)
+        self.assertIsInstance(res[0].constraint, (types.PositiveTerm, types.NegativeTerm))
+    
+    
+    def test_ConstraintParser_PositiveTerm(self):
+        res = self._testImpl('ConstraintParser', r"""
+        A
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.Constraint)
+        self.assertIsInstance(res[0].constraint, types.PositiveTerm)
+        self.assertIsInstance(res[0].constraint.term, types.Symbol)
+    
+    
+    def test_ConstraintParser_NegativeTerm(self):
+        res = self._testImpl('ConstraintParser', r"""
+        ~A
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.Constraint)
+        self.assertIsInstance(res[0].constraint, types.NegativeTerm)
+        self.assertIsInstance(res[0].constraint.term, types.Symbol)
+        
+        
+    def test_ConnectedConstraintParser(self):
+        res = self._testImpl('ConstraintParser', r"""
+        A&B
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.ConnectedConstraint)
+        self.assertIsInstance(res[0].constraint, (types.PositiveTerm, types.NegativeTerm))
+        self.assertEqual(len(res[0].connectedConstraints), 1)
+        self.assertEqual(res[0].connectedConstraints[0][0], "&")
+        self.assertIsInstance(res[0].connectedConstraints[0][1], types.Constraint)
+    
+    
+    def test_ConnectedConstraintParser_FunctionCall(self):
+        res = self._testImpl('ConstraintParser', r"""
+        A&:(func 1 2)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.ConnectedConstraint)
+        self.assertIsInstance(res[0].constraint, (types.PositiveTerm, types.NegativeTerm))
+        self.assertEqual(len(res[0].connectedConstraints), 1)
+        self.assertEqual(res[0].connectedConstraints[0][0], "&")
+        self.assertIsInstance(res[0].connectedConstraints[0][1], types.Constraint)
+        self.assertIsInstance(res[0].connectedConstraints[0][1].constraint, types.PositiveTerm)
+        self.assertIsInstance(res[0].connectedConstraints[0][1].constraint.term, types.FunctionCall)
+    
+    
+    def test_ConnectedConstraintParser_NegativeTermFunctionCall(self):
+        res = self._testImpl('ConstraintParser', r"""
+        A&~:(func 1 2)
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.ConnectedConstraint)
+        self.assertIsInstance(res[0].constraint, (types.PositiveTerm, types.NegativeTerm))
+        self.assertEqual(len(res[0].connectedConstraints), 1)
+        self.assertEqual(res[0].connectedConstraints[0][0], "&")
+        self.assertIsInstance(res[0].connectedConstraints[0][1], types.Constraint)
+        self.assertIsInstance(res[0].connectedConstraints[0][1].constraint, types.NegativeTerm)
+        self.assertIsInstance(res[0].connectedConstraints[0][1].constraint.term, types.FunctionCall)
+        
+    def test_ConditionalElementParser_AssignedPatternCEParser(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        ?var <- ( B A&~:(func 1 2) )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.AssignedPatternCE)
+        self.assertIsInstance(res[0].variable, types.SingleFieldVariable)
+        self.assertIsInstance(res[0].pattern, types.PatternCE)
+        self.assertNotIsInstance(res[0].pattern, types.AssignedPatternCE)
+
+    def test_ConditionalElementParser_AssignedPatternCEParser_WithoutWS(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        ?var<-( B A&~:(func 1 2) )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.AssignedPatternCE)
+        self.assertIsInstance(res[0].variable, types.SingleFieldVariable)
+        self.assertIsInstance(res[0].pattern, types.PatternCE)
+        self.assertNotIsInstance(res[0].pattern, types.AssignedPatternCE)
+
+
+    def test_ConditionalElementParser_OrderedPatternCEParser(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        (A B C D)
+        """).asList()
+
+        self.assertIsInstance(res[0], types.OrderedPatternCE)
+
+    def test_ConditionalElementParser_TemplatePatternCEParser(self):
+        res = self._testImpl('ConditionalElementParser', r"""
+        (template 
+            (B) 
+            (C c) 
+            (D d1 d2 d3)
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.TemplatePatternCE)
     
         
 if __name__ == "__main__":

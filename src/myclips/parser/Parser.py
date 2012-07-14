@@ -234,12 +234,18 @@ class Parser(object):
         
         self.subparsers['PatternCEParser'] = (self._sb("OrderedPatternCEParser") ^ self._sb("TemplatePatternCEParser"))\
                 .setParseAction(forwardParsed(key=0))
+                
+        self.subparsers['AssignedPatternCEParser'] = (self._sb("SingleFieldVariableParser") 
+                                                        + pp.Literal("<-").suppress()
+                                                        + self._sb("PatternCEParser")
+                                                    )\
+                .setParseAction(types.makeInstanceDict(types.AssignedPatternCE, {"variable": 0, "pattern": 1}))
         
         # recursive parser in And/Not/Or
         self.subparsers['ConditionalElementParser'] = pp.Forward()
         
-        self.subparsers['ConditionalElementParser'] << (self._sb("PatternCEParser") #^ 
-                                                        #self._sb("AssignedPatternCEParser") ^ 
+        self.subparsers['ConditionalElementParser'] << (self._sb("PatternCEParser") ^ 
+                                                        self._sb("AssignedPatternCEParser") #^ 
                                                         #self._sb("NotCEParser") ^
                                                         #self._sb("AndCEParser") ^
                                                         #self._sb("OrCEParser") ^
@@ -248,7 +254,6 @@ class Parser(object):
                                                         #self._sb("ExistsCEParser") ^
                                                         #self._sb("ForallCEParser")
                                                         )\
-                                                        .copy()\
                 .setParseAction(forwardParsed(key=0))
         
         self.subparsers['DefRuleConstructParser'] = (LPAR + pp.Keyword("defrule").suppress() + 

@@ -195,6 +195,19 @@ class TemplatePatternCE(PatternCE):
                                     self.templateName,
                                     self.templateSlots
                                     )
+        
+class AssignedPatternCE(PatternCE):
+    def __init__(self, variable, pattern):
+        PatternCE.__init__(self, variable)
+        self.variable = variable
+        self.pattern = pattern
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1} <- {2}>".format(self.__class__.__name__,
+                                    self.variable,
+                                    self.pattern
+                                    )
+    
 
 
 class Constraint(ParsedType):
