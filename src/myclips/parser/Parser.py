@@ -68,6 +68,12 @@ class Parser(object):
         LPAR = pp.Literal("(").suppress()
         RPAR = pp.Literal(")").suppress()
         
+        self.subparsers["MyClipsDirectiveParser"] = pp.Regex(r'\;\@(?P<command>\w+)\((?P<params>.+?)\)')\
+                .setName("MyClipsDirectiveParser").suppress()
+                #.setParseAction(lambda s,l,t: ('myclips-directive', (t['command'], t['params'])))
+                
+        self.subparsers["ClipsCommentParser"] = ( ";" + pp.NotAny('@') + pp.SkipTo("\n") ).setName("ClipsComment")
+        
         self.subparsers["SymbolParser"] = pp.Word("".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]))\
                 .setParseAction(types.makeInstance(types.Symbol))
         
@@ -287,17 +293,22 @@ class Parser(object):
                                                         + pp.Group(pp.ZeroOrMore(self._sb("ActionParser"))).setResultsName("rhs")
                                                      + RPAR)\
                 .setParseAction(types.makeInstanceDict(types.DefRuleConstruct, {"defruleName" : 'rulename', "defruleComment" : "comment", "defruleDeclaration" : "declaration", "lhs" : "lhs", "rhs" : "rhs"}))
+
+
+        ### DEFTEMPLATE
         
         ### HIGH-LEVEL PARSERS
 
-        self.subparsers["ConstructParser"] = (self._sb("DefFactsConstructParser") 
+        self.subparsers["ConstructParser"] = (self._sb("MyClipsDirectiveParser")
+                                                | self._sb("DefFactsConstructParser") 
                                                 #| self._sb("DefTemplateConstructParser")
                                                 #| self._sb("DefGlobalContructParser")
                                                 | self._sb("DefRuleConstructParser")
                                                 #| self._sb("DefFunctionConstructParser")
                                                 #| self._sb("DefModuleConstructParser")
                                                 )\
-                .setParseAction(forwardParsed())#\
+                .setParseAction(forwardParsed())\
+                .ignore(self._sb("ClipsCommentParser"))#\
                 #.setDebug(self._debug)
                   
         
