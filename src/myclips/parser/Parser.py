@@ -72,7 +72,9 @@ class Parser(object):
                 .setName("MyClipsDirectiveParser").suppress()
                 #.setParseAction(lambda s,l,t: ('myclips-directive', (t['command'], t['params'])))
                 
-        self.subparsers["ClipsCommentParser"] = ( ";" + pp.NotAny('@') + pp.SkipTo("\n") ).setName("ClipsComment")
+        self.subparsers["ClipsCommentParser"] = \
+                pp.Regex(r'\;^\@.*?\n')
+                #( ";" + pp.NotAny('@') + pp.SkipTo("\n") ).setName("ClipsComment")
         
         self.subparsers["SymbolParser"] = pp.Word("".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]))\
                 .setParseAction(types.makeInstance(types.Symbol))
@@ -299,13 +301,13 @@ class Parser(object):
         
         ### HIGH-LEVEL PARSERS
 
-        self.subparsers["ConstructParser"] = (self._sb("MyClipsDirectiveParser")
-                                                | self._sb("DefFactsConstructParser") 
+        self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
                                                 #| self._sb("DefTemplateConstructParser")
                                                 #| self._sb("DefGlobalContructParser")
                                                 | self._sb("DefRuleConstructParser")
                                                 #| self._sb("DefFunctionConstructParser")
                                                 #| self._sb("DefModuleConstructParser")
+                                                | self._sb("MyClipsDirectiveParser")
                                                 )\
                 .setParseAction(forwardParsed())\
                 .ignore(self._sb("ClipsCommentParser"))#\
