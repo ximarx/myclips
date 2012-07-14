@@ -32,11 +32,13 @@ def _forwardParsed(bounds=None, key=None):
 
 class Parser(object):
     
-    def __init__(self, debug=False, funcNames=None):
+    def __init__(self, debug=False, funcNames=None, enableComments=False, enableDirectives=False):
         
         self.subparsers = {}
         self._initied = False
         self._debug = debug
+        self._enableComments = enableComments
+        self._enableDirectives = enableDirectives
         self._funcNames = funcNames if funcNames != None else []
         
     def isInitied(self):
@@ -54,6 +56,26 @@ class Parser(object):
         else:
             self._funcNames = funcNames
             return True
+        
+    def setAllowDirectives(self, newStatus):
+        if self._initied:
+            if self._enableDirectives != newStatus:
+                self._initied = False
+                self.subparsers = {}
+        self._enableDirectives = newStatus            
+
+    def setAllowComments(self, newStatus):
+        if self._initied:
+            if self._enableComments != newStatus:
+                self._initied = False
+                self.subparsers = {}
+        self._enableComments = newStatus            
+    
+    def isCommentsAllowed(self):
+        return self._enableComments
+    
+    def isDirectivesAllowed(self):
+        return self._enableDirectives
     
     def _initParsers(self):
         
@@ -62,19 +84,10 @@ class Parser(object):
         
         self._initied = True
 
-
         ### BASE PARSERS
         
         LPAR = pp.Literal("(").suppress()
         RPAR = pp.Literal(")").suppress()
-        
-        self.subparsers["MyClipsDirectiveParser"] = pp.Regex(r'\;\@(?P<command>\w+)\((?P<params>.+?)\)')\
-                .setName("MyClipsDirectiveParser").suppress()
-                #.setParseAction(lambda s,l,t: ('myclips-directive', (t['command'], t['params'])))
-                
-        self.subparsers["ClipsCommentParser"] = \
-                pp.Regex(r'\;^\@.*?\n')
-                #( ";" + pp.NotAny('@') + pp.SkipTo("\n") ).setName("ClipsComment")
         
         self.subparsers["SymbolParser"] = pp.Word("".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]))\
                 .setParseAction(types.makeInstance(types.Symbol))
@@ -300,18 +313,46 @@ class Parser(object):
         ### DEFTEMPLATE
         
         ### HIGH-LEVEL PARSERS
+        
+        ### COMMENTS & DIRECTIVE
+        
+        # small speed parsing improvements disabiling directive
+        if self._enableDirectives:
+            self.subparsers["MyClipsDirectiveParser"] = pp.Regex(r'\;\@(?P<command>\w+)\((?P<params>.+?)\)')\
+                    .setName("MyClipsDirectiveParser").suppress()
+                    #.setParseAction(lambda s,l,t: ('myclips-directive', (t['command'], t['params'])))
+                
 
-        self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
-                                                #| self._sb("DefTemplateConstructParser")
-                                                #| self._sb("DefGlobalContructParser")
-                                                | self._sb("DefRuleConstructParser")
-                                                #| self._sb("DefFunctionConstructParser")
-                                                #| self._sb("DefModuleConstructParser")
-                                                | self._sb("MyClipsDirectiveParser")
-                                                )\
-                .setParseAction(forwardParsed())\
-                .ignore(self._sb("ClipsCommentParser"))#\
+            self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
+                                                    #| self._sb("DefTemplateConstructParser")
+                                                    #| self._sb("DefGlobalContructParser")
+                                                    | self._sb("DefRuleConstructParser")
+                                                    #| self._sb("DefFunctionConstructParser")
+                                                    #| self._sb("DefModuleConstructParser")
+                                                    | self._sb("MyClipsDirectiveParser")
+                                                    )
+        else:
+            self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
+                                                    #| self._sb("DefTemplateConstructParser")
+                                                    #| self._sb("DefGlobalContructParser")
+                                                    | self._sb("DefRuleConstructParser")
+                                                    #| self._sb("DefFunctionConstructParser")
+                                                    #| self._sb("DefModuleConstructParser")
+                                                    )
+            
+        self.subparsers["ConstructParser"]\
+                .setParseAction(forwardParsed())
                 #.setDebug(self._debug)
+
+        # if file/string doesn't contain comments
+        # 1/3 faster parsing can be archived
+        # setting containsComments = False
+        if self._enableComments:
+            self.subparsers["ClipsCommentParser"] = (
+                        #pp.Regex(r'\;^\@.*?\n')
+                        ( ";" + pp.NotAny('@') + pp.SkipTo("\n") ).setName("ClipsComment")
+                        )
+            self.subparsers["ConstructParser"].ignore(self._sb("ClipsCommentParser"))#\
                   
         
         self.subparsers["CLIPSProgramParser"] = pp.OneOrMore( self.getSParser("ConstructParser") )
@@ -367,7 +408,7 @@ if __name__ == '__main__':
             (A B C)
             (D ~E F)
             (G ?h&:(sum ?h 2)|:(eq ?h 4) I)
-            (template 
+            (template
                 (s1 v1) 
                 (s2 v2)
             )
