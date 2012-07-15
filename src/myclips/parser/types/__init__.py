@@ -80,7 +80,7 @@ class UnnamedMultiFieldVariable(Variable):
     pass
 
 class GlobalVariable(Variable):
-    converter = lambda self, t: "?*"+self.content.evaluate()
+    converter = lambda self, t: "?*"+self.content.evaluate()+"*"
     pass
 
 class FunctionCall(ParsedType):
@@ -406,6 +406,28 @@ class DefTemplateConstruct(ParsedType):
                                         self.templateComment,
                                         self.slots)
         
+class DefGlobalConstruct(ParsedType):
+    def __init__(self, assignments=None, moduleName=None):
+        ParsedType.__init__(self, assignments)
+        self.moduleName = moduleName.evaluate() if isinstance(moduleName, BaseParsedType) else moduleName
+        self.assignments = assignments if assignments != None else []
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1} -> {2}>".format(self.__class__.__name__,
+                                        self.assignments,
+                                        self.moduleName)
+        
+class GlobalAssignment(ParsedType):
+    def __init__(self, variable, value):
+        ParsedType.__init__(self, variable)
+        self.variable = variable
+        self.value = value
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1} = {2}>".format(self.__class__.__name__,
+                                        self.variable,
+                                        self.value)
+    
 
 SPECIAL_VALUES = {
     "?NONE" 

@@ -91,7 +91,7 @@ class Parser(object):
         self.subparsers["FloatParser"] = pp.Regex(r'[+-]?\d+(\.\d*)?([eE]-?\d+)?')\
                 .setParseAction(types.tryInstance(types.Integer, types.Float))
                     
-        self.subparsers["VariableSymbolParser"] = pp.Word(string.letters, "".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]))\
+        self.subparsers["VariableSymbolParser"] = pp.Word(string.letters, "".join([ c for c in string.printable if c not in string.whitespace and c not in "*\"'()&?|<~;" ]))\
                 .setParseAction(types.makeInstance(types.Symbol))    
                          
         self.subparsers["NumberParser"] = (self.getSParser("FloatParser") ^ self.getSParser("IntegerParser"))\
@@ -111,10 +111,16 @@ class Parser(object):
         self.subparsers["MultiFieldVariableParser"] = (pp.Literal("$?") + self.getSParser("VariableSymbolParser"))\
                 .setParseAction(types.makeInstance(types.MultiFieldVariable, 1))
             
-        self.subparsers["GlobalVariableParser"] = (pp.Literal("?*") + self.getSParser("VariableSymbolParser"))\
+        self.subparsers["GlobalVariableParser"] = (
+                                                   pp.Literal("?*") 
+                                                   + self._sb("VariableSymbolParser").copy().leaveWhitespace() 
+                                                   + pp.Literal("*").leaveWhitespace()
+                                                   )\
                 .setParseAction(types.makeInstance(types.GlobalVariable, 1))
         
-        self.subparsers["VariableParser"] = (self.getSParser("MultiFieldVariableParser") | self.getSParser("GlobalVariableParser") | self.getSParser("SingleFieldVariableParser"))\
+        self.subparsers["VariableParser"] = (self._sb("MultiFieldVariableParser") 
+                                                | self._sb("GlobalVariableParser")
+                                                | self._sb("SingleFieldVariableParser"))\
                 .setParseAction(forwardParsed(key=0))
         
         ### CONSTRUCTS PARSERS        
@@ -354,6 +360,21 @@ class Parser(object):
                                                         + RPAR)\
                 .setParseAction(types.makeInstanceDict(types.DefTemplateConstruct, {"templateName" : 'templateName', "templateComment" : "templateComment", "slots" : "slots"})) 
         
+        
+        ### DEFGLOBALS
+        
+        self.subparsers["GlobalAssignmentParser"] = (self._sb("GlobalVariableParser") 
+                                                     + pp.Literal("=").suppress()
+                                                     + self._sb("ExpressionParser"))\
+                .setParseAction(types.makeInstanceDict(types.GlobalAssignment, {"variable": 0, "value": 1}))
+        
+        self.subparsers["DefGlobalContructParser"] = (LPAR + pp.Keyword("defglobal").suppress()
+                                                            + pp.Optional(self._sb("SymbolParser")).setResultsName("moduleName")
+                                                        + pp.Group(pp.ZeroOrMore(self._sb("GlobalAssignmentParser"))).setResultsName("assignments")
+                                                        + RPAR)\
+                .setParseAction(types.makeInstanceDict(types.DefGlobalConstruct, {"assignments": "assignments", "moduleName": "moduleName"}))
+                
+        
         ### HIGH-LEVEL PARSERS
         
         ### COMMENTS & DIRECTIVE
@@ -366,7 +387,7 @@ class Parser(object):
                 
 
             self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
-                                                    #| self._sb("DefGlobalContructParser")
+                                                    | self._sb("DefGlobalContructParser")
                                                     | self._sb("DefRuleConstructParser")
                                                     | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefFunctionConstructParser")
@@ -375,7 +396,7 @@ class Parser(object):
                                                     )
         else:
             self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
-                                                    #| self._sb("DefGlobalContructParser")
+                                                    | self._sb("DefGlobalContructParser")
                                                     | self._sb("DefRuleConstructParser")
                                                     | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefFunctionConstructParser")

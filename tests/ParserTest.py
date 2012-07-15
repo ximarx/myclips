@@ -822,6 +822,72 @@ class ParserTest(unittest.TestCase):
         )
         """)
         
+    def test_VariableParser_GlobalVariable_Normal(self):
+        res = self._testImpl('VariableParser', r"""
+        ?*gff* 
+        """).asList()
+
+        self.assertIsInstance(res[0], types.GlobalVariable)        
+
+    def test_VariableParser_GlobalVariable_AvoidWSBeforeVariableSymbol(self):
+        self.assertRaises(ParseException, self._testImpl, 'VariableParser', r"""
+        ?* gff*
+        """)
+
+    def test_VariableParser_GlobalVariable_AvoidWSAfterVariableSymbol(self):
+        self.assertRaises(ParseException, self._testImpl, 'VariableParser', r"""
+        ?*gff *
+        """)
+
+    def test_VariableParser_GlobalVariable_AvoidWSAfterBeforeVariableSymbol(self):
+        self.assertRaises(ParseException, self._testImpl, 'VariableParser', r"""
+        ?* gff *
+        """)
+
+    def test_DefGlobalConstructParser(self):
+        res = self._testImpl('ConstructParser', r"""
+        (defglobal MODULE 
+            ?*A* = B
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.DefGlobalConstruct)
+        self.assertEqual(res[0].moduleName, "MODULE")
+        self.assertEqual(len(res[0].assignments), 1)
+        self.assertEqual(len([True for x in res[0].assignments if not isinstance(x, types.GlobalAssignment)]), 0)
+
+    def test_DefGlobalConstructParser_WithoutModuleName(self):
+        res = self._testImpl('ConstructParser', r"""
+        (defglobal
+            ?*A* = B
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.DefGlobalConstruct)
+        self.assertEqual(res[0].moduleName, None)
+
+    def test_DefGlobalConstructParser_MultipleAssignments(self):
+        res = self._testImpl('ConstructParser', r"""
+        (defglobal 
+            ?*A* = B
+            ?*B* = A
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.DefGlobalConstruct)
+        self.assertEqual(len(res[0].assignments), 2)
+        self.assertEqual(len([True for x in res[0].assignments if not isinstance(x, types.GlobalAssignment)]), 0)
+
+    def test_GlobalAssignmentParser(self):
+        res = self._testImpl('GlobalAssignmentParser', r"""
+            ?*A* = B
+        """).asList()
+
+        self.assertIsInstance(res[0], types.GlobalAssignment)
+        self.assertIsInstance(res[0].variable, types.GlobalVariable)
+        self.assertIsInstance(res[0].value, types.ParsedType)
+    
+        
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testObjectIsSymbol']
     unittest.main()
