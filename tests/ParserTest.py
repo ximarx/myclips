@@ -21,6 +21,8 @@ class ParserTest(unittest.TestCase):
         return p.parseString(parsable, parseAll)
 
     def test_deffact_Normal(self):
+        '''Check parse result for normal deffacts construct'''
+        
         res = self._testImpl('DefFactsConstructParser', r"""
         (deffacts nome1 "commento1"
             (1 2 3)
@@ -35,6 +37,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].rhs, list)
 
     def test_deffact_WithoutComment(self):
+        '''Check parse result for deffacts construct without comment field'''
         res = self._testImpl('DefFactsConstructParser', r"""
         (deffacts nome1
             (1 2 3)
@@ -45,8 +48,8 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(res[0].deffactsComment, None)
 
 
-
     def test_deffact_SpaceBetweenLparAndDeffacts(self):
+        '''Check if deffacts is parsed correctly even if there is a whitespace between LPAR and keyword'''
         res = self._testImpl('DefFactsConstructParser', r"""
         ( deffacts nome1 "commento1"
             (1 2 3)
@@ -58,6 +61,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.DefFactsConstruct)
     
     def test_deffact_NLBetweenLparAndDeffacts(self):
+        '''Check if deffacts is parsed correctly even if there is a new-line between LPAR and keyword'''
         res = self._testImpl('DefFactsConstructParser', r"""
         (
             deffacts nome1 "commento1"
@@ -70,6 +74,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.DefFactsConstruct)
 
     def test_deffact_TwoRhsPattern(self):
+        '''Check if deffacts content is correctly parsed if it's multiple ordered-fact'''
         res = self._testImpl('DefFactsConstructParser', r"""
         (deffacts nome1 "commento1"
             (1 2 3)
@@ -83,6 +88,7 @@ class ParserTest(unittest.TestCase):
 
 
     def test_DefFactsConstructParser_TemplateRhsPattern(self):
+        '''Check if deffacts content is correctly parsed if it's a template fact'''
         res = self._testImpl('DefFactsConstructParser', r"""
         (deffacts nome1 "commento1"
             (templateName (slot1k slot1v))
@@ -93,6 +99,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].rhs[0], types.TemplateRhsPattern)
 
     def test_DefFactsConstructParser_TemplateRhsPatternAndOrderedRhsPattern(self):
+        '''Check if deffacts content is correctly parsed if it's mixed type'''
         res = self._testImpl('DefFactsConstructParser', r"""
         (deffacts nome1 "commento1"
             (templateName (slot1k slot1v))
@@ -106,6 +113,7 @@ class ParserTest(unittest.TestCase):
 
 
     def test_orderedrhspattern_Normal(self):
+        '''Check if RHS parsing is correct'''
         res = self._testImpl('RhsPatternParser', r"""
         (A b c)
         """).asList()
@@ -117,6 +125,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].content[2], types.Symbol)
 
     def test_orderedrhspattern_WithSingleFieldVariable(self):
+        '''Check if RHS parsing is correct with singlefield variable in it'''
         res = self._testImpl('RhsPatternParser', r"""
         (A ?b c)
         """).asList()
@@ -128,6 +137,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].content[2], types.Symbol)
 
     def test_orderedrhspattern_WithInteger(self):
+        '''Check if RHS parsing is correct with integer in it'''
         res = self._testImpl('RhsPatternParser', r"""
         (A 1 c)
         """).asList()
@@ -139,6 +149,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].content[2], types.Symbol)
         
     def test_MultiFieldRhsSlot_SingleValue(self):
+        '''Check multifield RHS slot parsing is correct with a single value in it'''
         res = self._testImpl('MultiFieldRhsSlotParser', r"""
         (slotName prova)
         """).asList()
@@ -150,6 +161,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(len(res[0].slotValue), 1)
         
     def test_MultiFieldRhsSlot_TwoValue(self):
+        '''Check multifield RHS slot parsing is correct with a multiple values'''
         res = self._testImpl('MultiFieldRhsSlotParser', r"""
         (slotName prova ciao)
         """).asList()
@@ -158,6 +170,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(len(res[0].slotValue), 2)
         
     def test_MultiFieldRhsSlot_ZeroValue(self):
+        '''Check multifield RHS slot parsing is correct without values'''
         res = self._testImpl('MultiFieldRhsSlotParser', r"""
         (slotName )
         """).asList()
@@ -166,6 +179,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(res[0].slotValue, [])
         
     def test_SingleFieldRhsSlot_Normal(self):
+        '''Check single-field RHS slot parsing is correct with a single value in it'''
         res = self._testImpl('SingleFieldRhsSlotParser', r"""
         (slotName slotValue)
         """).asList()
@@ -176,11 +190,13 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].slotValue, types.ParsedType )
         
     def test_SingleFieldRhsSlot_NotValid(self):
+        '''Check exception raising when parsing single-field without slot value'''
         self.assertRaises(ParseException, self._testImpl, 'SingleFieldRhsSlotParser', r"""
         (slotName )
         """)
         
     def test_RhsSlotParser_Normal(self):
+        '''Check general RHS-slot-parser return correct value type'''
         res = self._testImpl('RhsSlotParser', r"""
         (slotName slotValue)
         """).asList()
@@ -190,6 +206,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(res[0].slotName, "slotName")
         
     def test_RhsSlotParser_ForcedMultiField(self):
+        '''Check general RHS-slot-parser return correct value type when multi-field is required'''
         res = self._testImpl('RhsSlotParser', r"""
         (slotName slotValue1 slotValue2)
         """).asList()
@@ -197,6 +214,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.MultiFieldRhsSlot)
     
     def test_RhsSlotParser_GuessSingleField(self):
+        '''Check general RHS-slot-parser return correct value type when single-field is possible'''
         res = self._testImpl('RhsSlotParser', r"""
         (slotName singleField)
         """).asList()
@@ -204,6 +222,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.SingleFieldRhsSlot)
 
     def test_RhsSlotParser_GuessMultiField(self):
+        '''Check general RHS-slot-parser return correct value type when multi-field is possible'''
         res = self._testImpl('RhsSlotParser', r"""
         (slotName )
         """).asList()
@@ -211,6 +230,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.MultiFieldRhsSlot)
 
     def test_TemplateRhsPatternParser(self):
+        '''Check general full template-rhs format '''
         res = self._testImpl('TemplateRhsPatternParser', r"""
         (templateName 
             (slot1k slot1v) 
@@ -225,6 +245,7 @@ class ParserTest(unittest.TestCase):
         self.assertFalse(False in [isinstance(x, types.FieldRhsSlot) for x in res[0].templateSlots])
 
     def test_TemplateRhsPatternParser_SlotsTypes(self):
+        '''Check general full template-rhs slot format'''
         res = self._testImpl('TemplateRhsPatternParser', r"""
         (templateName 
             (slot1k slot1v) 
@@ -238,6 +259,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].templateSlots[2], types.MultiFieldRhsSlot)
 
     def test_TemplateRhsPatternParser_FunctionInSlot(self):
+        '''Check general template-rhs format when function call in it'''
         res = self._testImpl('TemplateRhsPatternParser', r"""
         (templateName 
             (slot1k (funzione 1 2 3)) 
@@ -249,6 +271,7 @@ class ParserTest(unittest.TestCase):
 
 
     def test_DefRuleConstructParser_Minimal(self):
+        '''Check minimal defrule construct parsing'''
         res = self._testImpl('DefRuleConstructParser', r"""
         (defrule rulename
             => 
@@ -259,6 +282,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(res[0].defruleName, "rulename")
 
     def test_DefRuleConstructParser_WithComment(self):
+        '''Check defrule construct parsing with comment'''
         res = self._testImpl('DefRuleConstructParser', r"""
         (defrule rulename "comment"
             => 
@@ -268,6 +292,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(res[0].defruleComment, "comment")
 
     def test_DefRuleConstructParser_WithRHS(self):
+        '''Check defrule construct parsing with RHS'''
         res = self._testImpl('DefRuleConstructParser', r"""
         (defrule rulename
             => 
@@ -279,6 +304,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].rhs[0], types.FunctionCall)
 
     def test_DefRuleConstructParser_WithRHSs(self):
+        '''Check defrule construct parsing with multiple RHS entry'''
         res = self._testImpl('DefRuleConstructParser', r"""
         (defrule rulename
             => 
@@ -293,6 +319,7 @@ class ParserTest(unittest.TestCase):
         #print res[0].rhs[1]
 
     def test_DefRuleConstructParser_WithDeclarations(self):
+        '''Check defrule construct parsing with property declaration'''
         res = self._testImpl('DefRuleConstructParser', r"""
         (defrule rulename
             (declare 
@@ -308,6 +335,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].defruleDeclaration[1], types.RuleProperty)
 
     def test_DefRuleConstructParser_WithLHS(self):
+        '''Check defrule construct parsing with LHS'''
         res = self._testImpl('DefRuleConstructParser', r"""
         (defrule rulename
             (A B C) 
@@ -319,6 +347,7 @@ class ParserTest(unittest.TestCase):
 
     @expectedFailure
     def test_ActionParser_MultifieldValueNested(self):
+        '''Check action parsed correct parsing when nested value in it'''
         res = self._testImpl('ActionParser', r"""
         (assert (A B C))
         """).asList()
@@ -329,6 +358,7 @@ class ParserTest(unittest.TestCase):
     
 
     def test_RulePropertyParser_Salience(self):
+        '''Check salience correct parsing'''
         res = self._testImpl('RulePropertyParser', r"""
         (salience 100)
         """).asList()
@@ -337,6 +367,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(res[0].propertyValue, 100)
 
     def test_RulePropertyParser_NegativeSalience(self):
+        '''Check salience correct parsing when negative'''
         res = self._testImpl('RulePropertyParser', r"""
         (salience -100)
         """).asList()
@@ -345,16 +376,19 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(res[0].propertyValue, -100)
 
     def test_RulePropertyParser_InvalidFloatSalience(self):
+        '''Check exception raising for salience when invalid value'''
         self.assertRaises(ParseException, self._testImpl, 'RulePropertyParser', r"""
         (salience -100.34)
         """)
         
     def test_RulePropertyParser_InvalidSymbolSalience(self):
+        '''Check exception raising for salience when invalid value'''
         self.assertRaises(ParseException, self._testImpl, 'RulePropertyParser', r"""
         (salience ciao)
         """)
 
     def test_RulePropertyParser_TrueAutoFocus(self):
+        '''Check auto-focus parsin return value'''
         res = self._testImpl('RulePropertyParser', r"""
         (auto-focus TRUE)
         """).asList()
@@ -362,6 +396,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.RuleProperty)
 
     def test_RulePropertyParser_FalseAutoFocus(self):
+        '''Check auto-focus parsin return value'''
         res = self._testImpl('RulePropertyParser', r"""
         (auto-focus FALSE)
         """).asList()
@@ -370,6 +405,7 @@ class ParserTest(unittest.TestCase):
 
     @expectedFailure
     def test_RulePropertyParser_InvalidAutoFocus(self):
+        '''Check exception raising when invalid auto-focus value parsed'''
         self.assertRaises(ParseException, self._testImpl, 'RulePropertyParser', r"""
         (auto-focus ciao)
         """)
