@@ -754,6 +754,37 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].slots[1].attributes[0], types.DefaultAttribute)
         self.assertIsInstance(res[0].slots[1].attributes[1], types.TypeAttribute)
 
+    def test_DefTemplateParser_AvoidMultipleDefinitionOfSameSlotName(self):
+        self.assertRaisesRegexp(ParseFatalException, "Multiple definition for same slot name",
+                            self._testImpl, 'DefTemplateConstructParser', r"""
+        (deftemplate NomeTemplate "commento" 
+            (slot A)
+            (multislot A)
+            (slot B)
+        )
+        """)
+
+    def test_DefTemplateParser_SlotDefinitions_AvoidMultipleDefinitionOfSameType_DoubleDefault(self):
+        self.assertRaisesRegexp(ParseFatalException, "Multiple definition for same type of attribute",
+                            self._testImpl, 'DefTemplateConstructParser', r"""
+        (deftemplate NomeTemplate "commento" 
+            (slot A
+                (default 1)
+                (type INTEGER)
+                (default 5))
+        )
+        """)
+        
+    def test_DefTemplateParser_SlotDefinitions_AvoidMultipleDefinitionOfSameType_DoubleType(self):
+        self.assertRaisesRegexp(ParseFatalException, "Multiple definition for same type of attribute",
+                            self._testImpl, 'DefTemplateConstructParser', r"""
+        (deftemplate NomeTemplate "commento" 
+            (slot A
+                (default 1)
+                (type INTEGER)
+                (type SYMBOL))
+        )
+        """)
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testObjectIsSymbol']

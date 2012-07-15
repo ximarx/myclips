@@ -338,13 +338,19 @@ class SingleFieldLhsSlot(FieldLhsSlot):
                                         self.slotValue)    
 
 class SlotDefinition(ParsedType):
+    def __init__(self, content, attributes):
+        ParsedType.__init__(self, content)
+        self.attributes = attributes if attributes != None else []
+        if len(self.attributes) != len(set([x.__class__ for x in self.attributes])):
+            import pyparsing
+            raise pyparsing.ParseFatalException("Multiple definition for same type of attribute")
     pass
 
 class SingleSlotDefinition(SlotDefinition):
     def __init__(self, slotName, attributes=None):
-        SlotDefinition.__init__(self, slotName)
+        SlotDefinition.__init__(self, slotName, attributes)
         self.slotName = slotName.evaluate() if isinstance(slotName, ParsedType) else slotName 
-        self.attributes = attributes if attributes != None else []
+        #self.attributes = attributes if attributes != None else []
 
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1}, {2}>".format(self.__class__.__name__,
@@ -353,9 +359,9 @@ class SingleSlotDefinition(SlotDefinition):
 
 class MultiSlotDefinition(SlotDefinition):
     def __init__(self, slotName, attributes=None):
-        SlotDefinition.__init__(self, slotName)
+        SlotDefinition.__init__(self, slotName, attributes)
         self.slotName = slotName.evaluate() if isinstance(slotName, ParsedType) else slotName 
-        self.attributes = attributes if attributes != None else []
+        #self.attributes = attributes if attributes != None else []
 
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1}, {2}>".format(self.__class__.__name__,
@@ -389,6 +395,10 @@ class DefTemplateConstruct(ParsedType):
         self.templateName = templateName.evaluate() if isinstance(templateName, BaseParsedType) else templateName
         self.templateComment = templateComment.evaluate().strip('"') if isinstance(templateComment, BaseParsedType) else None
         self.slots = slots if slots != None else []
+        if len(self.slots) != len(set([x.slotName for x in self.slots])):
+            import pyparsing
+            raise pyparsing.ParseFatalException("Multiple definition for same slot name")
+        
         
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1}, {2}, {3}>".format(self.__class__.__name__,
