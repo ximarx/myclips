@@ -349,7 +349,7 @@ class SingleSlotDefinition(SlotDefinition):
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1}, {2}>".format(self.__class__.__name__,
                                         self.slotName,
-                                        self.slotValue)    
+                                        self.attributes)    
 
 class MultiSlotDefinition(SlotDefinition):
     def __init__(self, slotName, attributes=None):
@@ -360,7 +360,7 @@ class MultiSlotDefinition(SlotDefinition):
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1}, {2}>".format(self.__class__.__name__,
                                         self.slotName,
-                                        self.slotValue)    
+                                        self.attributes)    
 
 class Attribute(ParsedType):
     pass
@@ -377,23 +377,36 @@ class DefaultAttribute(Attribute):
 class TypeAttribute(Attribute):
     def __init__(self, allowedTypes=None):
         Attribute.__init__(self, allowedTypes)
-        self.allowedTypes = allowedTypes if allowedTypes != None else [SPECIAL_VALUES["?VARIABLE"]]
+        self.allowedTypes = [TYPES[x] for x in allowedTypes] if isinstance(allowedTypes, list) else [TYPES["?VARIABLE"]]
         
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1}>".format(self.__class__.__name__,
                                         self.allowedTypes)    
 
+class DefTemplateConstruct(ParsedType):
+    def __init__(self, templateName, templateComment=None, slots=None):
+        ParsedType.__init__(self, templateName)
+        self.templateName = templateName.evaluate() if isinstance(templateName, BaseParsedType) else templateName
+        self.templateComment = templateComment.evaluate().strip('"') if isinstance(templateComment, BaseParsedType) else None
+        self.slots = slots if slots != None else []
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}, {2}, {3}>".format(self.__class__.__name__,
+                                        self.templateName,
+                                        self.templateComment,
+                                        self.slots)
+        
 
 SPECIAL_VALUES = {
     "?NONE" 
-        : None,     # check isinstance vs ?NONE = FALSE
+        : None,     # FORCE value specification in template slot
     "?DERIVE"
-        : object,   # check isinstance vs ?DERIVE = TRUE
-    "?VARIABLE"
-        : object,   # check isinstance vs ?DERIVE = TRUE
+        : object(),   # Same as default=None
 }
     
 TYPES = {
+    "?VARIABLE"
+        : object,   # check isinstance vs ?VARIABLE = TRUE
     "SYMBOL"
         : Symbol,
     "STRING"

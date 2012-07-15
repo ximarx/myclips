@@ -662,6 +662,97 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.AndPatternCE)
         self.assertEqual(len(res[0].patterns), 2)
         self.assertIsInstance(res[0].patterns[1], types.AssignedPatternCE)
+        
+    def test_DefTemplateParser(self):
+        res = self._testImpl('ConstructParser', r"""
+        (deftemplate NomeTemplate "commento" 
+            (slot A)
+            (multislot B)
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0], types.DefTemplateConstruct)
+        self.assertEqual(res[0].templateName, "NomeTemplate")
+        self.assertEqual(res[0].templateComment, "commento")
+        self.assertEqual(len(res[0].slots), 2)
+        self.assertEqual(len([True for x in res[0].slots if not isinstance(x, types.SlotDefinition)]), 0)
+
+    def test_DefTemplateParser_SingleSlotDefinition(self):
+        res = self._testImpl('ConstructParser', r"""
+        (deftemplate NomeTemplate "commento" 
+            (slot A)
+            (multislot B)
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0].slots[0], types.SingleSlotDefinition)
+
+    def test_DefTemplateParser_MultiSlotDefinition(self):
+        res = self._testImpl('ConstructParser', r"""
+        (deftemplate NomeTemplate "commento" 
+            (slot A)
+            (multislot B)
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0].slots[1], types.MultiSlotDefinition)
+
+    def test_DefTemplateParser_SlotDefinitions_DefaultAttribute(self):
+        res = self._testImpl('ConstructParser', r"""
+        (deftemplate NomeTemplate "commento" 
+            (slot A 
+                (default ?DERIVE))
+            (slot B 
+                (default ?NONE))
+            (slot C 
+                (default vC))
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0].slots[0].attributes[0], types.DefaultAttribute)
+        self.assertEqual(res[0].slots[0].attributes[0].defaultValue, types.SPECIAL_VALUES["?DERIVE"])
+        self.assertIsInstance(res[0].slots[1].attributes[0], types.DefaultAttribute)
+        self.assertEqual(res[0].slots[1].attributes[0].defaultValue, types.SPECIAL_VALUES["?NONE"])
+        self.assertIsInstance(res[0].slots[2].attributes[0], types.DefaultAttribute)
+        self.assertIsInstance(res[0].slots[2].attributes[0].defaultValue, types.Symbol)
+
+    def test_DefTemplateParser_SlotDefinitions_TypeConstraint(self):
+        res = self._testImpl('ConstructParser', r"""
+        (deftemplate NomeTemplate "commento" 
+            (slot A 
+                (type INTEGER))
+            (slot B 
+                (type ?VARIABLE))
+            (slot C 
+                (type SYMBOL NUMBER))
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0].slots[0].attributes[0], types.TypeAttribute)
+        self.assertEqual(res[0].slots[0].attributes[0].allowedTypes[0], types.TYPES['INTEGER'])
+        self.assertIsInstance(res[0].slots[1].attributes[0], types.TypeAttribute)
+        self.assertEqual(res[0].slots[1].attributes[0].allowedTypes[0], types.TYPES["?VARIABLE"])
+        self.assertIsInstance(res[0].slots[2].attributes[0], types.TypeAttribute)
+        self.assertEqual(len(res[0].slots[2].attributes[0].allowedTypes), 2)
+        self.assertEqual(res[0].slots[2].attributes[0].allowedTypes[0], types.TYPES['SYMBOL'])
+        self.assertEqual(res[0].slots[2].attributes[0].allowedTypes[1], types.TYPES['NUMBER'])
+
+    def test_DefTemplateParser_SlotDefinitions_BothConstraint(self):
+        res = self._testImpl('ConstructParser', r"""
+        (deftemplate NomeTemplate "commento" 
+            (slot A
+                (default 1)
+                (type INTEGER))
+            (multislot B 
+                (default symbol)
+                (type ?VARIABLE))
+        )
+        """).asList()
+
+        self.assertIsInstance(res[0].slots[0].attributes[0], types.DefaultAttribute)
+        self.assertIsInstance(res[0].slots[0].attributes[1], types.TypeAttribute)
+        self.assertIsInstance(res[0].slots[1].attributes[0], types.DefaultAttribute)
+        self.assertIsInstance(res[0].slots[1].attributes[1], types.TypeAttribute)
 
         
 if __name__ == "__main__":

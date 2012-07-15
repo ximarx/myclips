@@ -16,18 +16,6 @@ def forwardParsed(bounds=None, key=None):
             
     return forwardAction
 
-def _forwardParsed(bounds=None, key=None):
-    def forwardAction(s,l,t):
-        rlist = t.asList()
-        if key != None:
-            return rlist[key]
-        elif bounds != None and len(bounds) == 2:
-            return rlist[bounds[0]:bounds[1]]
-        else:
-            return rlist
-            
-    return forwardAction
-
 
 class Parser(object):
     
@@ -220,7 +208,7 @@ class Parser(object):
                                                                     ( pp.Literal("&") + self._sb("ConnectedConstraintParser"))
                                                                 )
                                                             ).setResultsName("connectedConstraint")\
-                                                                .setParseAction(_forwardParsed())
+                                                                .setParseAction(forwardParsed())
                                                          )\
                 .setParseAction(types.tryInstance(types.ConnectedConstraint, types.Constraint, {"constraint" : "constraint", "connectedConstraints" : "connectedConstraint" }))
         
@@ -322,22 +310,23 @@ class Parser(object):
         self.subparsers["TypeSpecificationParser"] = (pp.Group( 
                                                         pp.OneOrMore(
                                                             pp.oneOf( types.TYPES.keys() ))
-                                                        | pp.Keyword("?VARIABLE")
                                                         )
                                                       )\
-                .setParseAction(forwardParsed(0))
+                .setParseAction(forwardParsed())
         
         self.subparsers["TypeAttributeParser"] = (LPAR + pp.Keyword("type").suppress()
                                                     + self._sb("TypeSpecificationParser")
                                                     + RPAR)\
                 .setParseAction(types.makeInstance(types.TypeAttribute, 0))                                                  
         
-        self.subparsers["ConstraintAttributeParser"] = (self._sb("TypeAttributeParser").copy())\
-                .setParseAction(forwardParsed(key=0))
+        # Re-enable when other constraints will be implemented
+        #self.subparsers["ConstraintAttributeParser"] = self._sb("TypeAttributeParser").copy()\
+        #        .setParseAction(forwardParsed(key=0))
         
 
         self.subparsers["TemplateAttributeParser"] = (self._sb("DefaultAttributeParser")
-                                                        | self._sb("ConstraintAttributeParser")
+                                                        #| self._sb("ConstraintAttributeParser")
+                                                        | self._sb("TypeAttributeParser")
                                                         )\
                 .setParseAction(forwardParsed(key=0))
 
@@ -363,7 +352,7 @@ class Parser(object):
                                                             + pp.Optional(self._sb("CommentParser")).setName("templateComment").setResultsName("templateComment")
                                                         + pp.Group(pp.ZeroOrMore(self._sb("SlotDefinitionParser"))).setResultsName("slots")
                                                         + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefRuleConstruct, {"defruleName" : 'rulename', "defruleComment" : "comment", "defruleDeclaration" : "declaration", "lhs" : "lhs", "rhs" : "rhs"})) 
+                .setParseAction(types.makeInstanceDict(types.DefTemplateConstruct, {"templateName" : 'templateName', "templateComment" : "templateComment", "slots" : "slots"})) 
         
         ### HIGH-LEVEL PARSERS
         
@@ -377,18 +366,18 @@ class Parser(object):
                 
 
             self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
-                                                    | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefGlobalContructParser")
                                                     | self._sb("DefRuleConstructParser")
+                                                    | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefFunctionConstructParser")
                                                     #| self._sb("DefModuleConstructParser")
                                                     | self._sb("MyClipsDirectiveParser")
                                                     )
         else:
             self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
-                                                    | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefGlobalContructParser")
                                                     | self._sb("DefRuleConstructParser")
+                                                    | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefFunctionConstructParser")
                                                     #| self._sb("DefModuleConstructParser")
                                                     )
