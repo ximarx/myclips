@@ -12,7 +12,7 @@ from unittest.case import expectedFailure
 class ParserTest(unittest.TestCase):
 
     def setUp(self):
-        if not hasattr(self, "parser"):
+        if True or not hasattr(self, "parser"):
             self.parser = Parser()
 
     def _testImpl(self, parsername, parsable, parseAll=False):
@@ -262,7 +262,7 @@ class ParserTest(unittest.TestCase):
         '''Check general template-rhs format when function call in it'''
         res = self._testImpl('TemplateRhsPatternParser', r"""
         (templateName 
-            (slot1k (funzione 1 2 3)) 
+            (slot1k (= 1 2 3)) 
         )
         """).asList()
         
@@ -345,8 +345,7 @@ class ParserTest(unittest.TestCase):
         
         self.assertNotEqual(len(res[0].lhs), 0)
 
-    @expectedFailure
-    def test_ActionParser_MultifieldValueNested(self):
+    def test_ActionParser_OrderedRhsPatternAsFunctionArg(self):
         '''Check action parsed correct parsing when nested value in it'''
         res = self._testImpl('ActionParser', r"""
         (assert (A B C))
@@ -354,8 +353,38 @@ class ParserTest(unittest.TestCase):
         
         self.assertEqual(len(res), 1)
         self.assertIsInstance(res[0], types.FunctionCall)
-        self.assertNotIsInstance(res[0].funcArgs[0], types.FunctionCall)
+        self.assertIsInstance(res[0].funcArgs[0], types.OrderedRhsPattern)
     
+    def test_ActionParser_TemplateRhsPatternAsFunctionArg(self):
+        '''Check action parsed correct parsing when nested value in it'''
+        res = self._testImpl('ActionParser', r"""
+        (assert (templateName (slotA A) (slotB B) (slotC C)))
+        """).asList()
+        
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], types.FunctionCall)
+        self.assertIsInstance(res[0].funcArgs[0], types.TemplateRhsPattern)
+
+    def test_ActionParser_SimpleFunctionCall(self):
+        '''Check action parsed correct parsing when nested value in it'''
+        res = self._testImpl('ActionParser', r"""
+        (printout t "blablabla" ?a "oifweoifj" crlf)
+        """).asList()
+        
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], types.FunctionCall)
+        self.assertEqual(len(res[0].funcArgs), 5)
+
+    def test_ActionParser_NestedFunctionCall(self):
+        '''Check action parsed correct parsing when nested value in it'''
+        res = self._testImpl('ActionParser', r"""
+        (printout t (+ 1 2) ?a "oifweoifj" crlf)
+        """).asList()
+        
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], types.FunctionCall)
+        self.assertEqual(len(res[0].funcArgs), 5)
+        self.assertIsInstance(res[0].funcArgs[1], types.FunctionCall)
 
     def test_RulePropertyParser_Salience(self):
         '''Check salience correct parsing'''
@@ -527,7 +556,7 @@ class ParserTest(unittest.TestCase):
     
     def test_ConnectedConstraintParser_FunctionCall(self):
         res = self._testImpl('ConstraintParser', r"""
-        A&:(func 1 2)
+        A&:(+ 1 2)
         """).asList()
         
         self.assertIsInstance(res[0], types.ConnectedConstraint)
@@ -541,7 +570,7 @@ class ParserTest(unittest.TestCase):
     
     def test_ConnectedConstraintParser_NegativeTermFunctionCall(self):
         res = self._testImpl('ConstraintParser', r"""
-        A&~:(func 1 2)
+        A&~:(+ 1 2)
         """).asList()
         
         self.assertIsInstance(res[0], types.ConnectedConstraint)
@@ -554,7 +583,7 @@ class ParserTest(unittest.TestCase):
         
     def test_ConditionalElementParser_AssignedPatternCE(self):
         res = self._testImpl('ConditionalElementParser', r"""
-        ?var <- ( B A&~:(func 1 2) )
+        ?var <- ( B A&~:(+ 1 2) )
         """).asList()
 
         self.assertIsInstance(res[0], types.AssignedPatternCE)
@@ -564,7 +593,7 @@ class ParserTest(unittest.TestCase):
 
     def test_ConditionalElementParser_AssignedPatternCE_WithoutWS(self):
         res = self._testImpl('ConditionalElementParser', r"""
-        ?var<-( B A&~:(func 1 2) )
+        ?var<-( B A&~:(+ 1 2) )
         """).asList()
 
         self.assertIsInstance(res[0], types.AssignedPatternCE)
@@ -625,7 +654,7 @@ class ParserTest(unittest.TestCase):
         
     def test_ConditionalElementParser_TestPatternCE(self):
         res = self._testImpl('ConditionalElementParser', r"""
-        (test (func B C))
+        (test (= B C))
         """).asList()
 
         self.assertIsInstance(res[0], types.TestPatternCE)
@@ -633,7 +662,7 @@ class ParserTest(unittest.TestCase):
 
     def test_ConditionalElementParser_TestPatternCE_WithWSBefore(self):
         res = self._testImpl('ConditionalElementParser', r"""
-        ( test (func B C))
+        ( test (= B C))
         """).asList()
 
         self.assertIsInstance(res[0], types.TestPatternCE)
@@ -641,7 +670,7 @@ class ParserTest(unittest.TestCase):
 
     def test_ConditionalElementParser_TestPatternCE_WithoutWSAfter(self):
         res = self._testImpl('ConditionalElementParser', r"""
-        (test(func B C))
+        (test(= B C))
         """).asList()
 
         self.assertIsInstance(res[0], types.TestPatternCE)
@@ -886,7 +915,14 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.GlobalAssignment)
         self.assertIsInstance(res[0].variable, types.GlobalVariable)
         self.assertIsInstance(res[0].value, types.ParsedType)
-    
+        
+    def test_FunctionCall_FunctionNameFromFunctionsDict(self):
+        res = self._testImpl('FunctionCallParser', r"""
+            (+ 1 2)
+        """).asList()
+
+        self.assertIsInstance(res[0], types.FunctionCall)
+        self.assertEqual(res[0].funcName, "+")
         
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testObjectIsSymbol']

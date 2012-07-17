@@ -1,5 +1,24 @@
 
 
+FuncNames = [
+    # FUNCTIONS
+    "+", "-", "/", "*", "div", "mod",
+    "max", "min", "abs",
+    "float", "integer"
+    "str-cat", "str-index", "str-length", "sub-string",
+    # ACTIONS
+    "assert", "retract", "modify", "duplicate",
+    "bind",
+    "printout",
+    "read",
+    "set-strategy", "refresh"
+    # CUSTOM-ACTIONS
+    "trace-rule", "trace-wme", "trigger-event",
+    # PREDICATES
+    "eq", "neq", "=", "<>", ">", ">=", "<", "<=",
+    "evenp", "oddp", "integerp", "floatp", "numberp", "stringp", "symbolp", "lexemep"
+]
+
 class ParsedType(object):
     '''
     Base class for all parsed types
@@ -88,6 +107,10 @@ class FunctionCall(ParsedType):
         ParsedType.__init__(self, funcName)
         self.funcName = funcName.evaluate()
         self.funcArgs = funcArgs if funcArgs != None else []
+        if self.funcName not in FuncNames:
+            import pyparsing
+            raise pyparsing.ParseException("Missing function declaration for {0}".format(self.funcName))
+            
         
     def __repr__(self, *args, **kwargs):
         return "<{0}, {1}, {2}>".format(self.__class__.__name__,
@@ -109,7 +132,9 @@ class DefFactsConstruct(ParsedType):
 
 class OrderedRhsPattern(ParsedType):
     #converter = lambda self, t: [x.evaluate() if isinstance(x, ParsedType) else x for x in t]
-    pass
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}>".format(self.__class__.__name__,
+                                        self.content)
 
 class TemplateRhsPattern(ParsedType):
     def __init__(self, templateName, templateSlots=None):

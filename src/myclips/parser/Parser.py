@@ -2,6 +2,7 @@
 import pyparsing as pp
 import string
 import myclips.parser.types as types
+import myclips.parser.types
 import time
 
 def forwardParsed(bounds=None, key=None):
@@ -26,7 +27,7 @@ class Parser(object):
         self._debug = debug
         self._enableComments = enableComments
         self._enableDirectives = enableDirectives
-        self._funcNames = funcNames if funcNames != None else []
+        self._funcNames = funcNames if isinstance(funcNames, list) else myclips.parser.types.FuncNames
         
     def isInitied(self):
         return self._initied
@@ -127,16 +128,20 @@ class Parser(object):
         
         self.subparsers["ExpressionParser"] = pp.Forward()
         
-        self.subparsers["FunctionCallParser"] = (LPAR + self.getSParser("VariableSymbolParser") + pp.Group(pp.ZeroOrMore(self.getSParser("ExpressionParser"))) + RPAR)\
+        self.subparsers["FunctionNameParser"] = (pp.oneOf(self._funcNames)\
+                                                    .setParseAction(types.makeInstance(types.Symbol, 0))
+                                                 | self.getSParser("VariableSymbolParser"))\
+                .setParseAction(forwardParsed(key=0))
+        
+        self.subparsers["FunctionCallParser"] = (LPAR + self.getSParser("FunctionNameParser") + pp.Group(pp.ZeroOrMore(self.getSParser("ExpressionParser"))) + RPAR)\
                 .setParseAction(types.makeInstanceDict(types.FunctionCall, {'funcName': 0, 'funcArgs': 1}))
         
-        self.subparsers["ExpressionParser"] << (self.getSParser("VariableParser") | self.getSParser("FunctionCallParser") | self.getSParser("ConstantParser") )\
+        self.subparsers["ExpressionParser"] << (self._sb("FunctionCallParser") 
+                                                | self._sb("VariableParser")
+                                                | self._sb("ConstantParser") )\
                 .setParseAction(forwardParsed())
-                
-        # expression alias    
-        self.subparsers["ActionParser"] = self.subparsers["ExpressionParser"]
 
-        self.subparsers["RhsFieldParser"] = self.subparsers["ExpressionParser"]
+        self.subparsers["RhsFieldParser"] = self.subparsers["ExpressionParser"].copy()
 
         self.subparsers["MultiFieldRhsSlotParser"] = (LPAR + self._sb("SymbolParser") + pp.Group(pp.ZeroOrMore(self._sb("RhsFieldParser"))).setResultsName("content") + RPAR )\
                 .setParseAction(types.makeInstanceDict(types.MultiFieldRhsSlot, {"slotName" : 0, "slotValue" : "content"}))
@@ -155,6 +160,23 @@ class Parser(object):
 
         self.subparsers["RhsPatternParser"] = (self._sb("TemplateRhsPatternParser") | self._sb("OrderedRhsPatternParser"))\
                 .setParseAction(forwardParsed(key=0))
+
+        self.subparsers["FactDefinitionParser"] = self._sb("RhsPatternParser").copy()
+        
+        self.subparsers["RhsFunctionCallParser"] = (LPAR + self._sb("FunctionNameParser") 
+                                                        + pp.Group(pp.ZeroOrMore(
+                                                            self._sb("ExpressionParser")
+                                                                | self._sb("FactDefinitionParser")
+                                                        ))
+                                                    + RPAR)\
+                .setParseAction(types.makeInstanceDict(types.FunctionCall, {'funcName': 0, 'funcArgs': 1}))
+                
+        # expression alias    
+        self.subparsers["ActionParser"] = (self._sb("RhsFunctionCallParser") 
+                                                | self._sb("VariableParser")
+                                                | self._sb("ConstantParser") )\
+                .setParseAction(forwardParsed())
+
 
         ### DEFFACTS
         
