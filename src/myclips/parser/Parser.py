@@ -330,7 +330,8 @@ class Parser(object):
                                                         + self._sb("SymbolParser").setResultsName('rulename')
                                                             + pp.Optional(self._sb("CommentParser")).setName("defruleComment").setResultsName("comment")
                                                             + pp.Optional(self._sb("DeclarationParser")).setName("defruleDeclaration").setResultsName("declaration")
-                                                            + pp.Optional(pp.Group(pp.ZeroOrMore(self._sb("ConditionalElementParser")))).setResultsName("lhs")
+                                                            + pp.Optional(pp.Group(pp.ZeroOrMore(self._sb("ConditionalElementParser")))).setResultsName("lhs")\
+                                                                    .setParseAction(forwardParsed())
                                                         + pp.Literal("=>").suppress()
                                                         + pp.Group(pp.ZeroOrMore(self._sb("ActionParser"))).setResultsName("rhs")
                                                      + RPAR)\

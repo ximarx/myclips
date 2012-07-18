@@ -40,7 +40,10 @@ class ParsedType(object):
         
     def __repr__(self, *args, **kwargs):
         evaluated = self.evaluate()
-        return "<{0}:{1}, {2}:{3}>".format(self.__class__.__name__, self.content, evaluated.__class__.__name__, evaluated )
+        return "<{0}:{1},converted={2}:{3}>".format(self.__class__.__name__, 
+                                                        self.content, 
+                                                        evaluated.__class__.__name__, 
+                                                        evaluated )
 
 class BaseParsedType(ParsedType):
     '''
@@ -57,7 +60,10 @@ class BaseParsedType(ParsedType):
         return self.content
 
     def __repr__(self, *args, **kwargs):
-        return "<{0}, {1}:{2}>".format(self.__class__.__name__, self.content.__class__.__name__, self.content )
+        return "<{0}:{1},converted={2}:{3}>".format(self.__class__.__name__,
+                                                        self.content, 
+                                                        self.content.__class__.__name__, 
+                                                        self.content )
     
 class Number(BaseParsedType):
     pass
@@ -132,7 +138,7 @@ class FunctionCall(ParsedType):
             
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}, {1}, {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},args={2}>".format(self.__class__.__name__,
                                         self.funcName,
                                         self.funcArgs )
 
@@ -144,7 +150,7 @@ class DefFactsConstruct(ParsedType):
         self.rhs = rhs if rhs != None else []
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, {2}, {3}>".format(self.__class__.__name__,
+        return "<{0}:{1},comment={2},rhs={3}>".format(self.__class__.__name__,
                                         self.deffactsName,
                                         self.deffactsComment,
                                         self.rhs )
@@ -152,8 +158,8 @@ class DefFactsConstruct(ParsedType):
 class OrderedRhsPattern(ParsedType):
     #converter = lambda self, t: [x.evaluate() if isinstance(x, ParsedType) else x for x in t]
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}>".format(self.__class__.__name__,
-                                        self.content)
+        return "<{0},values={1}>".format(self.__class__.__name__,
+                                        str(self.content).replace("[", "{").replace("}", "]")) #better formatting with pretty print
 
 class TemplateRhsPattern(ParsedType):
     def __init__(self, templateName, templateSlots=None):
@@ -162,7 +168,7 @@ class TemplateRhsPattern(ParsedType):
         self.templateSlots =  templateSlots if templateName != None else []
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},slots={2}>".format(self.__class__.__name__,
                                         self.templateName,
                                         self.templateSlots)
     
@@ -176,7 +182,7 @@ class MultiFieldRhsSlot(FieldRhsSlot):
         self.slotValue = slotValue if slotValue != None else []
 
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},values={2}>".format(self.__class__.__name__,
                                         self.slotName,
                                         self.slotValue)
 
@@ -187,7 +193,7 @@ class SingleFieldRhsSlot(FieldRhsSlot):
         self.slotValue = slotValue
 
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},value={2}>".format(self.__class__.__name__,
                                         self.slotName,
                                         self.slotValue)
 
@@ -202,7 +208,7 @@ class DefRuleConstruct(ParsedType):
         self.rhs = rhs if rhs != None else []
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, {2}, {3}, {4} => {5}>".format(self.__class__.__name__,
+        return "<{0}:{1},comment={2},declarations={3},lhs={4},rhs={5}>".format(self.__class__.__name__,
                                         self.defruleName,
                                         self.defruleComment,
                                         self.defruleDeclaration,
@@ -281,27 +287,49 @@ class TemplatePatternCE(PatternCE):
                     if isinstance(sAttr, Attribute_TypeConstraint):
                         # check vs types
                         allowedTypes = sAttr.getAllowedTypes()
+                    
+                        # field.slotValue = Constraint
+                        #                        '- Positive|NegativeTerm
+                        #                                '- BaseParsedType|Variable|FunctionCall
+                        # OR
+                        #
+                        # field.slotValue = ConnectedConstraint
+                        #                        '- Positive|NegativeTerm
+                        #                                '- BaseParsedType|Variable|FunctionCall
+                        #                        '- Constraint
+                        #                                '- Positive|NegativeTerm
+                        #                                        '- BaseParsedType|Variable|FunctionCall
+                        #
+                        #
+                        # 1: first go deep inside the SingleFieldLhsSlot
+                        #
+                        valuesToCheck = []
+                        valuesToScan = []
                         if isinstance(field, SingleFieldLhsSlot):
-                            # simple: ignore variable + 1 value isinstance
-                            if not isinstance(field.slotValue, (Variable, NullValue)):
-                                if not isinstance(field.slotValue, allowedTypes):
-                                    raise pyparsing.ParseFatalException("A {2} value found doesn't match the allowed types {3} for slot {0} of template {1}".format(
-                                                field.slotName,
-                                                self.templateName,
-                                                field.slotValue.__class__,
-                                                allowedTypes
-                                            ))
+                            valuesToScan.append(field.slotValue) 
                         elif isinstance(field, MultiFieldLhsSlot):
-                            # if at least one True in the array done with:
-                                # True if v not instance of allowed types and not Variable
-                                # False if v isinstance
-                            if any([not isinstance(v, allowedTypes) for v in field.slotValue if not isinstance(v, (Variable, NullValue))]):
-                                raise pyparsing.ParseFatalException("A {2} value found doesn't match the allowed types {3} for slot {0} of template {1}".format(
-                                            field.slotName,
-                                            self.templateName,
-                                            field.slotValue.__class__,
-                                            allowedTypes
-                                        ))
+                            valuesToScan = field.slotValue
+
+                        for toScan in valuesToScan:
+                            valuesToCheck.append(toScan.constraint.term)
+                            if isinstance(toScan, ConnectedConstraint):
+                                valuesToCheck += [x[1].term for x in toScan.connectedConstraints]
+
+                        # check if ANY of the array is True:
+                        #    True = term is not an allowedType or term (function call) return value is not an allowedType
+                        checkForInvalid = [False if isinstance(term, (Variable, NullValue))
+                                                else not any([issubclass(retType, allowedTypes) for retType in term.funcDefinition.getReturnTypes()]) if isinstance(term, FunctionCall) 
+                                                    else not isinstance(term, allowedTypes)
+                                            for term in valuesToCheck]
+                        
+                        if any(checkForInvalid):
+                            errorArg = valuesToCheck[checkForInvalid.index(True)]
+                            raise pyparsing.ParseFatalException("A {2} value found doesn't match the allowed types {3} for slot {0} of template {1}".format(
+                                        field.slotName,
+                                        self.templateName,
+                                        "function {0} return".format(errorArg.funcName) if isinstance(errorArg, FunctionCall) else errorArg.__class__.__name__,
+                                        tuple([t.__name__ for t in allowedTypes])
+                                    ))
                                 
             
         except KeyError:
@@ -311,7 +339,7 @@ class TemplatePatternCE(PatternCE):
                                                     ))
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},slots={2}>".format(self.__class__.__name__,
                                     self.templateName,
                                     self.templateSlots
                                     )
@@ -323,7 +351,7 @@ class AssignedPatternCE(PatternCE):
         self.pattern = pattern
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1} <- {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},variable={2}>".format(self.__class__.__name__,
                                     self.variable,
                                     self.pattern
                                     )
@@ -381,29 +409,33 @@ class ConnectedConstraint(ParsedType):
         ParsedType.__init__(self, constraint)
         # constraint is Constraint for sure
         self.constraint = constraint
-        self.connectedConstraints = [] # define it here first
         # connectedConstraint is [#CONNECTIVE, Constraint]
         #     OR
         # connectedConstraint is [#CONNECTIVE, ConnectedConstraint]
         # i need to linearize all ConnectedConstraint as a single ConnectedConstraint
         # with self.constraints = [#CONNECTIVE, Constraint]
         connective, subconstraints = connectedConstraints
+        self.connectedConstraints = [[connective, subconstraints.constraint]]
         if isinstance(subconstraints, ConnectedConstraint):
             # need to linearize it
-            self.connectedConstraints = [[connective, subconstraints.constraint]] + subconstraints.connectedConstraints
-            # now i need to sort it!
-            # priority: ~,&,|
-            #TODO sort function / nested connnected handling 
-        else:
-            self.connectedConstraints = [connectedConstraints]
+            self.connectedConstraints += subconstraints.connectedConstraints
+
+        # now i need to sort it!
+        # priority: ~,&,|
+        #TODO sort function / nested connected handling 
+            
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1},{2}>".format(self.__class__.__name__,
+        return "<{0}:{1},connected={2}>".format(self.__class__.__name__,
                                     self.constraint,
                                     self.connectedConstraints
                                     )
     
 class Term(ParsedType):
+    def __init__(self, term):
+        ParsedType.__init__(self, term)
+        self.term = term
+        
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1}>".format(self.__class__.__name__,
                                     self.term,
@@ -411,18 +443,16 @@ class Term(ParsedType):
 
 class PositiveTerm(Term):
     def __init__(self, term, isNot=None):
+        Term.__init__(self, term)
         if isNot is not None:
             raise ValueError()
-        Term.__init__(self, term)
-        self.term = term
 
         
 class NegativeTerm(Term):
     def __init__(self, term, isNot=None):
+        Term.__init__(self, term)
         if isNot is None:
             raise ValueError()
-        Term.__init__(self, term)
-        self.term = term
     
     
 class FieldLhsSlot(ParsedType):
@@ -436,7 +466,7 @@ class MultiFieldLhsSlot(FieldLhsSlot):
         self.slotValue = slotValue if slotValue != None else []
 
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},value={2}>".format(self.__class__.__name__,
                                         self.slotName,
                                         self.slotValue)
 
@@ -446,7 +476,7 @@ class SingleFieldLhsSlot(FieldLhsSlot):
         self.slotValue = slotValue
 
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},value={2}>".format(self.__class__.__name__,
                                         self.slotName,
                                         self.slotValue)    
 
@@ -461,14 +491,14 @@ class SlotDefinition(ParsedType):
 class SingleSlotDefinition(SlotDefinition):
 
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},attributes={2}>".format(self.__class__.__name__,
                                         self.slotName,
                                         self.attributes)    
 
 class MultiSlotDefinition(SlotDefinition):
 
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},attributes={2}>".format(self.__class__.__name__,
                                         self.slotName,
                                         self.attributes)    
 
@@ -487,7 +517,7 @@ class DefaultAttribute(Attribute):
 class TypeAttribute(Attribute):
     def __init__(self, allowedTypes=None):
         Attribute.__init__(self, allowedTypes)
-        self.allowedTypes = [TYPES[x] for x in allowedTypes] if isinstance(allowedTypes, list) else [TYPES["?VARIABLE"]]
+        self.allowedTypes = tuple([TYPES[x] for x in allowedTypes]) if isinstance(allowedTypes, list) else tuple([TYPES["?VARIABLE"]])
         
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1}>".format(self.__class__.__name__,
@@ -514,7 +544,8 @@ class DefTemplateConstruct(ParsedType):
         except KeyError:
             # create slot template definitions
             tslots = dict([(sd.getSlotName(), sd) for sd 
-                                in [TemplateSlotDefinition.fromParserSlotDefinition(slot) for slot in self.slots]])
+                                in [TemplateSlotDefinition.fromParserSlotDefinition(slot) 
+                                        for slot in self.slots]])
             # create a template definition instance
             tdef = TemplateDefinition(self.templateName, tslots)
             # push new template definition to the manager
@@ -522,7 +553,7 @@ class DefTemplateConstruct(ParsedType):
             
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}, '{2}', {3}>".format(self.__class__.__name__,
+        return "<{0}:{1},comment='{2}',slots={3}>".format(self.__class__.__name__,
                                         self.templateName,
                                         self.templateComment,
                                         self.slots)

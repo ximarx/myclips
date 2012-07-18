@@ -65,7 +65,7 @@ class SlotDefinition(object):
         self._slotAttributes = dict([(attribute.attributeType, attribute) for attribute 
                                         in (slotAttributes 
                                                 if isinstance(slotAttributes, list) 
-                                            else [])])
+                                            else [])]) if not isinstance(slotAttributes, dict) else slotAttributes 
         
         
     def getSlotName(self):

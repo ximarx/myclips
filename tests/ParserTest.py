@@ -10,6 +10,7 @@ from pyparsing import ParseException, ParseFatalException
 from unittest.case import expectedFailure
 from myclips.parser.Functions import _SampleFunctionsInit
 from myclips.parser.Templates import TemplatesManager
+import pyparsing
 #from myclips.parser.Templates import _SampleTemplatesInit
 
 class ParserTest(unittest.TestCase):
@@ -350,6 +351,28 @@ class ParserTest(unittest.TestCase):
         
         self.assertNotEqual(len(res[0].lhs), 0)
 
+    def test_DefRuleConstructParser_WithLHSs(self):
+        '''Check defrule construct parsing with multiple LHS'''
+        
+        self._testImpl('DefTemplateConstructParser', r"""
+        (deftemplate templ
+            (slot A)
+            (slot B))
+        """)
+        
+        res = self._testImpl('DefRuleConstructParser', r"""
+        (defrule rulename
+            (A B C) 
+            (C D E)
+            (templ 
+                (A 1)
+                (B 2))
+            => 
+        )
+        """).asList()
+        #print res
+        self.assertEqual(len(res[0].lhs), 3)
+
     def test_ActionParser_OrderedRhsPatternAsFunctionArg(self):
         '''Check action parsed correct parsing when nested value in it'''
         res = self._testImpl('ActionParser', r"""
@@ -578,7 +601,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].constraint, (types.PositiveTerm, types.NegativeTerm))
         self.assertEqual(len(res[0].connectedConstraints), 1)
         self.assertEqual(res[0].connectedConstraints[0][0], "&")
-        self.assertIsInstance(res[0].connectedConstraints[0][1], types.Constraint)
+        self.assertIsInstance(res[0].connectedConstraints[0][1], types.Term)
     
     
     def test_ConnectedConstraintParser_FunctionCall(self):
@@ -590,9 +613,8 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].constraint, (types.PositiveTerm, types.NegativeTerm))
         self.assertEqual(len(res[0].connectedConstraints), 1)
         self.assertEqual(res[0].connectedConstraints[0][0], "&")
-        self.assertIsInstance(res[0].connectedConstraints[0][1], types.Constraint)
-        self.assertIsInstance(res[0].connectedConstraints[0][1].constraint, types.PositiveTerm)
-        self.assertIsInstance(res[0].connectedConstraints[0][1].constraint.term, types.FunctionCall)
+        self.assertIsInstance(res[0].connectedConstraints[0][1], types.PositiveTerm)
+        self.assertIsInstance(res[0].connectedConstraints[0][1].term, types.FunctionCall)
     
     
     def test_ConnectedConstraintParser_NegativeTermFunctionCall(self):
@@ -601,12 +623,11 @@ class ParserTest(unittest.TestCase):
         """).asList()
         
         self.assertIsInstance(res[0], types.ConnectedConstraint)
-        self.assertIsInstance(res[0].constraint, (types.PositiveTerm, types.NegativeTerm))
+        self.assertIsInstance(res[0].constraint, types.Term)
         self.assertEqual(len(res[0].connectedConstraints), 1)
         self.assertEqual(res[0].connectedConstraints[0][0], "&")
-        self.assertIsInstance(res[0].connectedConstraints[0][1], types.Constraint)
-        self.assertIsInstance(res[0].connectedConstraints[0][1].constraint, types.NegativeTerm)
-        self.assertIsInstance(res[0].connectedConstraints[0][1].constraint.term, types.FunctionCall)
+        self.assertIsInstance(res[0].connectedConstraints[0][1], types.NegativeTerm)
+        self.assertIsInstance(res[0].connectedConstraints[0][1].term, types.FunctionCall)
         
     def test_ConditionalElementParser_AssignedPatternCE(self):
         res = self._testImpl('ConditionalElementParser', r"""
@@ -958,7 +979,193 @@ class ParserTest(unittest.TestCase):
 
         self.assertIsInstance(res[0], types.FunctionCall)
         self.assertEqual(res[0].funcName, "+")
+
+    def test_FunctionCall_CheckFunctionReturnValueAsTermType(self):
+        res = self._testImpl('FunctionCallParser', r"""
+            (+ 1 (+ 1 (+ 1 (* 1 2))))
+        """).asList()
+
+        self.assertIsInstance(res[0], types.FunctionCall)
+        self.assertEqual(res[0].funcName, "+")
+
+    def test_FunctionCall_RaiseErrorForInvalidFunctionReturnValueAsTermType(self):
+        self.assertRaises(pyparsing.ParseFatalException, self._testImpl, 'FunctionCallParser', r"""
+            (+ 1 (+ 1 (+ 1 (eq a b))))
+        """)
         
+    def test_FunctionCall_RaiseErrorForInvalidTermType(self):
+        self.assertRaises(pyparsing.ParseFatalException, self._testImpl, 'FunctionCallParser', r"""
+            (+ 1 a)
+        """)
+
+    def test_FunctionCall_RaiseErrorForInvalidArgsNumber(self):
+        self.assertRaises(pyparsing.ParseFatalException, self._testImpl, 'FunctionCallParser', r"""
+            (float 1 2)
+        """)
+        
+    def test_PatternCEParser_CorrectCastToSlotTypeIfNeededByTemplateDefinition(self):
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate templateName
+            (slot s1)
+            (multislot s2)
+            (slot s3)
+            (multislot s4)
+        )
+        """)
+        
+        res = self._testImpl('PatternCEParser', r"""
+        (templateName 
+            (s1 ) 
+            (s2 ) 
+            (s3 v3)
+            (s4 v4)
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.TemplatePatternCE)
+        self.assertEqual(res[0].templateName, "templateName")
+        self.assertIsInstance(res[0].templateSlots[0], types.SingleFieldLhsSlot)
+        self.assertIsInstance(res[0].templateSlots[1], types.MultiFieldLhsSlot)
+        self.assertIsInstance(res[0].templateSlots[2], types.SingleFieldLhsSlot)
+        self.assertIsInstance(res[0].templateSlots[3], types.MultiFieldLhsSlot)
+    
+    def test_TemplatePatternCEParser_TypeConstraint_OneType(self):
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate templateName
+            (slot s1 
+                (type INTEGER))
+            (slot s2 
+                (type NUMBER))
+            (slot s3
+                (type STRING))
+            (multislot s4
+                (type ?VARIABLE))
+        )
+        """)
+        
+        res = self._testImpl('TemplatePatternCEParser', r"""
+        (templateName 
+            (s1 1) 
+            (s2 2.5) 
+            (s3 "ciao")
+            (s4 1 2.5 "ciao" simbolo ?var)
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.TemplatePatternCE)
+
+    def test_TemplatePatternCEParser_TypeConstraint_MultipleTypes(self):
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate templateName
+            (slot s1 
+                (type INTEGER FLOAT))
+            (slot s2 
+                (type INTEGER FLOAT))
+            (slot s3
+                (type STRING SYMBOL))
+            (slot s4
+                (type STRING SYMBOL))
+            (multislot s5
+                (type INTEGER FLOAT SYMBOL STRING))
+        )
+        """)
+        
+        res = self._testImpl('TemplatePatternCEParser', r"""
+        (templateName 
+            (s1 1) 
+            (s2 2.5) 
+            (s3 "ciao")
+            (s4 ciao)
+            (s5 1 2.5 "ciao" simbolo ?var)
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.TemplatePatternCE)
+
+    def test_TemplatePatternCEParser_TypeConstraint_ParentTypes(self):
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate templateName
+            (slot s1 
+                (type NUMBER))
+            (slot s2 
+                (type NUMBER))
+            (slot s3
+                (type LEXEME))
+            (slot s4
+                (type LEXEME))
+            (multislot s5
+                (type NUMBER LEXEME))
+        )
+        """)
+        
+        res = self._testImpl('TemplatePatternCEParser', r"""
+        (templateName 
+            (s1 1) 
+            (s2 2.5) 
+            (s3 "ciao")
+            (s4 ciao)
+            (s5 1 2.5 "ciao" simbolo ?var)
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.TemplatePatternCE)
+
+
+    def test_TemplatePatternCEParser_TypeConstraint_FunctionCallReturnValue(self):
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate templateName
+            (slot s1 
+                (type INTEGER))
+            (slot s2 
+                (type FLOAT))
+            (slot s3
+                (type NUMBER))
+            (slot s4
+                (type INTEGER FLOAT))
+        )
+        """)
+        
+        res = self._testImpl('TemplatePatternCEParser', r"""
+        (templateName 
+            (s1 =(+ 1 2)) 
+            (s2 =(+ 1 2)) 
+            (s3 =(+ 1 2))
+            (s4 =(+ 1 2))
+        )
+        """).asList()
+        
+        self.assertIsInstance(res[0], types.TemplatePatternCE)
+
+
+    def test_TemplatePatternCEParser_TypeConstraintFaultRaiseException_WrongTypeTerm(self):
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate templateName
+            (slot s
+                (type INTEGER))
+        )
+        """)
+        
+        self.assertRaises(pyparsing.ParseFatalException, self._testImpl, 'TemplatePatternCEParser', r"""
+        (templateName 
+            (s 1.5) 
+        )
+        """)
+
+    def test_TemplatePatternCEParser_TypeConstraintFaultRaiseException_WrongFunctionReturnValue(self):
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate templateName
+            (slot s
+                (type INTEGER))
+        )
+        """)
+        
+        self.assertRaises(pyparsing.ParseFatalException, self._testImpl, 'TemplatePatternCEParser', r"""
+        (templateName 
+            (s =(eq uno due)) 
+        )
+        """)
+
+
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testObjectIsSymbol']
     unittest.main()

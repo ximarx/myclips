@@ -41,12 +41,12 @@ class FunctionDefinition(object):
     def __init__(self, funcName, returnType, handler):
         self.funcName = funcName
         self.handler = handler
-        self.returnType = returnType
+        self.returnType = returnType if isinstance(returnType, tuple) else (returnType,)
         
     def getFuncName(self):
         return self.funcName
     
-    def getReturnType(self):
+    def getReturnTypes(self):
         return self.returnType
         
     def isValidCall(self, args):
@@ -116,11 +116,24 @@ class Constraint_ArgType(FunctionConstraint):
     def isValid(self, args):
         import myclips.parser.types.Types as types
         if self.argIndex == None:
-            return len([False for x in args if not isinstance(x, self.argType) 
-                                                and not isinstance(x, types.Variable)
-                                                and ( isinstance(x, types.FunctionCall) and not isinstance(x.funcDefinition.getReturnType(), self.argType ))]) == 0
+            invalidArgs = [True if isinstance(x, self.argType)
+                                else True if isinstance(x, types.Variable)
+                                    else True if isinstance(x, types.FunctionCall)
+                                                    and self.argType in x.funcDefinition.getReturnTypes()
+                                        else True if isinstance(x, types.FunctionCall)
+                                                        and any([issubclass(retType, self.argType) for retType in x.funcDefinition.getReturnTypes()])
+                                            else False
+                           for x in args]
+            return (not any([not x for x in invalidArgs]))
         else:
-            return isinstance(args[self.argIndex], self.argType )
+            x = args[self.argIndex]
+            return (True if isinstance(x, self.argType)
+                                else True if isinstance(x, types.Variable)
+                                    else True if isinstance(x, types.FunctionCall)
+                                                    and self.argType in x.funcDefinition.getReturnTypes()
+                                        else True if isinstance(x, types.FunctionCall)
+                                                        and any([issubclass(retType, self.argType) for retType in x.funcDefinition.getReturnTypes()])
+                                            else False)
 
 
 # Standard instance
@@ -135,13 +148,13 @@ def _SampleFunctionsInit():
     # setup basic functions like aritmetic / comparison
     # FOR PARSING ONLY
     
-    from myclips.parser.types.Types import Number, BaseParsedType, Lexeme
+    from myclips.parser.types.Types import Number, BaseParsedType, Lexeme, Integer, Float
     
     import sys
     
     
     FunctionsManager.instance.registerFunction(
-        CustomFunctionDefinition("+", Number, lambda *args: sum([t.evaluate() if isinstance(t, BaseParsedType) else t for t in args]),
+        CustomFunctionDefinition("+", (Integer, Float), lambda *args: sum([t.evaluate() if isinstance(t, BaseParsedType) else t for t in args]),
             [
                 Constraint_MinArgsLength(2),
                 Constraint_ArgType(Number)
@@ -152,7 +165,7 @@ def _SampleFunctionsInit():
                 else sequence[0] * r_mul(sequence[1:]))
     
     FunctionsManager.instance.registerFunction(
-        CustomFunctionDefinition("*", Number, lambda *args: r_mul([t.evaluate() if isinstance(t, BaseParsedType) else t for t in args]),
+        CustomFunctionDefinition("*", (Integer, Float), lambda *args: r_mul([t.evaluate() if isinstance(t, BaseParsedType) else t for t in args]),
             [
                 Constraint_MinArgsLength(2),
                 Constraint_ArgType(Number)
@@ -206,6 +219,13 @@ def _SampleFunctionsInit():
         CustomFunctionDefinition("printout", None.__class__, lambda *args: sys.stdout.writelines(args[1:]),
             [
                 Constraint_MinArgsLength(2),
+            ]))
+
+    FunctionsManager.instance.registerFunction(
+        CustomFunctionDefinition("float", Float, lambda arg: Float(arg.evaluate()),
+            [
+                Constraint_ArgType(Number),
+                Constraint_ExactArgsLength(1)
             ]))
     
     FunctionsManager.instance.registerFunction(
