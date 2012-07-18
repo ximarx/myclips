@@ -3,7 +3,7 @@ import pyparsing as pp
 import string
 import myclips.parser.types.Types as types
 import time
-from myclips.parser.Functions import FunctionsManager
+from myclips.parser.Functions import FunctionsManager, _SampleFunctionsInit
 from myclips.parser.Globals import GlobalsManager
 from myclips.parser.Templates import TemplatesManager
 
@@ -530,10 +530,17 @@ if __name__ == '__main__':
     for i in range(1,500):
         _complete_test += complete_test
 
+    # Inizializza funzioni e template per poter leggere il tutto
+    _SampleFunctionsInit()
+    
     parser = Parser(debug=False)
-
-    #parser.getSParser("VariableSymbolParser").setDebug(True)
-    #parser.getSParser("SingleFieldVariableParser").setDebug(True)
+    
+    parser.parse(r"""
+    (deftemplate template (slot s1) (slot s2))
+    (deftemplate template2 (slot s1) (multislot s2) (multislot s3) (multislot s4) (slot s5))
+    """)
+    
+    
 
     complete_P = pp.OneOrMore(
                     parser.getSParser("ConstructParser").setDebug(False)
