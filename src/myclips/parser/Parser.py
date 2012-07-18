@@ -1,9 +1,11 @@
 
 import pyparsing as pp
 import string
-import myclips.parser.types as types
-import myclips.parser.types
+import myclips.parser.types.Types as types
 import time
+from myclips.parser.Functions import FunctionsManager
+from myclips.parser.Globals import GlobalsManager
+from myclips.parser.Templates import TemplatesManager
 
 def forwardParsed(bounds=None, key=None):
     def forwardAction(s,l,t):
@@ -20,14 +22,22 @@ def forwardParsed(bounds=None, key=None):
 
 class Parser(object):
     
-    def __init__(self, debug=False, funcNames=None, enableComments=False, enableDirectives=False):
+    def __init__(self, debug=False, funcManager=None, templatesManager=None, globalsManager=None, enableComments=False, enableDirectives=False):
         
         self.subparsers = {}
         self._initied = False
         self._debug = debug
         self._enableComments = enableComments
         self._enableDirectives = enableDirectives
-        self._funcNames = funcNames if isinstance(funcNames, list) else myclips.parser.types.FuncNames
+        self._funcManager = (FunctionsManager.instance 
+                                if not isinstance(funcManager, FunctionsManager)
+                                    else funcManager)
+        self._globalsManager = (GlobalsManager.instance 
+                                    if not isinstance(globalsManager, GlobalsManager)
+                                        else globalsManager)
+        self._templatesManager = (TemplatesManager.instance 
+                                    if not isinstance(templatesManager, TemplatesManager)
+                                        else templatesManager)
         
     def isInitied(self):
         return self._initied
@@ -128,7 +138,7 @@ class Parser(object):
         
         self.subparsers["ExpressionParser"] = pp.Forward()
         
-        self.subparsers["FunctionNameParser"] = (pp.oneOf(self._funcNames)\
+        self.subparsers["FunctionNameParser"] = (pp.oneOf(self._funcManager.getFuncNames())\
                                                     .setParseAction(types.makeInstance(types.Symbol, 0))
                                                  | self.getSParser("VariableSymbolParser"))\
                 .setParseAction(forwardParsed(key=0))
@@ -169,12 +179,12 @@ class Parser(object):
                                                                 | self._sb("FactDefinitionParser")
                                                         ))
                                                     + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.FunctionCall, {'funcName': 0, 'funcArgs': 1}))
+                .setParseAction(types.makeInstanceDict(types.FunctionCall, {'funcName': 0, 'funcArgs': 1, 'funcManager': self._funcManager}))
                 
         # expression alias    
-        self.subparsers["ActionParser"] = (self._sb("RhsFunctionCallParser") 
-                                                | self._sb("VariableParser")
-                                                | self._sb("ConstantParser") )\
+        self.subparsers["ActionParser"] = (self._sb("VariableParser")
+                                                | self._sb("ConstantParser")
+                                                | self._sb("RhsFunctionCallParser") )\
                 .setParseAction(forwardParsed())
 
 
@@ -268,7 +278,9 @@ class Parser(object):
         self.subparsers['TemplatePatternCEParser'] = (LPAR + self._sb("SymbolParser").setResultsName("templateName") + 
                                                         pp.Group(pp.ZeroOrMore(self._sb("LhsSlotParser"))).setResultsName("templateSlots") + 
                                                       RPAR)\
-                .setParseAction(types.makeInstanceDict(types.TemplatePatternCE, {"templateName" : "templateName", "templateSlots" : "templateSlots"}))
+                .setParseAction(types.makeInstanceDict(types.TemplatePatternCE, {"templateName" : "templateName", 
+                                                                                 "templateSlots" : "templateSlots", 
+                                                                                 "templatesManager": self._templatesManager}))
         
         self.subparsers['PatternCEParser'] = (self._sb("OrderedPatternCEParser")
                                               | self._sb("TemplatePatternCEParser"))\
@@ -380,7 +392,10 @@ class Parser(object):
                                                             + pp.Optional(self._sb("CommentParser")).setName("templateComment").setResultsName("templateComment")
                                                         + pp.Group(pp.ZeroOrMore(self._sb("SlotDefinitionParser"))).setResultsName("slots")
                                                         + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefTemplateConstruct, {"templateName" : 'templateName', "templateComment" : "templateComment", "slots" : "slots"})) 
+                .setParseAction(types.makeInstanceDict(types.DefTemplateConstruct, {"templateName" : 'templateName',
+                                                                                    "templateComment" : "templateComment", 
+                                                                                    "slots" : "slots", 
+                                                                                    "templatesManager": self._templatesManager})) 
         
         
         ### DEFGLOBALS
@@ -426,7 +441,7 @@ class Parser(object):
                                                     )
             
         self.subparsers["ConstructParser"]\
-                .setParseAction(forwardParsed())
+                .setParseAction(forwardParsed(key=0))
                 #.setDebug(self._debug)
 
         # if file/string doesn't contain comments
@@ -453,6 +468,9 @@ class Parser(object):
 
     # shortcut
     _sb = getSParser
+    
+    def parse(self, text):
+        return self.getSParser('CLIPSProgramParser').parseString(text).asList()
     
     def _changeDebug(self):
         for p in self.subparsers:
@@ -493,13 +511,13 @@ if __name__ == '__main__':
         (defrule rulename
             (A B C)
             (D ~E F)
-            (G ?h&:(sum ?h 2)|:(eq ?h 4) I)
+            (G ?h&:(neq ?h 2)|:(eq ?h 4) I)
             (template
                 (s1 v1) 
                 (s2 v2)
             )
             (template2 
-                (s1 ?var&:(fun 1 2)) 
+                (s1 ?var&:(neq 1 2)) 
                 (s2 1 2 3) 
                 (s3 $?ciao) 
                 (s4 $?) 

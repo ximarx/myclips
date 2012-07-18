@@ -5,15 +5,20 @@ Created on 11/lug/2012
 '''
 import unittest
 from myclips.parser.Parser import Parser
-import myclips.parser.types as types
+import myclips.parser.types.Types as types
 from pyparsing import ParseException, ParseFatalException
 from unittest.case import expectedFailure
+from myclips.parser.Functions import _SampleFunctionsInit
+from myclips.parser.Templates import TemplatesManager
+#from myclips.parser.Templates import _SampleTemplatesInit
 
 class ParserTest(unittest.TestCase):
 
     def setUp(self):
-        if True or not hasattr(self, "parser"):
-            self.parser = Parser()
+        #if True or not hasattr(self, "parser"):
+        _SampleFunctionsInit()
+            #_SampleTemplatesInit()
+        self.parser = Parser(templatesManager=TemplatesManager())
 
     def _testImpl(self, parsername, parsable, parseAll=False):
         p = self.parser.getSParser(parsername)
@@ -259,7 +264,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].templateSlots[2], types.MultiFieldRhsSlot)
 
     def test_TemplateRhsPatternParser_FunctionInSlot(self):
-        '''Check general template-rhs format when function call in it'''
+        #'''Check general template-rhs format when function call in it'''
         res = self._testImpl('TemplateRhsPatternParser', r"""
         (templateName 
             (slot1k (= 1 2 3)) 
@@ -447,6 +452,14 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.OrderedPatternCE)
 
     def test_PatternCEParser_TemplatePatternCE(self):
+        # prepare a fake template definition
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate template 
+            (slot s1)
+            (multislot s2)
+        )
+        """)
+        
         res = self._testImpl('PatternCEParser', r"""
         (template 
             (s1 v1)
@@ -467,7 +480,7 @@ class ParserTest(unittest.TestCase):
 
     def test_OrderedPatternCEParser_Constraints(self):
         res = self._testImpl('OrderedPatternCEParser', r"""
-        (A G&3|:(eq 1 ?b)|3 $?)
+        (A G&3|:(= 1 ?b)|3 $?)
         """).asList()
         
         self.assertIsInstance(res[0], types.OrderedPatternCE)
@@ -477,6 +490,12 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].constraints[2], types.UnnamedMultiFieldVariable)
 
     def test_TemplatePatternCEParser(self):
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate templateName 
+            (multislot slot)
+        )
+        """)
+        
         res = self._testImpl('TemplatePatternCEParser', r"""
         (templateName (slot))
         """).asList()
@@ -488,6 +507,14 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(res[0].templateSlots[0].slotName, "slot")
 
     def test_TemplatePatternCEParser_SlotsType(self):
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate templateName
+            (slot s1)
+            (multislot s2)
+            (multislot s3)
+        )
+        """)
+        
         res = self._testImpl('TemplatePatternCEParser', r"""
         (templateName 
             (s1 v1) 
@@ -610,6 +637,14 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.OrderedPatternCE)
 
     def test_ConditionalElementParser_TemplatePatternCEParser(self):
+        self._testImpl("DefTemplateConstructParser", r"""
+        (deftemplate template
+            (slot B)
+            (slot C)
+            (multislot D)
+        )
+        """)
+        
         res = self._testImpl('ConditionalElementParser', r"""
         (template 
             (B) 
@@ -654,7 +689,7 @@ class ParserTest(unittest.TestCase):
         
     def test_ConditionalElementParser_TestPatternCE(self):
         res = self._testImpl('ConditionalElementParser', r"""
-        (test (= B C))
+        (test (eq B C))
         """).asList()
 
         self.assertIsInstance(res[0], types.TestPatternCE)
@@ -662,7 +697,7 @@ class ParserTest(unittest.TestCase):
 
     def test_ConditionalElementParser_TestPatternCE_WithWSBefore(self):
         res = self._testImpl('ConditionalElementParser', r"""
-        ( test (= B C))
+        ( test (= 1 2))
         """).asList()
 
         self.assertIsInstance(res[0], types.TestPatternCE)
@@ -670,7 +705,7 @@ class ParserTest(unittest.TestCase):
 
     def test_ConditionalElementParser_TestPatternCE_WithoutWSAfter(self):
         res = self._testImpl('ConditionalElementParser', r"""
-        (test(= B C))
+        (test(= 1 2))
         """).asList()
 
         self.assertIsInstance(res[0], types.TestPatternCE)
