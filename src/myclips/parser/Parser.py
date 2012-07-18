@@ -512,13 +512,13 @@ if __name__ == '__main__':
         (defrule rulename
             (A B C)
             (D ~E F)
-            (G ?h&:(neq ?h 2)|:(eq ?h 4) I)
+            (G ?h&:(neq ?h t)|:(eq ?h t) I)
             (template
                 (s1 v1) 
                 (s2 v2)
             )
             (template2 
-                (s1 ?var&:(neq 1 2)) 
+                (s1 ?var&:(neq s t)) 
                 (s2 1 2 3) 
                 (s3 $?ciao) 
                 (s4 $?) 
