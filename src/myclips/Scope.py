@@ -3,10 +3,10 @@ Created on 19/lug/2012
 
 @author: Francesco Capozzo
 '''
-from myclips.parser.Templates import TemplatesManager, TemplateDefinition
-from myclips.parser.Globals import GlobalsManager
-from myclips.parser.Functions import FunctionsManager
 from myclips.Observer import Observer
+from myclips.TemplatesManager import TemplatesManager, TemplateDefinition
+from myclips.GlobalsManager import GlobalsManager
+from myclips.FunctionsManager import FunctionsManager
 
 class Scope(Observer):
     '''
@@ -157,7 +157,7 @@ class Scope(Observer):
         return self._moduleName
     
     @property
-    def moduleManager(self):
+    def modules(self):
         return self._moduleManager
     
     @property

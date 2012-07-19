@@ -4,8 +4,8 @@ Created on 19/lug/2012
 @author: Francesco Capozzo
 '''
 import unittest
-from myclips.parser.Scope import Scope, ScopeExport
-from myclips.parser.Modules import ModulesManager
+from myclips.Scope import Scope, ScopeExport
+from myclips.ModulesManager import ModulesManager
 
 
 class ScopeTest(unittest.TestCase):
