@@ -11,6 +11,7 @@ from unittest.case import expectedFailure
 from myclips.parser.Functions import _SampleFunctionsInit
 from myclips.parser.Templates import TemplatesManager
 import pyparsing
+from myclips.parser.Globals import GlobalsManager
 #from myclips.parser.Templates import _SampleTemplatesInit
 
 class ParserTest(unittest.TestCase):
@@ -19,7 +20,7 @@ class ParserTest(unittest.TestCase):
         #if True or not hasattr(self, "parser"):
         _SampleFunctionsInit()
             #_SampleTemplatesInit()
-        self.parser = Parser(templatesManager=TemplatesManager())
+        self.parser = Parser(templatesManager=TemplatesManager(), globalsManager=GlobalsManager())
 
     def _testImpl(self, parsername, parsable, parseAll=False):
         p = self.parser.getSParser(parsername)
@@ -940,6 +941,9 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(res[0].moduleName, "MODULE")
         self.assertEqual(len(res[0].assignments), 1)
         self.assertEqual(len([True for x in res[0].assignments if not isinstance(x, types.GlobalAssignment)]), 0)
+        allGlobals = self.parser.getGlobalsManager().getAllGlobals()
+        self.assertEqual(len(allGlobals), 1)
+        self.assertEqual(allGlobals[0][0:2], ("MODULE", "?*A*"))
 
     def test_DefGlobalConstructParser_WithoutModuleName(self):
         res = self._testImpl('ConstructParser', r"""
@@ -950,6 +954,9 @@ class ParserTest(unittest.TestCase):
 
         self.assertIsInstance(res[0], types.DefGlobalConstruct)
         self.assertEqual(res[0].moduleName, None)
+        allGlobals = self.parser.getGlobalsManager().getAllGlobals()
+        self.assertEqual(len(allGlobals), 1)
+        self.assertEqual(allGlobals[0][0:2], (None, "?*A*"))
 
     def test_DefGlobalConstructParser_MultipleAssignments(self):
         res = self._testImpl('ConstructParser', r"""
@@ -962,6 +969,10 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.DefGlobalConstruct)
         self.assertEqual(len(res[0].assignments), 2)
         self.assertEqual(len([True for x in res[0].assignments if not isinstance(x, types.GlobalAssignment)]), 0)
+        allGlobals = self.parser.getGlobalsManager().getAllGlobals()
+        self.assertEqual(len(allGlobals), 2)
+        self.assertEqual(allGlobals[0][0:2], (None, "?*A*"))
+        self.assertEqual(allGlobals[1][0:2], (None, "?*B*"))
 
     def test_GlobalAssignmentParser(self):
         res = self._testImpl('GlobalAssignmentParser', r"""

@@ -110,7 +110,13 @@ class UnnamedMultiFieldVariable(Variable):
 
 class GlobalVariable(Variable):
     converter = lambda self, t: "?*"+self.content.evaluate()+"*"
-    pass
+    def __init__(self, content, globalsManager=None):
+        Variable.__init__(self, content)
+        self.globalsManager = (GlobalsManager.instance 
+                                    if not isinstance(globalsManager, GlobalsManager)
+                                    else globalsManager)
+        self.checked=False
+        
 
 class FunctionCall(ParsedType):
     def __init__(self, funcName, funcArgs=None, funcManager=None):
@@ -559,13 +565,18 @@ class DefTemplateConstruct(ParsedType):
                                         self.slots)
         
 class DefGlobalConstruct(ParsedType):
-    def __init__(self, assignments=None, moduleName=None):
+    def __init__(self, assignments=None, moduleName=None, globalsManager=None):
         ParsedType.__init__(self, assignments)
         self.moduleName = moduleName.evaluate() if isinstance(moduleName, BaseParsedType) else moduleName
         self.assignments = assignments if assignments != None else []
+        self.globalsManager = (GlobalsManager.instance 
+                                    if not isinstance(globalsManager, GlobalsManager)
+                                    else globalsManager)
+        for ass in self.assignments:
+            self.globalsManager.addGlobal(ass.variable.evaluate(), ass.value, self.moduleName)
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1} -> {2}>".format(self.__class__.__name__,
+        return "<{0}:{1},module={2}>".format(self.__class__.__name__,
                                         self.assignments,
                                         self.moduleName)
         

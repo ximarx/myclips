@@ -127,7 +127,7 @@ class Parser(object):
                                                    + self._sb("VariableSymbolParser").copy().leaveWhitespace() 
                                                    + pp.Literal("*").leaveWhitespace()
                                                    )\
-                .setParseAction(types.makeInstance(types.GlobalVariable, 1))
+                .setParseAction(types.makeInstanceDict(types.GlobalVariable, {'content': 1, 'globalsManager': self._globalsManager}))
         
         self.subparsers["VariableParser"] = (self._sb("MultiFieldVariableParser") 
                                                 | self._sb("GlobalVariableParser")
@@ -410,7 +410,7 @@ class Parser(object):
                                                             + pp.Optional(self._sb("SymbolParser")).setResultsName("moduleName")
                                                         + pp.Group(pp.ZeroOrMore(self._sb("GlobalAssignmentParser"))).setResultsName("assignments")
                                                         + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefGlobalConstruct, {"assignments": "assignments", "moduleName": "moduleName"}))
+                .setParseAction(types.makeInstanceDict(types.DefGlobalConstruct, {"assignments": "assignments", "moduleName": "moduleName", "globalsManager": self._globalsManager}))
                 
         
         ### HIGH-LEVEL PARSERS
@@ -462,6 +462,14 @@ class Parser(object):
         for k in self.subparsers.keys():
             self.subparsers[k].setName(k).setDebug(self._debug)
         
+    def getFunctionsManager(self):
+        return self._funcManager
+
+    def getTemplatesManager(self):
+        return self._templatesManager
+    
+    def getGlobalsManager(self):
+        return self._globalsManager
             
     def getSParser(self, name):
         self._initParsers()

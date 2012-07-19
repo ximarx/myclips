@@ -21,23 +21,16 @@ def constructs_prettyprint(constr_string, INDENT=0):
 if __name__ == '__main__':
     
     s = r"""
-(deftemplate template "un commento"
-    (slot s1 (type INTEGER SYMBOL))
-    (multislot s2 (type NUMBER SYMBOL ?VARIABLE))
-    (slot s3 (type INTEGER))
+(defglobal modulo
+    ?*a* = 2
 )
-
 """
 
     s2 = r"""
 (defrule r1
     (declare
         (salience 100))
-    (A B|D C)
-    (template 
-        (s1 1|c|=(+ 1 (+ 3 4)))
-        (s2 1 =(eq ciao bubu))
-        (s3 ?var&~2))
+    (A ?*a* C)
 =>
 )
 """
