@@ -3,17 +3,23 @@ Created on 17/lug/2012
 
 @author: Francesco Capozzo
 '''
+from myclips.Observable import Observable
 
-class TemplatesManager(object):
+class TemplatesManager(Observable):
     '''
-    Stores the list of allowed functions
+    Stores the list of allowed templates for this scope
     '''
     instance = None
+    
+    EVENT_NEW_DEFINITION = "EVENT_TemplatesManager_NewDefinition"
 
     def __init__(self, templates = None):
         '''
         Constructor
         '''
+        Observable.__init__(self, [
+                TemplatesManager.EVENT_NEW_DEFINITION
+            ])
         self._templates = templates if isinstance(templates, dict) else {}
         
     def registerTemplate(self, tmplDefinition):

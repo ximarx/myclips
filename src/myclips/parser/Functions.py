@@ -3,17 +3,22 @@ Created on 17/lug/2012
 
 @author: Francesco Capozzo
 '''
+from myclips.Observable import Observable
 
-class FunctionsManager(object):
+class FunctionsManager(Observable):
     '''
     Stores the list of allowed functions
     '''
     instance = None
-
+    EVENT_NEW_DEFINITION = "EVENT_FunctionsManager_NewDefinition"
+    
     def __init__(self, funcs = None):
         '''
         Constructor
         '''
+        Observable.__init__(self, [
+                FunctionsManager.EVENT_NEW_DEFINITION
+            ])
         self._funcs = funcs if isinstance(funcs, dict) else {}
         
     def registerFunction(self, funcDefinition):

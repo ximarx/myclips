@@ -1,6 +1,7 @@
 from myclips.parser.Parser import Parser
 from myclips.parser.Functions import _SampleFunctionsInit
 import sys
+from myclips.parser.Modules import ModulesManager, ModuleDefinition
 
 def constructs_prettyprint(constr_string, INDENT=0):
     output = sys.stdout
@@ -27,7 +28,11 @@ if __name__ == '__main__':
 """
 
     s2 = r"""
-(defrule r1
+(deffacts MOD::bla
+    (A B C)
+)
+
+(defrule A::r1
     (declare
         (salience 100))
     (A ?*a* C)
@@ -40,5 +45,9 @@ if __name__ == '__main__':
     #import pprint
     
     _SampleFunctionsInit()
+    MM = ModulesManager()
+    MM.addModule(ModuleDefinition("modulo"))
+    MM.addModule(ModuleDefinition("MOD"))
+    MM.addModule(ModuleDefinition("A"))
     
-    [constructs_prettyprint(repr(x)) for x in Parser().parse(s)]
+    [constructs_prettyprint(repr(x)) for x in Parser(modulesManager=MM).parse(s)]

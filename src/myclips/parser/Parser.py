@@ -6,6 +6,7 @@ import time
 from myclips.parser.Functions import FunctionsManager, _SampleFunctionsInit
 from myclips.parser.Globals import GlobalsManager
 from myclips.parser.Templates import TemplatesManager
+from myclips.parser.Modules import ModulesManager
 
 def forwardParsed(bounds=None, key=None):
     def forwardAction(s,l,t):
@@ -22,7 +23,7 @@ def forwardParsed(bounds=None, key=None):
 
 class Parser(object):
     
-    def __init__(self, debug=False, funcManager=None, templatesManager=None, globalsManager=None, enableComments=False, enableDirectives=False):
+    def __init__(self, debug=False, funcManager=None, templatesManager=None, globalsManager=None, modulesManager=None, enableComments=False, enableDirectives=False):
         
         self.subparsers = {}
         self._initied = False
@@ -38,6 +39,9 @@ class Parser(object):
         self._templatesManager = (TemplatesManager.instance 
                                     if not isinstance(templatesManager, TemplatesManager)
                                         else templatesManager)
+        self._modulesManager = (ModulesManager.instance 
+                                    if not isinstance(modulesManager, ModulesManager)
+                                        else modulesManager)
         
     def isInitied(self):
         return self._initied
@@ -127,7 +131,10 @@ class Parser(object):
                                                    + self._sb("VariableSymbolParser").copy().leaveWhitespace() 
                                                    + pp.Literal("*").leaveWhitespace()
                                                    )\
-                .setParseAction(types.makeInstanceDict(types.GlobalVariable, {'content': 1, 'globalsManager': self._globalsManager}))
+                .setParseAction(types.makeInstanceDict(types.GlobalVariable, {'content': 1, 
+                                                                              'globalsManager': self._globalsManager, 
+                                                                              "modulesManager": self._modulesManager
+                                                                              }))
         
         self.subparsers["VariableParser"] = (self._sb("MultiFieldVariableParser") 
                                                 | self._sb("GlobalVariableParser")
@@ -196,7 +203,11 @@ class Parser(object):
                                                         self._sb("DefFactsNameParser").setResultsName("DefFactsNameParser") + 
                                                             pp.Optional(self._sb("CommentParser")).setName("comment").setResultsName("comment") + 
                                                         pp.Group(pp.OneOrMore(self._sb("RhsPatternParser"))).setName("rhs").setResultsName("rhs") + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefFactsConstruct, {"deffactsName" : 'DefFactsNameParser', "deffactsComment" : "comment", "rhs" : "rhs"}))
+                .setParseAction(types.makeInstanceDict(types.DefFactsConstruct, {"deffactsName" : 'DefFactsNameParser', 
+                                                                                 "deffactsComment" : "comment", 
+                                                                                 "rhs" : "rhs",
+                                                                                 "modulesManager": self._modulesManager
+                                                                                 }))
 
 
         ### DEFRULE
@@ -335,7 +346,13 @@ class Parser(object):
                                                         + pp.Literal("=>").suppress()
                                                         + pp.Group(pp.ZeroOrMore(self._sb("ActionParser"))).setResultsName("rhs")
                                                      + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefRuleConstruct, {"defruleName" : 'rulename', "defruleComment" : "comment", "defruleDeclaration" : "declaration", "lhs" : "lhs", "rhs" : "rhs"}))
+                .setParseAction(types.makeInstanceDict(types.DefRuleConstruct, {"defruleName" : 'rulename', 
+                                                                                "defruleComment" : "comment", 
+                                                                                "defruleDeclaration" : "declaration", 
+                                                                                "lhs" : "lhs", 
+                                                                                "rhs" : "rhs",
+                                                                                "modulesManager": self._modulesManager
+                                                                                }))
 
 
         ### DEFTEMPLATE
@@ -396,7 +413,9 @@ class Parser(object):
                 .setParseAction(types.makeInstanceDict(types.DefTemplateConstruct, {"templateName" : 'templateName',
                                                                                     "templateComment" : "templateComment", 
                                                                                     "slots" : "slots", 
-                                                                                    "templatesManager": self._templatesManager})) 
+                                                                                    "templatesManager": self._templatesManager,
+                                                                                    "modulesManager": self._modulesManager
+                                                                                    })) 
         
         
         ### DEFGLOBALS
@@ -410,7 +429,11 @@ class Parser(object):
                                                             + pp.Optional(self._sb("SymbolParser")).setResultsName("moduleName")
                                                         + pp.Group(pp.ZeroOrMore(self._sb("GlobalAssignmentParser"))).setResultsName("assignments")
                                                         + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefGlobalConstruct, {"assignments": "assignments", "moduleName": "moduleName", "globalsManager": self._globalsManager}))
+                .setParseAction(types.makeInstanceDict(types.DefGlobalConstruct, {"assignments": "assignments", 
+                                                                                  "moduleName": "moduleName", 
+                                                                                  "globalsManager": self._globalsManager, 
+                                                                                  "modulesManager": self._modulesManager
+                                                                                  }))
                 
         
         ### HIGH-LEVEL PARSERS
@@ -470,6 +493,9 @@ class Parser(object):
     
     def getGlobalsManager(self):
         return self._globalsManager
+
+    def getModulesManager(self):
+        return self._modulesManager
             
     def getSParser(self, name):
         self._initParsers()

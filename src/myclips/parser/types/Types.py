@@ -3,6 +3,7 @@ import pyparsing
 from myclips.parser.Templates import TemplatesManager, TemplateDefinition, SlotDefinition as TemplateSlotDefinition,\
     Attribute_TypeConstraint
 from myclips.parser.Globals import GlobalsManager
+from myclips.parser.Modules import ModulesManager
 
 FuncNames = [
     # FUNCTIONS
@@ -65,6 +66,45 @@ class BaseParsedType(ParsedType):
                                                         self.content.__class__.__name__, 
                                                         self.content )
     
+class HasScope(object):
+    def __init__(self, moduleName=None, modulesManager=None):
+        self.modulesManager = (ModulesManager.instance 
+                                    if not isinstance(modulesManager, ModulesManager)
+                                    else modulesManager)
+        self.scope = moduleName if moduleName != None else self.modulesManager.getCurrentScope()
+        if isinstance(self.scope, BaseParsedType):
+            self.scope = self.scope.evaluate()
+        if not self.modulesManager.isDefined(self.scope):
+            raise pyparsing.ParseFatalException("Unable to find defmodule {0}".format(self.scope))
+        self.modulesManager.setCurrentScope(self.scope)
+    
+    @staticmethod
+    def guessNameParts(constructName, modulesManager):
+        modulesManager = (ModulesManager.instance 
+                                    if not isinstance(modulesManager, ModulesManager)
+                                    else modulesManager)
+        # evaluate scope
+        splitted = constructName.split("::", 2)
+        moduleName = modulesManager.getCurrentScope()
+        if len(splitted) == 2:
+            moduleName, _  = splitted
+        else:
+            constructName = "::".join([moduleName, constructName])
+            
+        return (moduleName, constructName)
+        
+        
+    def getScope(self):
+        return self.scope
+    
+    def setScope(self, moduleName):
+        self.scope = moduleName if moduleName != None else "MAIN"
+        # change also the current scope
+        #self.modulesManager.setCurrentScope(self.scope)
+        
+    def getModuleManager(self):
+        return self.modulesManager
+    
 class Number(BaseParsedType):
     pass
 
@@ -110,7 +150,7 @@ class UnnamedMultiFieldVariable(Variable):
 
 class GlobalVariable(Variable):
     converter = lambda self, t: "?*"+self.content.evaluate()+"*"
-    def __init__(self, content, globalsManager=None):
+    def __init__(self, content, globalsManager=None, modulesManager=None):
         Variable.__init__(self, content)
         self.globalsManager = (GlobalsManager.instance 
                                     if not isinstance(globalsManager, GlobalsManager)
@@ -148,12 +188,16 @@ class FunctionCall(ParsedType):
                                         self.funcName,
                                         self.funcArgs )
 
-class DefFactsConstruct(ParsedType):
-    def __init__(self, deffactsName, deffactsComment=None, rhs=None):
+class DefFactsConstruct(ParsedType, HasScope):
+    def __init__(self, deffactsName, deffactsComment=None, rhs=None, modulesManager=None):
         ParsedType.__init__(self, deffactsName)
-        self.deffactsName = deffactsName.evaluate()
+        self.deffactsName = deffactsName.evaluate() if isinstance(deffactsName, BaseParsedType) else deffactsName
         self.deffactsComment = deffactsComment.evaluate().strip('"') if deffactsComment != None else None
         self.rhs = rhs if rhs != None else []
+        
+        # evaluate scope
+        moduleName, self.deffactsName = HasScope.guessNameParts(self.deffactsName, modulesManager)
+        HasScope.__init__(self, moduleName, modulesManager)
         
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1},comment={2},rhs={3}>".format(self.__class__.__name__,
@@ -204,14 +248,19 @@ class SingleFieldRhsSlot(FieldRhsSlot):
                                         self.slotValue)
 
 
-class DefRuleConstruct(ParsedType):
-    def __init__(self, defruleName, defruleComment=None, defruleDeclaration=None, lhs=None, rhs=None):
+class DefRuleConstruct(ParsedType, HasScope):
+    def __init__(self, defruleName, defruleComment=None, defruleDeclaration=None, lhs=None, rhs=None, modulesManager=None):
         ParsedType.__init__(self, defruleName)
         self.defruleName = defruleName.evaluate() if isinstance(defruleName, ParsedType) else defruleName
         self.defruleComment = defruleComment.evaluate().strip('"') if isinstance(defruleComment, ParsedType) else None
         self.defruleDeclaration = defruleDeclaration if defruleDeclaration != None else []
         self.lhs = lhs if lhs != None else [] 
         self.rhs = rhs if rhs != None else []
+        
+        # evaluate scope
+        moduleName, self.defruleName = HasScope.guessNameParts(self.defruleName, modulesManager)
+        HasScope.__init__(self, moduleName, modulesManager)
+        
         
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1},comment={2},declarations={3},lhs={4},rhs={5}>".format(self.__class__.__name__,
@@ -530,7 +579,7 @@ class TypeAttribute(Attribute):
                                         self.allowedTypes)    
 
 class DefTemplateConstruct(ParsedType):
-    def __init__(self, templateName, templateComment=None, slots=None, templatesManager=None):
+    def __init__(self, templateName, templateComment=None, slots=None, templatesManager=None, modulesManager=None):
         ParsedType.__init__(self, templateName)
         self.templateName = templateName.evaluate() if isinstance(templateName, BaseParsedType) else templateName
         self.templateComment = templateComment.evaluate().strip('"') if isinstance(templateComment, BaseParsedType) else None
@@ -538,13 +587,13 @@ class DefTemplateConstruct(ParsedType):
         if len(self.slots) != len(set([x.slotName for x in self.slots])):
             raise pyparsing.ParseFatalException("Multiple definition for same slot name")
         
-        
         self.templatesManager = (TemplatesManager.instance 
                                     if not isinstance(templatesManager, TemplatesManager)
                                     else templatesManager)
         
         # check if a template with the same name is already available
         try:
+            #scope.templates.getTemplateDefinitions(self.templateName)
             self.templatesManager.getTemplateDefinition(self.templateName)
             raise pyparsing.ParseFatalException("Multiple definition for template {0}".format(self.templateName))
         except KeyError:
@@ -564,21 +613,22 @@ class DefTemplateConstruct(ParsedType):
                                         self.templateComment,
                                         self.slots)
         
-class DefGlobalConstruct(ParsedType):
-    def __init__(self, assignments=None, moduleName=None, globalsManager=None):
+class DefGlobalConstruct(ParsedType, HasScope):
+    def __init__(self, assignments=None, moduleName=None, globalsManager=None, modulesManager=None):
         ParsedType.__init__(self, assignments)
-        self.moduleName = moduleName.evaluate() if isinstance(moduleName, BaseParsedType) else moduleName
+        HasScope.__init__(self, moduleName.evaluate() if isinstance(moduleName, BaseParsedType) else None, 
+                            modulesManager)
         self.assignments = assignments if assignments != None else []
         self.globalsManager = (GlobalsManager.instance 
                                     if not isinstance(globalsManager, GlobalsManager)
                                     else globalsManager)
         for ass in self.assignments:
-            self.globalsManager.addGlobal(ass.variable.evaluate(), ass.value, self.moduleName)
+            self.globalsManager.addGlobal(ass.variable.evaluate(), ass.value, self.getScope())
         
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1},module={2}>".format(self.__class__.__name__,
                                         self.assignments,
-                                        self.moduleName)
+                                        self.getScope())
         
 class GlobalAssignment(ParsedType):
     def __init__(self, variable, value):
