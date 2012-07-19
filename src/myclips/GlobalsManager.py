@@ -23,6 +23,12 @@ class GlobalsManager(RestrictedManager, Observable):
             ])
         RestrictedManager.__init__(self, scope)
         
+    def addDefinition(self, definition):
+        RestrictedManager.addDefinition(self, definition)
+        
+        # after i added the definition, i need to fire the event
+        self.fire(GlobalsManager.EVENT_NEW_DEFINITION, definition)
+        
         
 class GlobalVarDefinition(RestrictedDefinition):
     def __init__(self, moduleName, defName, linkedType):

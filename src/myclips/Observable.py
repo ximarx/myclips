@@ -20,6 +20,11 @@ class Observable(object):
     def registerObserver(self, eventName, observer):
         if isinstance(observer, Observer):
             self._observers[eventName].append(observer)
+#            print "Registering new observer {0} for event {1}.{2}".format(
+#                            repr(observer),
+#                            repr(self),
+#                            eventName
+#                        )
             
     def unregisterObserver(self, eventName=None, observer=None):
         if eventName is None:
@@ -41,6 +46,12 @@ class Observable(object):
         return self._events
     
     def fire(self, event, *args, **kargs):
+#        print "Firing {0}.{1} with {2}".format(
+#                       repr(self),
+#                       event,
+#                       repr(args)
+#                    )
+        
         for observer in self._observers[event]:
             observer.notify(event, *args, **kargs)
         

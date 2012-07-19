@@ -4,9 +4,10 @@ Created on 19/lug/2012
 @author: Francesco Capozzo
 '''
 from myclips.Observer import Observer
-from myclips.TemplatesManager import TemplatesManager, TemplateDefinition
+from myclips.TemplatesManager import TemplatesManager
 from myclips.GlobalsManager import GlobalsManager
 from myclips.FunctionsManager import FunctionsManager
+from myclips.RestrictedManager import RestrictedDefinition, RestrictedManager
 
 class Scope(Observer):
     '''
@@ -33,6 +34,8 @@ class Scope(Observer):
         
         if imports is None:
             imports = []
+            
+        self._imports = imports
             
         # imports buffer: i need it
         # because otherwise i will destroy
@@ -110,15 +113,44 @@ class Scope(Observer):
                                 otherModDef.functions.registerObserver(FunctionsManager.EVENT_NEW_DEFINITION, self)
                             elif iqType == Scope.PROMISE_TYPE_GLOBAL:
                                 otherModDef.globalsvars.registerObserver(GlobalsManager.EVENT_NEW_DEFINITION, self)
+        
+        # time to merge all imports with the definitions
+        # avaiables in the scope
+        
+        typeMap = {
+            Scope.PROMISE_TYPE_TEMPLATE   : self.templates,
+            Scope.PROMISE_TYPE_FUNCTION   : self.functions,
+            Scope.PROMISE_TYPE_GLOBAL     : self.globalsvars
+        }
+        
+        for (modName, defDict) in tmp_imports.items():
+            for (constType, constDict) in defDict.items():
+                for (defName, defObj) in constDict.items():
+                    if typeMap[constType].has(defName):
+                        raise ScopeDefinitionConflict(("Cannot define defmodule {0} "
+                                                      + "because of an import/export conflict caused by the {0} {2}::{1}").format(
+                                            self.moduleName,
+                                            constType,
+                                            defName,
+                                            modName
+                                    ))
+                    typeMap[constType].addDefinition(defObj)
                         
             
     def notify(self, eventName, *args, **kargs):
         if eventName == TemplatesManager.EVENT_NEW_DEFINITION:
-            self._handleEventNewTemplate(args[0])
+            self._handleEventNewDefinition(self.templates, args[0])
             
-    def _handleEventNewTemplate(self, definition):
+        elif eventName == GlobalsManager.EVENT_NEW_DEFINITION:
+            self._handleEventNewDefinition(self.globalsvars, args[0])
+            
+        elif eventName == FunctionsManager.EVENT_NEW_DEFINITION:
+            self._handleEventNewDefinition(self.functions, args[0])
+            
+    def _handleEventNewDefinition(self, manager, definition):
         
-        assert isinstance(definition, TemplateDefinition)
+        assert isinstance(definition, RestrictedDefinition)
+        assert isinstance(manager, RestrictedManager)
         
         # i need to verify the case (1):
         #    module A import ?ALL module B
@@ -133,23 +165,25 @@ class Scope(Observer):
             #    module A
             #    module B import ?ALL module A
             #    module C import ?ALL module B and A
-            if self.templates.hasDefinition(definition.templateName):
-                defPresent = self.templates.getTemplateDefinition(definition.templateName)
+            if manager.has(definition.name):
+                defPresent = manager.getDefinition(definition.name)
                 # I already have a definition with the same name
                 # so there is a conflict if they are equals
                 if defPresent != definition:
-                    raise ScopeDefinitionConflict("Cannot define deftemplate {0} because of an import/export conflict".format(
-                                    definition.templateName
+                    raise ScopeDefinitionConflict("Cannot define {1} {0} because of an import/export conflict".format(
+                                    definition.name,
+                                    definition.definitionType
                                 ))
                 # otherwise it's ok: i already know about this definition
                 # just like in case (2)
             
             # this is a new definition
             # i need to add this to my scope
-            self.templates.registerTemplate(definition)
+            manager.addDefinition(definition)
             
         # otherwise it's ok:
-        # reciprocate inclusion just like in case (1) 
+        # <-> inclusion just like in case (1)
+        # nothing to do 
         
             
     @property
@@ -188,11 +222,11 @@ class Scope(Observer):
         exDefs = self._exports.getExports(eType)
         if eName is None or eName == Scope.PROMISE_NAME_ALL:
             if eType == Scope.PROMISE_TYPE_TEMPLATE:
-                return [(eName, self.templates.getTemplateDefinition(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
+                return [(eName, self.templates.getDefinition(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
             elif eType == Scope.PROMISE_TYPE_GLOBAL:
-                return [(eName, self.globalsvars.getGlobal(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
+                return [(eName, self.globalsvars.getDefinition(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
             elif eType == Scope.PROMISE_TYPE_FUNCTION:
-                return [(eName, self.functions.getFuncDefinition(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
+                return [(eName, self.functions.getDefinition(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
             else:
                 raise ValueError("Syntax Error: check appropriate syntax for defmodule import specification")
         else:
@@ -200,13 +234,37 @@ class Scope(Observer):
             # otherwise a ValueError is raised
             eName = exDefs[eName].eName
             if eType == Scope.PROMISE_TYPE_TEMPLATE:
-                return [(eName, self.templates.getTemplateDefinition(eName))]
+                return [(eName, self.templates.getDefinition(eName))]
             elif eType == Scope.PROMISE_TYPE_GLOBAL:
-                return [(eName, self.globalsvars.getGlobal(eName))]
+                return [(eName, self.globalsvars.getDefinition(eName))]
             elif eType == Scope.PROMISE_TYPE_FUNCTION:
-                return [(eName, self.functions.getFuncDefinition(eName))]
+                return [(eName, self.functions.getDefinition(eName))]
             else:
                 raise ValueError("Syntax Error: check appropriate syntax for defmodule import specification")
+        
+    def __str__(self, *args, **kwargs):
+        retStr = [super(Scope, self).__repr__(*args, **kwargs)]
+        TAB = "\t|"
+        retStr.append(TAB + "-moduleName: " + self.moduleName)
+        retStr.append(TAB + "-exports: ")
+        retStr.append(str(self._exports))
+        retStr.append(TAB + "-imports: ")
+        for im in self._imports:
+            retStr.append(TAB + TAB + "-" + str(im))
+        
+        iMan = [("functions", self.functions),
+                ("globals", self.globalsvars),
+                ("templates", self.templates)]
+        for (aN, aM) in iMan:
+            retStr.append(TAB + "-{0}: ".format(aN))
+            for iDef in aM.definitions:
+                retStr.append(TAB + TAB + "-{0}::{1}".format(
+                        aM.getDefinition(iDef).moduleName, 
+                        iDef
+                    ))
+        return "\n".join(retStr)+"\n"
+        
+        
         
 class _ScopeExportPromise(object):
     
@@ -250,7 +308,15 @@ class _ScopeExportPromise(object):
     
     def getExports(self, eType):
         return getattr(self, _ScopeExportPromise._typeMap[eType])
-        
+
+    def __str__(self):
+        TAB = "\t|"
+        retStr = []
+        for eType in _ScopeExportPromise._typeMap.keys():
+            retStr.append(TAB + TAB + "-{0}:".format(eType))
+            for exDef in self.getExports(eType).keys():
+                retStr.append(TAB + TAB + TAB + "-" + exDef)
+        return "\n".join(retStr)
 
 class ScopeImport(object):
 
@@ -270,6 +336,9 @@ class ScopeImport(object):
     @property
     def iName(self):
         return self._importName
+    
+    def __str__(self, *args, **kwargs):
+        return "<ScopeImport: from {0} {1} {2}>".format(self.iModule, self.iType, self.iName)
 
 class ScopeExport(object):
     
