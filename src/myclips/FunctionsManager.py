@@ -4,7 +4,8 @@ Created on 17/lug/2012
 @author: Francesco Capozzo
 '''
 from myclips.Observable import Observable
-from myclips.RestrictedManager import RestrictedManager, RestrictedDefinition
+from myclips.RestrictedManager import RestrictedManager, RestrictedDefinition,\
+    MultipleDefinitionError
 
 
 class FunctionsManager(RestrictedManager, Observable):
@@ -23,12 +24,44 @@ class FunctionsManager(RestrictedManager, Observable):
             ])
         RestrictedManager.__init__(self, scope)
         
+        # need to import system function definitions
+        self._systemsFunctions = Functions_ImportSystemDefinitions()
+        
+        
+    @property
+    def systemFunctions(self):
+        return self._systemsFunctions.keys()
+    
+    def getSystemFunctionDefinition(self, funcName):
+        return self._systemsFunctions[funcName] 
+        
+    def hasSystemFunction(self, funcName):
+        return self._systemsFunctions.has_key(funcName)
+
+    def has(self, definitionName):
+        return (self.hasSystemFunction(definitionName) or RestrictedManager.has(self, definitionName))
+    
+    def getDefinition(self, defName):
+        try:
+            return self.getSystemFunctionDefinition(defName)
+        except:
+            return RestrictedManager.getDefinition(self, defName)
+    
+    def registerSystemFunction(self, definition):
+        if self.hasSystemFunction(definition.name):
+            raise MultipleDefinitionError("Cannot redefine {0} {2}::{1} while it is in use".format(
+                        definition.definitionType,
+                        definition.name,
+                        "?SYSTEM?"
+                    ))
+        self._systemsFunctions[definition.name] = definition
+            
         
 class FunctionDefinition(RestrictedDefinition):
-    def __init__(self, moduleName, defName, linkedType, returnType, handler, constraints=None):
+    def __init__(self, moduleName, defName, linkedType, returnTypes, handler, constraints=None):
         RestrictedDefinition.__init__(self, moduleName, defName, "deffunction", linkedType)
         self._handler = handler
-        self._returnType = returnType if isinstance(returnType, tuple) else (returnType,)
+        self._returnTypes = returnTypes if isinstance(returnTypes, tuple) else (returnTypes,)
         self._constraints = constraints if isinstance(constraints, list) else [] 
         
     @property
@@ -40,13 +73,13 @@ class FunctionDefinition(RestrictedDefinition):
         return self._handler
     
     @property
-    def returnType(self):
+    def returnTypes(self):
         '''
         Return a tuple of all return types the function
         can use as output
         @rtype: tuple
         '''
-        return self._returnType
+        return self._returnTypes
     
     def isValidCall(self, args):
         for c in self._constraints:
@@ -119,14 +152,14 @@ class Constraint_ArgType(FunctionConstraint):
                                                                 )
         
     def isValid(self, args):
-        import myclips.parser.types.Types as types
+        import myclips.parser.Types as types
         if self.argIndex == None:
             invalidArgs = [True if isinstance(x, self.argType)
                                 else True if isinstance(x, types.Variable)
                                     else True if isinstance(x, types.FunctionCall)
-                                                    and self.argType in x.funcDefinition.getReturnTypes()
+                                                    and self.argType in x.funcDefinition.returnTypes
                                         else True if isinstance(x, types.FunctionCall)
-                                                        and any([issubclass(retType, self.argType) for retType in x.funcDefinition.getReturnTypes()])
+                                                        and any([issubclass(retType, self.argType) for retType in x.funcDefinition.returnTypes])
                                             else False
                            for x in args]
             return (not any([not x for x in invalidArgs]))
@@ -135,11 +168,105 @@ class Constraint_ArgType(FunctionConstraint):
             return (True if isinstance(x, self.argType)
                                 else True if isinstance(x, types.Variable)
                                     else True if isinstance(x, types.FunctionCall)
-                                                    and self.argType in x.funcDefinition.getReturnTypes()
+                                                    and self.argType in x.funcDefinition.returnTypes
                                         else True if isinstance(x, types.FunctionCall)
-                                                        and any([issubclass(retType, self.argType) for retType in x.funcDefinition.getReturnTypes()])
+                                                        and any([issubclass(retType, self.argType) for retType in x.funcDefinition.returnTypes])
                                             else False)
 
     
     
+
+FUNCTIONS_DEFINITIONS = {}
     
+def Functions_ImportSystemDefinitions():
+
+    if len(FUNCTIONS_DEFINITIONS) > 0:
+        return FUNCTIONS_DEFINITIONS
+
+    # setup basic functions like aritmetic / comparison
+    # FOR PARSING ONLY
+    
+    from myclips.parser.Types import Number, BaseParsedType, Lexeme, Integer, Float
+    
+    import sys
+    
+    
+    
+    FUNCTIONS_DEFINITIONS["+"] = FunctionDefinition("?SYSTEM?", "+", object(), (Integer, Float), lambda *args: sum([t.evaluate() if isinstance(t, BaseParsedType) else t for t in args]),
+            [
+                Constraint_MinArgsLength(2),
+                Constraint_ArgType(Number)
+            ])
+    
+    def r_mul(sequence):
+        return (sequence[0] if len(sequence) == 1 
+                else sequence[0] * r_mul(sequence[1:]))
+    
+    FUNCTIONS_DEFINITIONS["*"] = FunctionDefinition("?SYSTEM?", "*", object(), (Integer, Float), lambda *args: r_mul([t.evaluate() if isinstance(t, BaseParsedType) else t for t in args]),
+            [
+                Constraint_MinArgsLength(2),
+                Constraint_ArgType(Number)
+            ])
+    
+    FUNCTIONS_DEFINITIONS["eq"] = FunctionDefinition("?SYSTEM?", "eq", object(), True.__class__, lambda *args: not any([
+                                                                (t.evaluate() if isinstance(t, BaseParsedType) else t) 
+                                                                    != 
+                                                                (args[0].evaluate() if isinstance(args[0], BaseParsedType) else args[0]) 
+                                                                for (i,t) in enumerate(args) if i > 0]),
+            [
+                Constraint_MinArgsLength(2),
+                Constraint_ArgType(Lexeme)
+            ])
+    
+    FUNCTIONS_DEFINITIONS["neq"] = FunctionDefinition("?SYSTEM?", "neq", object(), True.__class__, lambda *args: not any([
+                                                                (t.evaluate() if isinstance(t, BaseParsedType) else t) 
+                                                                    == 
+                                                                (args[0].evaluate() if isinstance(args[0], BaseParsedType) else args[0]) 
+                                                                for (i,t) in enumerate(args) if i > 0]),
+            [
+                Constraint_MinArgsLength(2),
+                Constraint_ArgType(Lexeme)
+            ])
+    
+    FUNCTIONS_DEFINITIONS["="] = FunctionDefinition("?SYSTEM?", "=", object(), True.__class__, lambda *args: not any([
+                                                                (t.evaluate() if isinstance(t, BaseParsedType) else t) 
+                                                                    != 
+                                                                (args[0].evaluate() if isinstance(args[0], BaseParsedType) else args[0]) 
+                                                                for (i,t) in enumerate(args) if i > 0]),
+            [
+                Constraint_MinArgsLength(2),
+                Constraint_ArgType(Number)
+            ])
+    
+    FUNCTIONS_DEFINITIONS["<>"] = FunctionDefinition("?SYSTEM?", "<>", object(), True.__class__, lambda *args: not any([
+                                                                (t.evaluate() if isinstance(t, BaseParsedType) else t) 
+                                                                    == 
+                                                                (args[0].evaluate() if isinstance(args[0], BaseParsedType) else args[0]) 
+                                                                for (i,t) in enumerate(args) if i > 0]),
+            [
+                Constraint_MinArgsLength(2),
+                Constraint_ArgType(Number)
+            ])
+    
+    FUNCTIONS_DEFINITIONS["printout"] = FunctionDefinition("?SYSTEM?", "printout", object(), None.__class__, lambda *args: sys.stdout.writelines(args[1:]),
+            [
+                Constraint_MinArgsLength(2),
+            ])
+
+    FUNCTIONS_DEFINITIONS["float"] = FunctionDefinition("?SYSTEM?", "float", object(), Float, lambda arg: Float(arg.evaluate()),
+            [
+                Constraint_ArgType(Number),
+                Constraint_ExactArgsLength(1)
+            ])
+    
+    FUNCTIONS_DEFINITIONS["assert"] = FunctionDefinition("?SYSTEM?", "assert", object(), None.__class__, lambda *args: args,
+            [
+                Constraint_MinArgsLength(1),
+            ])
+    
+    FUNCTIONS_DEFINITIONS["retract"] = FunctionDefinition("?SYSTEM?", "retract", object(), None.__class__, lambda *args: args,
+            [
+                Constraint_MinArgsLength(1),
+            ])
+    
+    return FUNCTIONS_DEFINITIONS

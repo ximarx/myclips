@@ -70,7 +70,7 @@ class SlotDefinition(object):
     
     @staticmethod
     def fromParserSlotDefinition(psl):
-        import myclips.parser.types.Types as types
+        import myclips.parser.Types as types
         
         sType = SlotDefinition.TYPE_SINGLE
         if isinstance(psl, types.MultiSlotDefinition):

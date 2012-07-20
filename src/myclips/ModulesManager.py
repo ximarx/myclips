@@ -36,6 +36,10 @@ class ModulesManager(object):
         
     def getCurrentScope(self):
         return self._currentScope
+    
+    @property
+    def currentScope(self):
+        return self._currentScope
         
     def getScope(self, moduleName):
         return self._modules[moduleName]

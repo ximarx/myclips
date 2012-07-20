@@ -5,15 +5,12 @@ Created on 11/lug/2012
 '''
 import unittest
 from myclips.parser.Parser import Parser
-import myclips.parser.types.Types as types
+import myclips.parser.Types as types
 from pyparsing import ParseException, ParseFatalException
 from unittest.case import expectedFailure
-from myclips.parser.Functions import _SampleFunctionsInit
-from myclips.parser.Templates import TemplatesManager
 import pyparsing
-from myclips.parser.Globals import GlobalsManager
-from myclips.parser.Modules import ModulesManager
 import logging
+from myclips.Scope import Scope
 #from myclips.parser.Templates import _SampleTemplatesInit
 
 # disable all logging from modules
@@ -24,9 +21,8 @@ class ParserTest(unittest.TestCase):
 
     def setUp(self):
         #if True or not hasattr(self, "parser"):
-        _SampleFunctionsInit()
             #_SampleTemplatesInit()
-        self.parser = Parser(templatesManager=TemplatesManager(), globalsManager=GlobalsManager(), modulesManager=ModulesManager())
+        self.parser = Parser()
 
     def _testImpl(self, parsername, parsable, parseAll=False):
         p = self.parser.getSParser(parsername)
@@ -45,7 +41,7 @@ class ParserTest(unittest.TestCase):
         
         self.assertEqual(len(res), 1)
         self.assertIsInstance(res[0], types.DefFactsConstruct)
-        self.assertEqual(res[0].deffactsName, "MAIN::nome1")
+        self.assertEqual(res[0].deffactsName, "nome1")
         self.assertEqual(res[0].deffactsComment, "commento1")
         self.assertIsInstance(res[0].rhs, list)
 
@@ -102,6 +98,13 @@ class ParserTest(unittest.TestCase):
 
     def test_DefFactsConstructParser_TemplateRhsPattern(self):
         '''Check if deffacts content is correctly parsed if it's a template fact'''
+        # need to add template definition first
+        self._testImpl('DefTemplateConstructParser', r"""
+        (deftemplate templateName 
+            (slot slot1k))
+        """)        
+        
+        
         res = self._testImpl('DefFactsConstructParser', r"""
         (deffacts nome1 "commento1"
             (templateName (slot1k slot1v))
@@ -113,6 +116,13 @@ class ParserTest(unittest.TestCase):
 
     def test_DefFactsConstructParser_TemplateRhsPatternAndOrderedRhsPattern(self):
         '''Check if deffacts content is correctly parsed if it's mixed type'''
+
+        # need to add template definition first        
+        self._testImpl('DefTemplateConstructParser', r"""
+        (deftemplate templateName 
+            (slot slot1k))
+        """)        
+        
         res = self._testImpl('DefFactsConstructParser', r"""
         (deffacts nome1 "commento1"
             (templateName (slot1k slot1v))
@@ -244,6 +254,15 @@ class ParserTest(unittest.TestCase):
 
     def test_TemplateRhsPatternParser(self):
         '''Check general full template-rhs format '''
+        # need to add template definition first
+        self._testImpl('DefTemplateConstructParser', r"""
+        (deftemplate templateName
+            (slot slot1k) 
+            (slot slot2k) 
+            (multislot slot3k)
+        )
+        """)        
+        
         res = self._testImpl('TemplateRhsPatternParser', r"""
         (templateName 
             (slot1k slot1v) 
@@ -259,6 +278,18 @@ class ParserTest(unittest.TestCase):
 
     def test_TemplateRhsPatternParser_SlotsTypes(self):
         '''Check general full template-rhs slot format'''
+        
+        # add template definition
+        
+        self._testImpl('DefTemplateConstructParser', r"""
+        (deftemplate templateName
+            (slot slot1k) 
+            (multislot slot2k) 
+            (multislot slot3k)
+        )
+        """)        
+        
+        
         res = self._testImpl('TemplateRhsPatternParser', r"""
         (templateName 
             (slot1k slot1v) 
@@ -272,7 +303,17 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0].templateSlots[2], types.MultiFieldRhsSlot)
 
     def test_TemplateRhsPatternParser_FunctionInSlot(self):
-        #'''Check general template-rhs format when function call in it'''
+        '''Check general template-rhs format when function call in it'''
+        
+        # add template definition
+        
+        self._testImpl('DefTemplateConstructParser', r"""
+        (deftemplate templateName
+            (slot slot1k) 
+        )
+        """)        
+        
+        
         res = self._testImpl('TemplateRhsPatternParser', r"""
         (templateName 
             (slot1k (= 1 2 3)) 
@@ -292,7 +333,7 @@ class ParserTest(unittest.TestCase):
         """).asList()
         
         self.assertIsInstance(res[0], types.DefRuleConstruct)
-        self.assertEqual(res[0].defruleName, "MAIN::rulename")
+        self.assertEqual(res[0].defruleName, "rulename")
 
     def test_DefRuleConstructParser_WithComment(self):
         '''Check defrule construct parsing with comment'''
@@ -392,6 +433,14 @@ class ParserTest(unittest.TestCase):
     
     def test_ActionParser_TemplateRhsPatternAsFunctionArg(self):
         '''Check action parsed correct parsing when nested value in it'''
+        # need to add template definition first
+        self._testImpl('DefTemplateConstructParser', r"""
+        (deftemplate templateName 
+            (slot slotA) 
+            (slot slotB) 
+            (slot slotC))
+        """)        
+        
         res = self._testImpl('ActionParser', r"""
         (assert (templateName (slotA A) (slotB B) (slotC C)))
         """).asList()
@@ -915,6 +964,13 @@ class ParserTest(unittest.TestCase):
         """)
         
     def test_VariableParser_GlobalVariable_Normal(self):
+        
+        self._testImpl('DefGlobalConstructParser', r"""
+        (defglobal
+            ?*gff* = 1 
+        )
+        """)        
+        
         res = self._testImpl('VariableParser', r"""
         ?*gff* 
         """).asList()
@@ -937,7 +993,8 @@ class ParserTest(unittest.TestCase):
         """)
 
     def test_DefGlobalConstructParser(self):
-        self.parser.getModulesManager().addModule(ModuleDefinition("MODULE"))
+        Scope("MODULE", self.parser.getModulesManager())
+        
         res = self._testImpl('ConstructParser', r"""
         (defglobal MODULE 
             ?*A* = B
@@ -945,12 +1002,12 @@ class ParserTest(unittest.TestCase):
         """).asList()
 
         self.assertIsInstance(res[0], types.DefGlobalConstruct)
-        self.assertEqual(res[0].getScope(), "MODULE")
+        self.assertEqual(res[0].scope.moduleName, "MODULE")
         self.assertEqual(len(res[0].assignments), 1)
         self.assertEqual(len([True for x in res[0].assignments if not isinstance(x, types.GlobalAssignment)]), 0)
-        allGlobals = self.parser.getGlobalsManager().getAllGlobals()
+        allGlobals = self.parser.getModulesManager().currentScope.globalsvars.definitions
         self.assertEqual(len(allGlobals), 1)
-        self.assertEqual(allGlobals[0][0:2], ("MODULE", "?*A*"))
+        self.assertEqual(allGlobals[0], "?*A*")
 
     def test_DefGlobalConstructParser_WithoutModuleName(self):
         res = self._testImpl('ConstructParser', r"""
@@ -960,10 +1017,11 @@ class ParserTest(unittest.TestCase):
         """).asList()
 
         self.assertIsInstance(res[0], types.DefGlobalConstruct)
-        self.assertEqual(res[0].getScope(), self.parser.getModulesManager().getCurrentScope())
-        allGlobals = self.parser.getGlobalsManager().getAllGlobals()
+        self.assertEqual(res[0].scope, self.parser.getModulesManager().currentScope)
+        allGlobals = self.parser.getModulesManager().currentScope.globalsvars.definitions
         self.assertEqual(len(allGlobals), 1)
-        self.assertEqual(allGlobals[0][0:2], ("MAIN", "?*A*"))
+        self.assertEqual(allGlobals[0], "?*A*")
+        self.assertEqual(self.parser.getModulesManager().currentScope.globalsvars.getDefinition("?*A*").moduleName, "MAIN")
 
     def test_DefGlobalConstructParser_MultipleAssignments(self):
         res = self._testImpl('ConstructParser', r"""
@@ -976,10 +1034,10 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.DefGlobalConstruct)
         self.assertEqual(len(res[0].assignments), 2)
         self.assertEqual(len([True for x in res[0].assignments if not isinstance(x, types.GlobalAssignment)]), 0)
-        allGlobals = self.parser.getGlobalsManager().getAllGlobals()
+        allGlobals = self.parser.getModulesManager().currentScope.globalsvars.definitions
         self.assertEqual(len(allGlobals), 2)
-        self.assertEqual(allGlobals[0][0:2], ("MAIN", "?*A*"))
-        self.assertEqual(allGlobals[1][0:2], ("MAIN", "?*B*"))
+        self.assertEqual(allGlobals[0], "?*A*")
+        self.assertEqual(allGlobals[1], "?*B*")
 
     def test_GlobalAssignmentParser(self):
         res = self._testImpl('GlobalAssignmentParser', r"""
