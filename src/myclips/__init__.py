@@ -1,6 +1,6 @@
 import logging
 
-FORMAT = '[%(levelname).3s %(module)s::%(funcName)s] %(message)s'
+FORMAT = '[%(levelname).3s %(module)s::%(funcName)s:%(lineno)d] %(message)s'
 logging.basicConfig(format=FORMAT)
 
 logger = logging.getLogger('myclips')

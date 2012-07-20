@@ -4,34 +4,7 @@ import string
 import myclips.parser.Types as types
 import time
 from myclips.ModulesManager import ModulesManager
-
-def forwardParsed(bounds=None, key=None):
-    def forwardAction(s,l,t):
-        rlist = t.asList()
-        if key != None:
-            return rlist[key]
-        elif bounds != None and len(bounds) == 2:
-            return rlist[bounds[0]:bounds[1]]
-        else:
-            return rlist
-            
-    return forwardAction
-
-def valutateScopeChange(currentScope):
-    def changeScopeAction(s,l,t):
-        constructName = t[0].evaluate() # i assume a Symbol is here
-        splitted = constructName.split("::", 2)
-        if len(splitted) == 2:
-            # there is a module definition
-            moduleName, _ = splitted
-            # need to valutate the currentScope
-            if moduleName != currentScope.moduleName:
-                try:
-                    currentScope.modules.changeCurrentScope(moduleName)
-                except ValueError, e:
-                    raise pp.ParseFatalException(e.getMessage())
-        
-    return changeScopeAction
+import myclips
 
 
 class Parser(object):
@@ -167,6 +140,49 @@ class Parser(object):
                     
             return tryMakeAction
                     
+                
+        def forwardParsed(bounds=None, key=None):
+            def forwardAction(s,l,t):
+                rlist = t.asList()
+                if key != None:
+                    return rlist[key]
+                elif bounds != None and len(bounds) == 2:
+                    return rlist[bounds[0]:bounds[1]]
+                else:
+                    return rlist
+                    
+            return forwardAction
+        
+        def valutateScopeChange(modulesManager):
+            def changeScopeAction(s,l,t):
+                constructName = t[0].evaluate() # i assume a Symbol is here
+                splitted = constructName.split("::", 2)
+                if len(splitted) == 2:
+                    # there is a module definition
+                    moduleName, _ = splitted
+                    # need to valutate the currentScope
+                    myclips.logger.debug("Changing scope: %s -> %s", modulesManager.currentScope.moduleName, moduleName)
+                    if moduleName != modulesManager.currentScope.moduleName:
+                        try:
+                            modulesManager.currentScope.modules.changeCurrentScope(moduleName)
+                        except ValueError, e:
+                            raise pp.ParseFatalException(s,l,e.args[0])
+                
+            return changeScopeAction
+        
+        
+        def doScopeChange(modulesManager):
+            def changeScopeAction(s,l,t):
+                moduleName = t[0].evaluate() # i assume a Symbol is here
+                # need to valutate the currentScope
+                myclips.logger.debug("Changing scope: %s -> %s", modulesManager.currentScope.moduleName, moduleName)
+                if moduleName != modulesManager.currentScope.moduleName:
+                    try:
+                        modulesManager.currentScope.modules.changeCurrentScope(moduleName)
+                    except ValueError, e:
+                        raise pp.ParseFatalException(s,l,e.args[0])
+                
+            return changeScopeAction
         
 
         ### BASE PARSERS
@@ -216,7 +232,7 @@ class Parser(object):
                                                    - pp.Literal("*").leaveWhitespace()
                                                    )\
                 .setParseAction(makeInstanceDict(types.GlobalVariable, {'content': 1, 
-                                                                              "scope": self._modulesManager.currentScope
+                                                                              "modulesManager": self._modulesManager
                                                                               }))
         
         self.subparsers["VariableParser"] = (self._sb("MultiFieldVariableParser") 
@@ -228,7 +244,7 @@ class Parser(object):
         
         self.subparsers["ExpressionParser"] = pp.Forward()
         
-        self.subparsers["FunctionNameParser"] = (pp.oneOf(self._modulesManager.currentScope.functions.systemFunctions )\
+        self.subparsers["FunctionNameParser"] = (pp.oneOf(self.getModulesManager().currentScope.functions.systemFunctions )\
                                                     .setParseAction(makeInstance(types.Symbol, 0))
                                                  | self.getSParser("VariableSymbolParser"))\
                 .setParseAction(forwardParsed(key=0))
@@ -238,7 +254,7 @@ class Parser(object):
                                                     + RPAR)\
                 .setParseAction(makeInstanceDict(types.FunctionCall, {'funcName': 0,
                                                                             'funcArgs': 1, 
-                                                                            "scope": self._modulesManager.currentScope
+                                                                            "modulesManager": self._modulesManager
                                                                             }))
         
         self.subparsers["ExpressionParser"] << (self._sb("FunctionCallParser") 
@@ -263,7 +279,7 @@ class Parser(object):
         self.subparsers["TemplateRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.Group(pp.ZeroOrMore(self._sb("RhsSlotParser"))) + RPAR)\
                 .setParseAction(makeInstanceDict(types.TemplateRhsPattern, {'templateName': 0, 
                                                                                   'templateSlots': 1,
-                                                                                  "scope": self._modulesManager.currentScope
+                                                                                  "modulesManager": self._modulesManager
                                                                                   }))
 
         self.subparsers["RhsPatternParser"] = (self._sb("TemplateRhsPatternParser") | self._sb("OrderedRhsPatternParser"))\
@@ -279,7 +295,7 @@ class Parser(object):
                                                     + RPAR)\
                 .setParseAction(makeInstanceDict(types.FunctionCall, {'funcName': 0,
                                                                             'funcArgs': 1,
-                                                                            "scope": self._modulesManager.currentScope
+                                                                            "modulesManager": self._modulesManager
                                                                             }))
                 
         # expression alias    
@@ -292,7 +308,7 @@ class Parser(object):
         ### DEFFACTS
         
         self.subparsers['DefFactsNameParser'] = self._sb("SymbolParser").copy()\
-                .addParseAction(valutateScopeChange(self._modulesManager.currentScope))
+                .addParseAction(valutateScopeChange(self.getModulesManager()))
         
         self.subparsers["DefFactsConstructParser"] = (LPAR + pp.Keyword("deffacts").suppress() 
                                                         - self._sb("DefFactsNameParser").setResultsName("DefFactsNameParser") 
@@ -302,7 +318,7 @@ class Parser(object):
                 .setParseAction(makeInstanceDict(types.DefFactsConstruct, {"deffactsName" : 'DefFactsNameParser', 
                                                                                  "deffactsComment" : "comment", 
                                                                                  "rhs" : "rhs",
-                                                                                 "scope": self._modulesManager.currentScope
+                                                                                 "modulesManager": self._modulesManager
                                                                                  }))
 
 
@@ -391,7 +407,7 @@ class Parser(object):
                                                       RPAR)\
                 .setParseAction(makeInstanceDict(types.TemplatePatternCE, {"templateName" : "templateName", 
                                                                                  "templateSlots" : "templateSlots", 
-                                                                                 "scope": self._modulesManager.currentScope
+                                                                                 "modulesManager": self._modulesManager
                                                                                  }))
         
         self.subparsers['PatternCEParser'] = (self._sb("OrderedPatternCEParser")
@@ -440,7 +456,7 @@ class Parser(object):
                 
         
         self.subparsers['DefRuleNameParser'] = self._sb("SymbolParser").copy()\
-                .addParseAction(valutateScopeChange(self._modulesManager.currentScope))
+                .addParseAction(valutateScopeChange(self.getModulesManager()))
         
         self.subparsers['DefRuleConstructParser'] = (LPAR + pp.Keyword("defrule").suppress()  
                                                         - self._sb("DefRuleNameParser").setResultsName('rulename')
@@ -456,7 +472,7 @@ class Parser(object):
                                                                                 "defruleDeclaration" : "declaration", 
                                                                                 "lhs" : "lhs", 
                                                                                 "rhs" : "rhs",
-                                                                                "scope": self._modulesManager.currentScope
+                                                                                "modulesManager": self._modulesManager
                                                                                 }))
 
 
@@ -512,7 +528,7 @@ class Parser(object):
 
 
         self.subparsers['DefTemplateNameParser'] = self._sb("SymbolParser").copy()\
-                .addParseAction(valutateScopeChange(self._modulesManager.currentScope))
+                .addParseAction(valutateScopeChange(self.getModulesManager()))
         
         self.subparsers["DefTemplateConstructParser"] = (LPAR + pp.Keyword("deftemplate").suppress()  
                                                         - self._sb("DefTemplateNameParser").setResultsName('templateName')
@@ -522,7 +538,7 @@ class Parser(object):
                 .setParseAction(makeInstanceDict(types.DefTemplateConstruct, {"templateName" : 'templateName',
                                                                                     "templateComment" : "templateComment", 
                                                                                     "slots" : "slots", 
-                                                                                    "scope": self._modulesManager.currentScope
+                                                                                    "modulesManager": self._modulesManager
                                                                                     })) 
         
         
@@ -530,20 +546,23 @@ class Parser(object):
         
         self.subparsers["GlobalAssignmentParser"] = (self._sb("GlobalVariableParser").copy()
                                                         .setParseAction(makeInstanceDict(types.GlobalVariable, {'content': 1, 
-                                                                              "scope": self._modulesManager.currentScope,
+                                                                              "modulesManager": self._modulesManager,
                                                                               "ignoreCheck": True
                                                                               }))
                                                      + pp.Literal("=").suppress()
                                                      + self._sb("ExpressionParser"))\
                 .setParseAction(makeInstanceDict(types.GlobalAssignment, {"variable": 0, "value": 1}))
+                
+        self.subparsers['DefGlobalModuleParser'] = self._sb("SymbolParser").copy()\
+                .addParseAction(doScopeChange(self.getModulesManager()))
         
         self.subparsers["DefGlobalConstructParser"] = (LPAR + pp.Keyword("defglobal").suppress()
-                                                            - pp.Optional(self._sb("SymbolParser")).setResultsName("moduleName")
+                                                            - pp.Optional(self._sb("DefGlobalModuleParser")).setResultsName("moduleName")
                                                         - pp.Group(pp.ZeroOrMore(self._sb("GlobalAssignmentParser"))).setResultsName("assignments")
                                                         - RPAR)\
                 .setParseAction(makeInstanceDict(types.DefGlobalConstruct, {"assignments": "assignments", 
                                                                                   "moduleName": "moduleName", 
-                                                                                  "scope": self._modulesManager.currentScope
+                                                                                  "modulesManager": self._modulesManager
                                                                                   }))
                 
         

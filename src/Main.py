@@ -1,8 +1,9 @@
 from myclips.parser.Parser import Parser
 import sys
-from myclips.Scope import Scope
+from myclips.Scope import Scope, ScopeImport, ScopeExport
 from myclips.ModulesManager import ModulesManager
 from pyparsing import ParseSyntaxException, ParseFatalException
+from myclips.parser.Types import ParsedType
 
 def constructs_prettyprint(constr_string, INDENT=0):
     output = sys.stdout
@@ -23,46 +24,52 @@ def constructs_prettyprint(constr_string, INDENT=0):
 if __name__ == '__main__':
     
     s = r"""
-(defglobal modulo
+(defglobal A
     ?*a* = 2
 )
-"""
 
-    s2 = r"""
+(defglobal MOD
+    ?*b* = 2
+)
 
 (deffacts MOD::bla
     (A B C)
 )
 
+(deftemplate A::template 
+    (slot A (type INTEGER)))
+
 (defrule A::r1
     (declare
         (salience 100))
-    ?a <- (A ?a&:(efwohoi 1 2 3) C)
+    ?a <- (A ?a&:(+ 1 2 3) C)
     (template (A 1))
 =>
-    (printout t ?*a*)
+    (printout t ?*a* ?*b*)
 )
 
 
 """
 
-    s = s + s2
 
-    #import pprint
-    
     MM = ModulesManager()
     MM.addMainScope()
-    Scope("MOD", MM)
-    Scope("modulo", MM)
-    Scope("A", MM)
+    Scope("MOD", MM, exports=[ScopeExport(Scope.PROMISE_TYPE_GLOBAL, Scope.PROMISE_NAME_ALL)])
+    Scope("A", MM, imports=[ScopeImport("MOD", Scope.PROMISE_TYPE_GLOBAL, Scope.PROMISE_NAME_ALL)])
     MM.changeCurrentScope("MAIN")
     
     try:
     
-        [constructs_prettyprint(repr(x)) for x in Parser(modulesManager=MM, debug=False).parse(s)]
-        
-        for scopeName in MM.getModulesNames():
-            print MM.getScope(scopeName)
+        [constructs_prettyprint(repr(x)) for x in Parser(modulesManager=MM, debug=False).parse(s) if isinstance(x, ParsedType)]
             
     except Exception, err:
-        print Parser.ExceptionPPrint(err, s)
+        try:
+            print Parser.ExceptionPPrint(err, s)
+        except:
+            # raise the original exception,
+            # pretty printer failed
+            raise err
+    finally:
+        for scopeName in MM.getModulesNames():
+            print MM.getScope(scopeName)
+        

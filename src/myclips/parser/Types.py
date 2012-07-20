@@ -47,8 +47,8 @@ class BaseParsedType(ParsedType):
                                                         self.content )
     
 class HasScope(object):
-    def __init__(self, scope):
-        self._scope = scope
+    def __init__(self, modulesManager):
+        self._scope = modulesManager.currentScope
     
     @property
     def scope(self):
@@ -109,9 +109,9 @@ class UnnamedMultiFieldVariable(Variable):
 
 class GlobalVariable(Variable, HasScope):
     converter = lambda self, t: "?*"+self.content.evaluate()+"*"
-    def __init__(self, content, scope, ignoreCheck=False):
+    def __init__(self, content, modulesManager, ignoreCheck=False):
         Variable.__init__(self, content)
-        HasScope.__init__(self, scope)
+        HasScope.__init__(self, modulesManager)
         if not ignoreCheck:
             if not self.scope.globalsvars.has(self.evaluate()):
                 # this variable is undefined in this scope
@@ -123,9 +123,9 @@ class GlobalVariable(Variable, HasScope):
         
 
 class FunctionCall(ParsedType, HasScope):
-    def __init__(self, funcName, scope, funcArgs=None):
+    def __init__(self, funcName, modulesManager, funcArgs=None):
         ParsedType.__init__(self, funcName)
-        HasScope.__init__(self, scope)
+        HasScope.__init__(self, modulesManager)
         
         self.funcName = funcName.evaluate()
         self.funcArgs = funcArgs if funcArgs != None else []
@@ -146,9 +146,9 @@ class FunctionCall(ParsedType, HasScope):
                                         self.funcArgs )
 
 class DefFactsConstruct(ParsedType, HasScope):
-    def __init__(self, deffactsName, scope, deffactsComment=None, rhs=None):
+    def __init__(self, deffactsName, modulesManager, deffactsComment=None, rhs=None):
         ParsedType.__init__(self, deffactsName)
-        HasScope.__init__(self, scope)
+        HasScope.__init__(self, modulesManager)
         deffactsName = deffactsName.evaluate() if isinstance(deffactsName, BaseParsedType) else deffactsName
         self.deffactsName = HasScope.cleanName(deffactsName)
         self.deffactsComment = deffactsComment.evaluate().strip('"') if deffactsComment != None else None
@@ -170,9 +170,9 @@ class OrderedRhsPattern(ParsedType):
                                         str(self.content).replace("[", "{").replace("}", "]")) #better formatting with pretty print
 
 class TemplateRhsPattern(ParsedType, HasScope):
-    def __init__(self, templateName, scope, templateSlots=None):
+    def __init__(self, templateName, modulesManager, templateSlots=None):
         ParsedType.__init__(self, templateName)
-        HasScope.__init__(self, scope)
+        HasScope.__init__(self, modulesManager)
         self.templateName = templateName.evaluate() if isinstance(templateName, ParsedType) else templateName
         self.templateSlots =  templateSlots if templateName != None else []
         try:
@@ -219,9 +219,9 @@ class SingleFieldRhsSlot(FieldRhsSlot):
 
 
 class DefRuleConstruct(ParsedType, HasScope):
-    def __init__(self, defruleName, scope, defruleComment=None, defruleDeclaration=None, lhs=None, rhs=None):
+    def __init__(self, defruleName, modulesManager, defruleComment=None, defruleDeclaration=None, lhs=None, rhs=None):
         ParsedType.__init__(self, defruleName)
-        HasScope.__init__(self, scope)
+        HasScope.__init__(self, modulesManager)
         
         # evaluate and clean rulename
         defruleName = defruleName.evaluate() if isinstance(defruleName, ParsedType) else defruleName
@@ -268,9 +268,9 @@ class OrderedPatternCE(PatternCE):
                                     )
 
 class TemplatePatternCE(PatternCE, HasScope):
-    def __init__(self, templateName, scope, templateSlots=None):
+    def __init__(self, templateName, modulesManager, templateSlots=None):
         PatternCE.__init__(self, templateName)
-        HasScope.__init__(self, scope)
+        HasScope.__init__(self, modulesManager)
         
         templateName = templateName.evaluate() if isinstance(templateName, ParsedType) else templateName
         self.templateName = HasScope.cleanName(templateName)
@@ -557,9 +557,9 @@ class TypeAttribute(Attribute):
                                         self.allowedTypes)    
 
 class DefTemplateConstruct(ParsedType, HasScope):
-    def __init__(self, templateName, scope, templateComment=None, slots=None, templatesManager=None):
+    def __init__(self, templateName, modulesManager, templateComment=None, slots=None, templatesManager=None):
         ParsedType.__init__(self, templateName)
-        HasScope.__init__(self, scope)
+        HasScope.__init__(self, modulesManager)
         
         templateName = templateName.evaluate() if isinstance(templateName, BaseParsedType) else templateName
         self.templateName = HasScope.cleanName(templateName)
@@ -586,13 +586,14 @@ class DefTemplateConstruct(ParsedType, HasScope):
             
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1},comment='{2}',slots={3}>".format(self.__class__.__name__,
+        return "<{0}:{4}::{1},comment='{2}',slots={3}>".format(self.__class__.__name__,
                                         self.templateName,
                                         self.templateComment,
-                                        self.slots)
+                                        self.slots,
+                                        self.scope.moduleName)
         
 class DefGlobalConstruct(ParsedType, HasScope):
-    def __init__(self, scope, assignments=None, moduleName=None):
+    def __init__(self, modulesManager, assignments=None, moduleName=None):
         ParsedType.__init__(self, assignments)
         
         # scope has the current scope
@@ -603,13 +604,12 @@ class DefGlobalConstruct(ParsedType, HasScope):
         # or raise exception
         if moduleName != None:
             moduleName = moduleName.evaluate() if isinstance(moduleName, BaseParsedType) else moduleName
-            scope.modules.changeCurrentScope(moduleName)
-            scope = scope.modules.currentScope
+            modulesManager.changeCurrentScope(moduleName)
         
         # if not exception raised, the scope var
         # has the real current scope (updated if have to)
         # i can call parent constructor now     
-        HasScope.__init__(self, scope)
+        HasScope.__init__(self, modulesManager)
         
         self.assignments = assignments if assignments != None else []
         
