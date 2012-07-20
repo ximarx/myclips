@@ -666,8 +666,6 @@ class Parser(object):
 if __name__ == '__main__':
 
 
-    import pprint
-
 
     complete_test = r"""
         (defrule rulename

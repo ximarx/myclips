@@ -2,7 +2,6 @@ from myclips.parser.Parser import Parser
 import sys
 from myclips.Scope import Scope, ScopeImport, ScopeExport
 from myclips.ModulesManager import ModulesManager
-from pyparsing import ParseSyntaxException, ParseFatalException
 from myclips.parser.Types import ParsedType
 
 def constructs_prettyprint(constr_string, INDENT=0):
