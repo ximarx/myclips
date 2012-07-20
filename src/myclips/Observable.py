@@ -4,6 +4,7 @@ Created on 19/lug/2012
 @author: Francesco Capozzo
 '''
 from myclips.Observer import Observer
+import myclips
 
 class Observable(object):
     '''
@@ -20,11 +21,11 @@ class Observable(object):
     def registerObserver(self, eventName, observer):
         if isinstance(observer, Observer):
             self._observers[eventName].append(observer)
-#            print "Registering new observer {0} for event {1}.{2}".format(
-#                            repr(observer),
-#                            repr(self),
-#                            eventName
-#                        )
+
+            myclips.logger.debug("Registering new observer %s\n\tfor event %s.%s",
+                                        repr(observer),
+                                        repr(self),
+                                        eventName)
             
     def unregisterObserver(self, eventName=None, observer=None):
         if eventName is None:
@@ -35,6 +36,11 @@ class Observable(object):
                     self._observers[eventName] = []
                 else:
                     self._observers[eventName].remove(observer)
+                    
+                myclips.logger.debug("Unregistering observer %s\n\tfrom event %s.%s",
+                                            repr(observer),
+                                            repr(self),
+                                            eventName)
             except:
                 # i don't care if the event is unknown or
                 # the listner is not registered
@@ -45,13 +51,28 @@ class Observable(object):
     def events(self):
         return self._events
     
+    def getObservers(self, eventName):
+        return self._observers[eventName]
+    
+    def cleanupObserver(self, observer):
+        for eventObs in self._observers.values():
+            try:
+                eventObs.remove(observer)
+            except ValueError:
+                pass
+    
     def fire(self, event, *args, **kargs):
-#        print "Firing {0}.{1} with {2}".format(
-#                       repr(self),
-#                       event,
-#                       repr(args)
-#                    )
-        
-        for observer in self._observers[event]:
-            observer.notify(event, *args, **kargs)
+        try:
+            if len(self._observers[event]) > 0:
+                myclips.logger.debug("Firing %s.%s \n\twith %s \n\tto %s observer(s)",
+                                           repr(self),
+                                           repr(event),
+                                           repr(args),
+                                           str(len(self._observers)))
+                for observer in self._observers[event]:
+                    observer.notify(event, *args, **kargs)
+        except:
+                myclips.logger.error("Invalid event %s \n\tfor %s",
+                                            repr(event),
+                                            repr(self))
         

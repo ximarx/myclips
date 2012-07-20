@@ -4,10 +4,14 @@ Created on 19/lug/2012
 @author: Francesco Capozzo
 '''
 import unittest
-from myclips.Scope import Scope, ScopeExport, ScopeImport
+from myclips.Scope import Scope, ScopeExport, ScopeImport,\
+    ScopeDefinitionConflict, ScopeDefinitionNotFound
 from myclips.ModulesManager import ModulesManager
 from myclips.GlobalsManager import GlobalVarDefinition
+import logging
 
+# disable all logging from modules
+logging.disable(logging.CRITICAL)
 
 class ScopeTest(unittest.TestCase):
 
@@ -99,23 +103,23 @@ class ScopeTest(unittest.TestCase):
         self.assertTrue(scope.isImportable(Scope.PROMISE_TYPE_FUNCTION, "function"))
         self.assertFalse(scope.isImportable(Scope.PROMISE_TYPE_GLOBAL, "*global*"))
 
-#    def test_ImportDefinitionFromAnotherScope(self):
-#        MM = ModulesManager()
-#        
-#        scope1 = Scope("MAIN", MM, exports=[
-#                            ScopeExport(Scope.PROMISE_TYPE_GLOBAL, "?*A*"),
-#                            ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
-#                        ])
-#        MM.addScope(scope1)
-#        scope1.globalsvars.addDefinition(GlobalVarDefinition(scope1.moduleName, "?*A*", object()))
-#        
-#        scope2 = Scope("SECOND", MM, imports=[
-#                            ScopeImport("MAIN", Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
-#                        ])
-#        MM.addScope(scope2)
-#
-#        self.assertTrue(scope2.globalsvars.has("?*A*"))
-#        self.assertEqual(scope2.globalsvars.getDefinition("?*A*").moduleName, "MAIN")
+    def test_ImportDefinitionFromAnotherScope(self):
+        MM = ModulesManager()
+        
+        scope1 = Scope("MAIN", MM, exports=[
+                            ScopeExport(Scope.PROMISE_TYPE_GLOBAL, "?*A*"),
+                            ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                        ])
+        
+        scope1.globalsvars.addDefinition(GlobalVarDefinition(scope1.moduleName, "?*A*", object()))
+        
+        scope2 = Scope("SECOND", MM, imports=[
+                            ScopeImport("MAIN", Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                        ])
+        
+
+        self.assertTrue(scope2.globalsvars.has("?*A*"))
+        self.assertEqual(scope2.globalsvars.getDefinition("?*A*").moduleName, "MAIN")
         
     def test_ImportDefinitionFromAnotherScopeWithObserver(self):
         MM = ModulesManager()
@@ -123,21 +127,89 @@ class ScopeTest(unittest.TestCase):
         scope1 = Scope("MAIN", MM, exports=[
                             ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
                         ])
-        MM.addScope(scope1)
+        
         
         scope2 = Scope("SECOND", MM, imports=[
                             ScopeImport("MAIN", Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
                         ])
-        MM.addScope(scope2)
+        
 
         scope1.globalsvars.addDefinition(GlobalVarDefinition(scope1.moduleName, "?*A*", object()))
         
-        print scope1
-        print scope2
-
         self.assertTrue(scope2.globalsvars.has("?*A*"))
         self.assertEqual(scope2.globalsvars.getDefinition("?*A*").moduleName, "MAIN")
         
+    def test_GuardOnRecursiveInclusion(self):
+        MM = ModulesManager()
+        
+        scopeM = Scope("MAIN", MM, exports=[
+                                ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                            ])
+        
+
+        scope1 = Scope("FIRST", MM, exports=[
+                                ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                            ], imports=[
+                                ScopeImport("MAIN", Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL),
+                            ])
+        
+
+        
+        scope2 = Scope("SECOND", MM, exports=[
+                                ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                            ], imports=[
+                                ScopeImport("MAIN", Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL),
+                                ScopeImport("FIRST", Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                            ])
+        
+
+        scopeM.globalsvars.addDefinition(GlobalVarDefinition(scopeM.moduleName, "?*A*", object()))
+        
+        self.assertTrue(scopeM.globalsvars.has("?*A*"))
+        self.assertTrue(scope1.globalsvars.has("?*A*"))
+        self.assertTrue(scope2.globalsvars.has("?*A*"))
+        self.assertEqual(scopeM.globalsvars.getDefinition("?*A*").moduleName, "MAIN")
+        self.assertEqual(scope1.globalsvars.getDefinition("?*A*").moduleName, "MAIN")
+        self.assertEqual(scope2.globalsvars.getDefinition("?*A*").moduleName, "MAIN")
+        self.assertEqual(scopeM.globalsvars.getDefinition("?*A*"), scope1.globalsvars.getDefinition("?*A*"))
+        self.assertEqual(scopeM.globalsvars.getDefinition("?*A*"), scope2.globalsvars.getDefinition("?*A*"))
+        self.assertEqual(scope1.globalsvars.getDefinition("?*A*"), scope2.globalsvars.getDefinition("?*A*"))
+        
+    def test_ListenerCleanupOnScopeCreationFail(self):
+        
+        MM = ModulesManager()
+        
+        scopeM = Scope("MAIN", MM, exports=[
+                                ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                            ])
+        
+        
+        scopeM.globalsvars.addDefinition(GlobalVarDefinition(scopeM.moduleName, "?*A*", object()))
+
+        scope1 = Scope("FIRST", MM, exports=[
+                                ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                            ])
+        
+        
+        scope1.globalsvars.addDefinition(GlobalVarDefinition(scope1.moduleName, "?*A*", object()))
+
+        
+        self.assertRaises(ScopeDefinitionConflict, Scope, "SECOND", MM, exports=[
+                                    ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                                ], imports=[
+                                    ScopeImport("MAIN", Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL),
+                                    ScopeImport("FIRST", Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                                ])
+        
+        self.assertEqual(len(scope1.globalsvars.getObservers(scope1.globalsvars.EVENT_NEW_DEFINITION)), 0)
+        self.assertEqual(len(scopeM.globalsvars.getObservers(scopeM.globalsvars.EVENT_NEW_DEFINITION)), 0)
+        
+    def test_ErrorOnInclusionOfNotDefinedModule(self):
+
+        MM = ModulesManager()
+        self.assertRaises(ScopeDefinitionNotFound, Scope, "MAIN", MM, imports=[
+                                ScopeImport("FIRST", Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+                            ])
 
 
 if __name__ == "__main__":

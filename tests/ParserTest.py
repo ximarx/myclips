@@ -13,7 +13,12 @@ from myclips.parser.Templates import TemplatesManager
 import pyparsing
 from myclips.parser.Globals import GlobalsManager
 from myclips.parser.Modules import ModulesManager
+import logging
 #from myclips.parser.Templates import _SampleTemplatesInit
+
+# disable all logging from modules
+logging.disable(logging.CRITICAL)
+
 
 class ParserTest(unittest.TestCase):
 

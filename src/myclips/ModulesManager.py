@@ -22,7 +22,7 @@ class ModulesManager(object):
 
     def addScope(self, scope):
         if self.isDefined(scope.moduleName):
-            raise ValueError("Cannot redefine defmodule {0} while it is in use".format(scope.moduleName))
+            raise ModulesManagerRedefinitionError("Cannot redefine defmodule {0} while it is in use".format(scope.moduleName))
         self._modules[scope.moduleName] = scope
         self._currentScope = scope
         
@@ -46,6 +46,8 @@ class ModulesManager(object):
     def reset(self):
         self._modules = {}
 
+class ModulesManagerRedefinitionError(ValueError):
+    pass
 
 # Standard instance
 ModulesManager.instance = ModulesManager()

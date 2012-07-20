@@ -37,105 +37,132 @@ class Scope(Observer):
             
         self._imports = imports
             
-        # imports buffer: i need it
-        # because otherwise i will destroy
-        # Scope own definition on import ?NONE
-        tmp_imports = {}
-            
-        for imDef in imports:
-            if not isinstance(imDef, ScopeImport):
-                raise ValueError("Export definition must be a ScopeExport instance")
-            
-            assert isinstance(imDef, ScopeImport)
-            # first thing: let's check the module
-            try:
-                otherModDef = self._moduleManager.getScope(imDef.iModule)
-            except ValueError:
-                raise ScopeDefinitionNotFound("Unable to find defmodule {0}".format(imDef.iModule))
-            else:
-                if imDef.iType == Scope.PROMISE_NAME_NONE:
-                    if tmp_imports.has_key(imDef.iModule):
-                        del tmp_imports[imDef.iModule]
-                    #else it's ok, i don't any def yet
-                else:
-                    importQueue = []
-                    if imDef.iType == Scope.PROMISE_NAME_ALL:
-                        # i have to import everything already defined
-                        # and set a listener on the scope
-                        # for future definitions
-                        importQueue = [Scope.PROMISE_TYPE_FUNCTION, Scope.PROMISE_TYPE_GLOBAL, Scope.PROMISE_TYPE_TEMPLATE]
-                    else:
-                        importQueue = [imDef.iType]
-                    # i know what i have to import now
-                    for iqType in importQueue:
-                        
-                        # get the list of definition i need to import
-                        imported = otherModDef.getExports(iqType, imDef.iName)
-
-                        # if i haven't imported anything for this module
-                        # yet, just create a skeleton dict                        
-                        if not tmp_imports.has_key(imDef.iModule):
-                            mod_imports = {Scope.PROMISE_TYPE_FUNCTION: {},
-                                           Scope.PROMISE_TYPE_GLOBAL: {},
-                                           Scope.PROMISE_TYPE_TEMPLATE: {}}
-                            tmp_imports[imDef.iModule] = mod_imports
-                        else:
-                            # otherwise i use the one i already got
-                            mod_imports = tmp_imports[imDef.iModule]
-
-                        # get the subdict for the import type i need
-                        mod_imports = mod_imports[iqType]
-                        
-                        # time to iterate over every single import definition
-                        # if i got a definition with the same name
-                        # i raise a ScopeDefinitionConflict,
-                        # and abort scope creation this way
-                        for (defName, defObj) in imported:
-                            if mod_imports.has_key(defName):
-                                raise ScopeDefinitionConflict(("Cannot define defmodule {0} "
-                                                              + "because of an import/export conflict caused by the {0} {1}").format(
-                                                    self.moduleName,
-                                                    iqType,
-                                                    defName
-                                            ))
-                            else:
-                                # otherwise i definite it and i'm happy
-                                mod_imports[defName] = defObj
-                        
-                        # if i get a ?ALL definition
-                        # i have to add a listner in the other scope
-                        # so when there is a new construct definition
-                        # the definition is forwarded here
-                        if imDef.iName == Scope.PROMISE_NAME_ALL:
-                            if iqType == Scope.PROMISE_TYPE_TEMPLATE:
-                                otherModDef.templates.registerObserver(TemplatesManager.EVENT_NEW_DEFINITION, self)
-                            elif iqType == Scope.PROMISE_TYPE_FUNCTION:
-                                otherModDef.functions.registerObserver(FunctionsManager.EVENT_NEW_DEFINITION, self)
-                            elif iqType == Scope.PROMISE_TYPE_GLOBAL:
-                                otherModDef.globalsvars.registerObserver(GlobalsManager.EVENT_NEW_DEFINITION, self)
-        
-        # time to merge all imports with the definitions
-        # avaiables in the scope
-        
         typeMap = {
             Scope.PROMISE_TYPE_TEMPLATE   : self.templates,
             Scope.PROMISE_TYPE_FUNCTION   : self.functions,
             Scope.PROMISE_TYPE_GLOBAL     : self.globalsvars
         }
+            
+        try:
+            
+            # imports buffer: i need it
+            # because otherwise i will destroy
+            # Scope own definition on import ?NONE
+            tmp_imports = {}
+                
+            for imDef in imports:
+                if not isinstance(imDef, ScopeImport):
+                    raise ValueError("Export definition must be a ScopeExport instance")
+                
+                assert isinstance(imDef, ScopeImport)
+                # first thing: let's check the module
+                try:
+                    otherModDef = self._moduleManager.getScope(imDef.iModule)
+                    
+                    otherTypeMap = {
+                        Scope.PROMISE_TYPE_TEMPLATE   : otherModDef.templates,
+                        Scope.PROMISE_TYPE_FUNCTION   : otherModDef.functions,
+                        Scope.PROMISE_TYPE_GLOBAL     : otherModDef.globalsvars
+                    }
+                    
+                    
+                except KeyError:
+                    raise ScopeDefinitionNotFound("Unable to find defmodule {0}".format(imDef.iModule))
+                else:
+                    if imDef.iType == Scope.PROMISE_NAME_NONE:
+                        if tmp_imports.has_key(imDef.iModule):
+                            del tmp_imports[imDef.iModule]
+                        #else it's ok, i don't any def yet
+                    else:
+                        importQueue = []
+                        if imDef.iType == Scope.PROMISE_NAME_ALL:
+                            # i have to import everything already defined
+                            # and set a listener on the scope
+                            # for future definitions
+                            importQueue = [Scope.PROMISE_TYPE_FUNCTION, Scope.PROMISE_TYPE_GLOBAL, Scope.PROMISE_TYPE_TEMPLATE]
+                        else:
+                            importQueue = [imDef.iType]
+                        # i know what i have to import now
+                        for iqType in importQueue:
+                            
+                            # get the list of definition i need to import
+                            imported = otherModDef.getExports(iqType, imDef.iName)
+    
+                            # if i haven't imported anything for this module
+                            # yet, just create a skeleton dict                        
+                            if not tmp_imports.has_key(imDef.iModule):
+                                mod_imports = {Scope.PROMISE_TYPE_FUNCTION: {},
+                                               Scope.PROMISE_TYPE_GLOBAL: {},
+                                               Scope.PROMISE_TYPE_TEMPLATE: {}}
+                                tmp_imports[imDef.iModule] = mod_imports
+                            else:
+                                # otherwise i use the one i already got
+                                mod_imports = tmp_imports[imDef.iModule]
+    
+                            # get the subdict for the import type i need
+                            mod_imports = mod_imports[iqType]
+                            
+                            # time to iterate over every single import definition
+                            # if i got a definition with the same name
+                            # i raise a ScopeDefinitionConflict,
+                            # and abort scope creation this way
+                            for (defName, defObj) in imported:
+                                if mod_imports.has_key(defName):
+                                    raise ScopeDefinitionConflict(("Cannot define defmodule {0} "
+                                                                  + "because of an import/export conflict caused by the {0} {1}").format(
+                                                        self.moduleName,
+                                                        iqType,
+                                                        defName
+                                                ))
+                                else:
+                                    # otherwise i definite it and i'm happy
+                                    mod_imports[defName] = defObj
+                            
+                            # if i get a ?ALL definition
+                            # i have to add a listner in the other scope
+                            # so when there is a new construct definition
+                            # the definition is forwarded here
+                            if imDef.iName == Scope.PROMISE_NAME_ALL:
+                                otherTypeMap[iqType].registerObserver(otherTypeMap[iqType].EVENT_NEW_DEFINITION, self)
+            
+            # time to merge all imports with the definitions
+            # avaiables in the scope
+            
+            
+            for (modName, defDict) in tmp_imports.items():
+                for (constType, constDict) in defDict.items():
+                    for (defName, defObj) in constDict.items():
+                        if typeMap[constType].has(defName):
+                            raise ScopeDefinitionConflict(("Cannot define defmodule {0} "
+                                                          + "because of an import/export conflict caused by the {0} {2}::{1}").format(
+                                                self.moduleName,
+                                                constType,
+                                                defName,
+                                                modName
+                                        ))
+                        typeMap[constType].addDefinition(defObj)
+            
+            # all right,
+            # include the scope in the MM
+            self._moduleManager.addScope(self)
+            
+        except Exception, mainE:
+            # i need to cleanup
+            # all listeners
+            if len(tmp_imports) > 0:
+                for modName in tmp_imports.keys():
+                    try:
+                        otherModDef = self._moduleManager.getScope(modName)
+                        otherModDef.functions.cleanupObserver(self)
+                        otherModDef.templates.cleanupObserver(self)
+                        otherModDef.globalsvars.cleanupObserver(self)
+                    except:
+                        continue
+            
+            # and then raise
+            raise mainE
+
         
-        for (modName, defDict) in tmp_imports.items():
-            for (constType, constDict) in defDict.items():
-                for (defName, defObj) in constDict.items():
-                    if typeMap[constType].has(defName):
-                        raise ScopeDefinitionConflict(("Cannot define defmodule {0} "
-                                                      + "because of an import/export conflict caused by the {0} {2}::{1}").format(
-                                            self.moduleName,
-                                            constType,
-                                            defName,
-                                            modName
-                                    ))
-                    typeMap[constType].addDefinition(defObj)
-                        
             
     def notify(self, eventName, *args, **kargs):
         if eventName == TemplatesManager.EVENT_NEW_DEFINITION:
@@ -220,27 +247,26 @@ class Scope(Observer):
     
     def getExports(self, eType, eName=None):
         exDefs = self._exports.getExports(eType)
+        
+        typeMap = {
+            Scope.PROMISE_TYPE_TEMPLATE   : self.templates,
+            Scope.PROMISE_TYPE_FUNCTION   : self.functions,
+            Scope.PROMISE_TYPE_GLOBAL     : self.globalsvars
+        }
+        
+        # check if export all is here!
+        if exDefs.has_key(Scope.PROMISE_NAME_ALL):
+            # i need to get all definitions i already got
+            # and replace the array
+            exDefs = dict([(defName, defName) for defName in typeMap[eType].definitions])
+        
         if eName is None or eName == Scope.PROMISE_NAME_ALL:
-            if eType == Scope.PROMISE_TYPE_TEMPLATE:
-                return [(eName, self.templates.getDefinition(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
-            elif eType == Scope.PROMISE_TYPE_GLOBAL:
-                return [(eName, self.globalsvars.getDefinition(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
-            elif eType == Scope.PROMISE_TYPE_FUNCTION:
-                return [(eName, self.functions.getDefinition(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
-            else:
-                raise ValueError("Syntax Error: check appropriate syntax for defmodule import specification")
+            return [(eName, typeMap[eType].getDefinition(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
         else:
             # this ensure the export for the name exists
-            # otherwise a ValueError is raised
-            eName = exDefs[eName].eName
-            if eType == Scope.PROMISE_TYPE_TEMPLATE:
-                return [(eName, self.templates.getDefinition(eName))]
-            elif eType == Scope.PROMISE_TYPE_GLOBAL:
-                return [(eName, self.globalsvars.getDefinition(eName))]
-            elif eType == Scope.PROMISE_TYPE_FUNCTION:
-                return [(eName, self.functions.getDefinition(eName))]
-            else:
-                raise ValueError("Syntax Error: check appropriate syntax for defmodule import specification")
+            # otherwise a KeyError is raised
+            exDefs[eName]
+            return [(eName, typeMap[eType].getDefinition(eName))]
         
     def __str__(self, *args, **kwargs):
         retStr = [super(Scope, self).__repr__(*args, **kwargs)]
