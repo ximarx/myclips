@@ -1,4 +1,4 @@
-import pyparsing
+#import pyparsing
 import myclips
 from myclips.TemplatesManager import SlotDefinition as TemplateSlotDefinition,\
     Attribute_TypeConstraint, TemplateDefinition
@@ -116,7 +116,8 @@ class GlobalVariable(Variable, HasScope):
             if not self.scope.globalsvars.has(self.evaluate()):
                 # this variable is undefined in this scope
                 # need to raise exception
-                raise pyparsing.ParseFatalException("Global variable {0} was referenced, but is not defined.".format(
+                myclips.logger.error("Global variable %s non definita!", self.evaluate())
+                raise TypeInstanceCreationError("Global variable {0} was referenced, but is not defined.".format(
                                 self.evaluate()
                             ))
         
@@ -132,11 +133,11 @@ class FunctionCall(ParsedType, HasScope):
         try:
             self.funcDefinition = self.scope.functions.getDefinition(self.funcName)
         except KeyError:
-            raise pyparsing.ParseException("Missing function declaration for {0}".format(self.funcName))
+            raise TypeRecoverableInstanceCreationError("Missing function declaration for {0}".format(self.funcName))
         else:
             checkResult, errMsg = self.funcDefinition.isValidCall(self.funcArgs)
             if not checkResult:
-                raise pyparsing.ParseFatalException("Function {0} {1}".format(self.funcName, errMsg))
+                raise TypeInstanceCreationError("Function {0} {1}".format(self.funcName, errMsg))
             
         
     def __repr__(self, *args, **kwargs):
@@ -177,7 +178,7 @@ class TemplateRhsPattern(ParsedType, HasScope):
         try:
             self.templateDefinition = self.scope.templates.getDefinition(self.templateName)
         except:
-            raise pyparsing.ParseException("Missing template declaration for {0}".format(
+            raise TypeRecoverableInstanceCreationError("Missing template declaration for {0}".format(
                         self.templateName
                     ))
         # TODO
@@ -280,7 +281,7 @@ class TemplatePatternCE(PatternCE, HasScope):
         try:
             self.templateDefinition = self.scope.templates.getDefinition(self.templateName)
         except KeyError:
-            raise pyparsing.ParseException("Missing declaration for template {0}".format(self.templateName))
+            raise TypeRecoverableInstanceCreationError("Missing declaration for template {0}".format(self.templateName))
         
         try:
             for (index, field) in enumerate(self.templateSlots):
@@ -353,7 +354,7 @@ class TemplatePatternCE(PatternCE, HasScope):
                         
                         if any(checkForInvalid):
                             errorArg = valuesToCheck[checkForInvalid.index(True)]
-                            raise pyparsing.ParseFatalException("A {2} value found doesn't match the allowed types {3} for slot {0} of template {4}::{1}".format(
+                            raise TypeInstanceCreationError("A {2} value found doesn't match the allowed types {3} for slot {0} of template {4}::{1}".format(
                                         field.slotName,
                                         self.templateName,
                                         "function {0} return".format(errorArg.funcName) if isinstance(errorArg, FunctionCall) else errorArg.__class__.__name__,
@@ -363,7 +364,7 @@ class TemplatePatternCE(PatternCE, HasScope):
                                 
             
         except KeyError:
-            raise pyparsing.ParseFatalException("Invalid slot {0} not defined in corresponding deftemplate {2}::{1}".format(
+            raise TypeInstanceCreationError("Invalid slot {0} not defined in corresponding deftemplate {2}::{1}".format(
                                                         field.slotName,
                                                         self.templateName,
                                                         self.templateDefinition.moduleName
@@ -392,7 +393,7 @@ class AssignedPatternCE(PatternCE):
 class NotPatternCE(PatternCE):
     def __init__(self, pattern):
         if isinstance(pattern, AssignedPatternCE):
-            raise pyparsing.ParseFatalException("A pattern CE cannot be bound to a pattern-address within a not CE")
+            raise TypeInstanceCreationError("A pattern CE cannot be bound to a pattern-address within a not CE")
         PatternCE.__init__(self, pattern)
         self.pattern = pattern
         
@@ -404,7 +405,7 @@ class NotPatternCE(PatternCE):
 class AndPatternCE(PatternCE):
     def __init__(self, patterns):
         if len(patterns) > 0 and isinstance(patterns[0], AssignedPatternCE):
-            raise pyparsing.ParseFatalException("Syntax Error:  Check appropriate syntax for the first field of a pattern.")
+            raise TypeInstanceCreationError("Syntax Error:  Check appropriate syntax for the first field of a pattern.")
         PatternCE.__init__(self, patterns)
         self.patterns = patterns
         
@@ -518,7 +519,7 @@ class SlotDefinition(ParsedType):
         self.slotName = slotName.evaluate() if isinstance(slotName, BaseParsedType) else slotName
         self.attributes = attributes if attributes != None else []
         if len(self.attributes) != len(set([x.__class__ for x in self.attributes])):
-            raise pyparsing.ParseFatalException("Multiple definition for same type of attribute")
+            raise TypeInstanceCreationError("Multiple definition for same type of attribute")
 
 class SingleSlotDefinition(SlotDefinition):
 
@@ -566,14 +567,14 @@ class DefTemplateConstruct(ParsedType, HasScope):
         self.templateComment = templateComment.evaluate().strip('"') if isinstance(templateComment, BaseParsedType) else None
         self.slots = slots if slots != None else []
         if len(self.slots) != len(set([x.slotName for x in self.slots])):
-            raise pyparsing.ParseFatalException("Multiple definition for same slot name")
+            raise TypeInstanceCreationError("Multiple definition for same slot name")
         
         
         # check if a template with the same name is already available
         try:
             #scope.templates.getTemplateDefinitions(self.templateName)
             self.scope.templates.getDefinition(self.templateName)
-            raise pyparsing.ParseFatalException("Multiple definition for template {0}".format(self.templateName))
+            raise TypeInstanceCreationError("Multiple definition for template {0}".format(self.templateName))
         except KeyError:
             # create slot template definitions
             tslots = dict([(sd.getSlotName(), sd) for sd 
@@ -660,55 +661,12 @@ TYPES = {
         : Number
 }
 
-def makeInstance(cls, position=0):
-    def makeAction(s,l,t):
-        if position != None:
-            try:
-                return cls(t[position].asList())
-            except:
-                return cls(t[position])
-        else:
-            try:
-                return cls(t.asList())
-            except:
-                return cls(t)
-            
-    return makeAction
+class TypeBaseError(Exception):
+    def getMessage(self):
+        return self.message
 
-def makeInstanceDict(cls, args):
-    def makeDictAction(s,l,t):
-        targs = {}
-        for (k,v) in args.items():
-            if isinstance(v, tuple) and len(v) == 2:
-                try:
-                    targs[k] = t.asList()[v[0]:v[1]]
-                except:
-                    targs[k] = t[v[0]:v[1]]
-            elif not isinstance(v, (str, unicode, int)):
-                targs[k] = v
-            else: 
-                try:
-                    targs[k] = t[v].asList()
-                except:
-                    try:
-                        targs[k] = t[v]
-                    except:
-                        if isinstance(k, int):
-                            raise
-        return cls(**targs)
-        
-    return makeDictAction
+class TypeInstanceCreationError(TypeBaseError):
+    pass
 
-def tryInstance(cls1, cls2, position=0):
-    def tryMakeAction(s,l,t):
-        if isinstance(position, dict):
-            makeImpl = makeInstanceDict
-        else:
-            makeImpl = makeInstance
-        try:
-            return makeImpl(cls1, position)(s,l,t)
-        except:
-            return makeImpl(cls2, position)(s,l,t)
-            
-    return tryMakeAction
-    
+class TypeRecoverableInstanceCreationError(TypeBaseError):
+    pass

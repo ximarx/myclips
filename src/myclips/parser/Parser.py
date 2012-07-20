@@ -4,7 +4,6 @@ import string
 import myclips.parser.Types as types
 import time
 from myclips.ModulesManager import ModulesManager
-from myclips.Scope import Scope, ScopeExport
 
 def forwardParsed(bounds=None, key=None):
     def forwardAction(s,l,t):
@@ -34,6 +33,7 @@ def valutateScopeChange(currentScope):
         
     return changeScopeAction
 
+
 class Parser(object):
     
     def __init__(self, debug=False, enableComments=False, enableDirectives=False, modulesManager=None):
@@ -46,13 +46,12 @@ class Parser(object):
         self._modulesManager = (ModulesManager()
                                     if not isinstance(modulesManager, ModulesManager)
                                         else modulesManager)
+        self._lastParseError = None
         # need to check if ModulesManager is ready to 
         # to get all construct. This means at least a 
         # scope must be available
         if len(self._modulesManager.getModulesNames()) == 0:
-            Scope("MAIN", self._modulesManager, exports=[
-                    ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
-                ]) 
+            self._modulesManager.addMainScope()
             
         
     def isInitied(self):
@@ -91,28 +90,108 @@ class Parser(object):
         
         self._initied = True
 
+
+        ### INTERNAL FUNCTION FOR TYPE CREATION
+                
+        def makeInstance(cls, position=0):
+            def makeAction(s,l,t):
+                argsToUse = None
+                if position != None:
+                    try:
+                        argsToUse = t[position].asList()
+                    except:
+                        argsToUse = t[position]
+                else:
+                    try:
+                        argsToUse = t.asList()
+                    except:
+                        argsToUse = t
+                
+                try:
+                    i = cls(argsToUse)
+                    # need to reset last error on first positive match
+                    self._lastParseError = None
+                    return i
+                except types.TypeRecoverableInstanceCreationError as e:
+                    self._lastParseError = e.getMessage()
+                    raise pp.ParseException(s,l, self._lastParseError)
+                except types.TypeInstanceCreationError as e:
+                    raise pp.ParseFatalException(s,l,e.getMessage())
+            
+                    
+            return makeAction
+        
+        def makeInstanceDict(cls, args):
+            def makeDictAction(s,l,t):
+                targs = {}
+                for (k,v) in args.items():
+                    if isinstance(v, tuple) and len(v) == 2:
+                        try:
+                            targs[k] = t.asList()[v[0]:v[1]]
+                        except:
+                            targs[k] = t[v[0]:v[1]]
+                    elif not isinstance(v, (str, unicode, int)):
+                        targs[k] = v
+                    else: 
+                        try:
+                            targs[k] = t[v].asList()
+                        except:
+                            try:
+                                targs[k] = t[v]
+                            except:
+                                if isinstance(k, int):
+                                    raise
+                try:
+                    i = cls(**targs)
+                    # need to reset last error on first positive match
+                    self._lastParseError = None
+                    return i
+                except types.TypeRecoverableInstanceCreationError as e:
+                    self._lastParseError = e.getMessage()
+                    raise pp.ParseException(s,l, self._lastParseError)
+                except types.TypeInstanceCreationError as e:
+                    raise pp.ParseFatalException(s,l,e.getMessage())
+                
+            return makeDictAction
+        
+        def tryInstance(cls1, cls2, position=0):
+            def tryMakeAction(s,l,t):
+                if isinstance(position, dict):
+                    makeImpl = makeInstanceDict
+                else:
+                    makeImpl = makeInstance
+                try:
+                    return makeImpl(cls1, position)(s,l,t)
+                except:
+                    return makeImpl(cls2, position)(s,l,t)
+                    
+            return tryMakeAction
+                    
+        
+
         ### BASE PARSERS
         
         LPAR = pp.Literal("(").suppress()
         RPAR = pp.Literal(")").suppress()
         
-        self.subparsers["SymbolParser"] = pp.Word("".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]))\
-                .setParseAction(types.makeInstance(types.Symbol))
+        self.subparsers["SymbolParser"] = pp.Word("".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;*" ]),
+                                                          "".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]))\
+                .setParseAction(makeInstance(types.Symbol))
         
         self.subparsers["StringParser"] = pp.QuotedString('"', '\\', None, True, True)\
-                .setParseAction(types.makeInstance(types.String))
+                .setParseAction(makeInstance(types.String))
         # StringParser alias    
         self.subparsers["CommentParser"] = self.subparsers["StringParser"]
         
         self.subparsers["IntegerParser"] = pp.Combine(pp.Optional(pp.oneOf('+ -')) + pp.Word(pp.nums))\
-                .setParseAction(types.makeInstance(types.Integer))
+                .setParseAction(makeInstance(types.Integer))
         
         # try to cast to Integer first, otherwise Float
         self.subparsers["FloatParser"] = pp.Regex(r'[+-]?\d+(\.\d*)?([eE]-?\d+)?')\
-                .setParseAction(types.tryInstance(types.Integer, types.Float))
+                .setParseAction(tryInstance(types.Integer, types.Float))
                     
         self.subparsers["VariableSymbolParser"] = pp.Word(string.letters, "".join([ c for c in string.printable if c not in string.whitespace and c not in "*\"'()&?|<~;" ]))\
-                .setParseAction(types.makeInstance(types.Symbol))    
+                .setParseAction(makeInstance(types.Symbol))    
                          
         self.subparsers["NumberParser"] = (self.getSParser("FloatParser") ^ self.getSParser("IntegerParser"))\
                 .setParseAction(forwardParsed())
@@ -125,18 +204,18 @@ class Parser(object):
         self.subparsers["ConstantParser"] = (self.getSParser("NumberParser") ^ self.getSParser("LexemeParser"))\
                 .setParseAction(forwardParsed())
         
-        self.subparsers["SingleFieldVariableParser"] = (pp.Literal("?") + self.getSParser("VariableSymbolParser"))\
-                .setParseAction(types.makeInstance(types.SingleFieldVariable, 1))
+        self.subparsers["SingleFieldVariableParser"] = (pp.Literal("?") - self.getSParser("VariableSymbolParser"))\
+                .setParseAction(makeInstance(types.SingleFieldVariable, 1))
         
-        self.subparsers["MultiFieldVariableParser"] = (pp.Literal("$?") + self.getSParser("VariableSymbolParser"))\
-                .setParseAction(types.makeInstance(types.MultiFieldVariable, 1))
+        self.subparsers["MultiFieldVariableParser"] = (pp.Literal("$?") - self.getSParser("VariableSymbolParser"))\
+                .setParseAction(makeInstance(types.MultiFieldVariable, 1))
             
         self.subparsers["GlobalVariableParser"] = (
                                                    pp.Literal("?*") 
-                                                   + self._sb("VariableSymbolParser").copy().leaveWhitespace() 
-                                                   + pp.Literal("*").leaveWhitespace()
+                                                   - self._sb("VariableSymbolParser").copy().leaveWhitespace() 
+                                                   - pp.Literal("*").leaveWhitespace()
                                                    )\
-                .setParseAction(types.makeInstanceDict(types.GlobalVariable, {'content': 1, 
+                .setParseAction(makeInstanceDict(types.GlobalVariable, {'content': 1, 
                                                                               "scope": self._modulesManager.currentScope
                                                                               }))
         
@@ -150,12 +229,14 @@ class Parser(object):
         self.subparsers["ExpressionParser"] = pp.Forward()
         
         self.subparsers["FunctionNameParser"] = (pp.oneOf(self._modulesManager.currentScope.functions.systemFunctions )\
-                                                    .setParseAction(types.makeInstance(types.Symbol, 0))
+                                                    .setParseAction(makeInstance(types.Symbol, 0))
                                                  | self.getSParser("VariableSymbolParser"))\
                 .setParseAction(forwardParsed(key=0))
         
-        self.subparsers["FunctionCallParser"] = (LPAR + self.getSParser("FunctionNameParser") + pp.Group(pp.ZeroOrMore(self.getSParser("ExpressionParser"))) + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.FunctionCall, {'funcName': 0,
+        self.subparsers["FunctionCallParser"] = (LPAR + self.getSParser("FunctionNameParser") 
+                                                    + pp.Group(pp.ZeroOrMore(self.getSParser("ExpressionParser"))) 
+                                                    + RPAR)\
+                .setParseAction(makeInstanceDict(types.FunctionCall, {'funcName': 0,
                                                                             'funcArgs': 1, 
                                                                             "scope": self._modulesManager.currentScope
                                                                             }))
@@ -168,19 +249,19 @@ class Parser(object):
         self.subparsers["RhsFieldParser"] = self.subparsers["ExpressionParser"].copy()
 
         self.subparsers["MultiFieldRhsSlotParser"] = (LPAR + self._sb("SymbolParser") + pp.Group(pp.ZeroOrMore(self._sb("RhsFieldParser"))).setResultsName("content") + RPAR )\
-                .setParseAction(types.makeInstanceDict(types.MultiFieldRhsSlot, {"slotName" : 0, "slotValue" : "content"}))
+                .setParseAction(makeInstanceDict(types.MultiFieldRhsSlot, {"slotName" : 0, "slotValue" : "content"}))
 
         self.subparsers["SingleFieldRhsSlotParser"] = (LPAR + self._sb("SymbolParser") + self._sb("RhsFieldParser") + RPAR )\
-                .setParseAction(types.makeInstanceDict(types.SingleFieldRhsSlot, {"slotName" : 0, "slotValue" : 1}))
+                .setParseAction(makeInstanceDict(types.SingleFieldRhsSlot, {"slotName" : 0, "slotValue" : 1}))
         
         self.subparsers["RhsSlotParser"] = (self._sb('SingleFieldRhsSlotParser') | self._sb("MultiFieldRhsSlotParser"))\
                 .setParseAction(forwardParsed(key=0))
         
         self.subparsers["OrderedRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("RhsFieldParser")) + RPAR)\
-                .setParseAction(types.makeInstance(types.OrderedRhsPattern, None))
+                .setParseAction(makeInstance(types.OrderedRhsPattern, None))
 
         self.subparsers["TemplateRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.Group(pp.ZeroOrMore(self._sb("RhsSlotParser"))) + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.TemplateRhsPattern, {'templateName': 0, 
+                .setParseAction(makeInstanceDict(types.TemplateRhsPattern, {'templateName': 0, 
                                                                                   'templateSlots': 1,
                                                                                   "scope": self._modulesManager.currentScope
                                                                                   }))
@@ -196,7 +277,7 @@ class Parser(object):
                                                                 | self._sb("FactDefinitionParser")
                                                         ))
                                                     + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.FunctionCall, {'funcName': 0,
+                .setParseAction(makeInstanceDict(types.FunctionCall, {'funcName': 0,
                                                                             'funcArgs': 1,
                                                                             "scope": self._modulesManager.currentScope
                                                                             }))
@@ -213,11 +294,12 @@ class Parser(object):
         self.subparsers['DefFactsNameParser'] = self._sb("SymbolParser").copy()\
                 .addParseAction(valutateScopeChange(self._modulesManager.currentScope))
         
-        self.subparsers["DefFactsConstructParser"] = (LPAR + pp.Keyword("deffacts").suppress() + 
-                                                        self._sb("DefFactsNameParser").setResultsName("DefFactsNameParser") + 
-                                                            pp.Optional(self._sb("CommentParser")).setName("comment").setResultsName("comment") + 
-                                                        pp.Group(pp.OneOrMore(self._sb("RhsPatternParser"))).setName("rhs").setResultsName("rhs") + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefFactsConstruct, {"deffactsName" : 'DefFactsNameParser', 
+        self.subparsers["DefFactsConstructParser"] = (LPAR + pp.Keyword("deffacts").suppress() 
+                                                        - self._sb("DefFactsNameParser").setResultsName("DefFactsNameParser") 
+                                                            - pp.Optional(self._sb("CommentParser")).setName("comment").setResultsName("comment") 
+                                                        - pp.Group(pp.OneOrMore(self._sb("RhsPatternParser"))).setName("rhs").setResultsName("rhs")
+                                                        - RPAR)\
+                .setParseAction(makeInstanceDict(types.DefFactsConstruct, {"deffactsName" : 'DefFactsNameParser', 
                                                                                  "deffactsComment" : "comment", 
                                                                                  "rhs" : "rhs",
                                                                                  "scope": self._modulesManager.currentScope
@@ -234,7 +316,7 @@ class Parser(object):
                                                      #(self._sb("SymbolParser") + self._sb("SymbolParser")) 
                                                  ) +
                                                 RPAR)\
-                .setParseAction(types.makeInstanceDict(types.RuleProperty, {"propertyName" : 0, "propertyValue" : 1}))
+                .setParseAction(makeInstanceDict(types.RuleProperty, {"propertyName" : 0, "propertyValue" : 1}))
         
         self.subparsers['DeclarationParser'] = (LPAR + pp.Keyword("declare").suppress() +
                                                     pp.Group(pp.OneOrMore(self._sb("RulePropertyParser") )) +
@@ -243,14 +325,14 @@ class Parser(object):
         
         
         self.subparsers['UnnamedSingleFieldVariableParser'] = pp.Keyword("?")\
-                .setParseAction(types.makeInstance(types.UnnamedSingleFieldVariable))
+                .setParseAction(makeInstance(types.UnnamedSingleFieldVariable))
                 
         self.subparsers['UnnamedMultiFieldVariableParser'] = pp.Keyword("$?")\
-                .setParseAction(types.makeInstance(types.UnnamedMultiFieldVariable))
+                .setParseAction(makeInstance(types.UnnamedMultiFieldVariable))
         
         self.subparsers['TermParser'] = (                                         
                                          (
-                                            ((pp.Literal(':') | pp.Literal('=')) + self._sb("FunctionCallParser"))\
+                                            ((pp.Literal(':') | pp.Literal('=')) - self._sb("FunctionCallParser"))\
                                                 .setParseAction(forwardParsed(key=1))
                                             )
                                          | self._sb("SingleFieldVariableParser")
@@ -261,7 +343,7 @@ class Parser(object):
         
         self.subparsers['SingleConstraintParser'] = (pp.Optional(pp.Literal('~')).setResultsName("not") + 
                                                      self._sb("TermParser").setResultsName("term"))\
-                .setParseAction(types.tryInstance(types.NegativeTerm, types.PositiveTerm, {"term" : "term", 
+                .setParseAction(tryInstance(types.NegativeTerm, types.PositiveTerm, {"term" : "term", 
                                                                                            "isNot" : 'not' 
                                                                                            }))
         
@@ -275,7 +357,7 @@ class Parser(object):
                                                             ).setResultsName("connectedConstraint")\
                                                                 .setParseAction(forwardParsed())
                                                          )\
-                .setParseAction(types.tryInstance(types.ConnectedConstraint, types.Constraint, {"constraint" : "constraint", 
+                .setParseAction(tryInstance(types.ConnectedConstraint, types.Constraint, {"constraint" : "constraint", 
                                                                                                 "connectedConstraints" : "connectedConstraint" 
                                                                                                 }))
         
@@ -288,13 +370,13 @@ class Parser(object):
                                                         self._sb("SymbolParser") +
                                                         self._sb("ConstraintParser") +
                                                        RPAR)\
-                .setParseAction(types.makeInstanceDict(types.SingleFieldLhsSlot, {"slotName" : 0, "slotValue" : 1}))
+                .setParseAction(makeInstanceDict(types.SingleFieldLhsSlot, {"slotName" : 0, "slotValue" : 1}))
         
         self.subparsers["MultiFieldLhsSlotParser"] = (LPAR + 
                                                         self._sb("SymbolParser") + 
                                                         pp.Group(pp.ZeroOrMore(self._sb("ConstraintParser"))).setResultsName("content") + 
                                                       RPAR )\
-                .setParseAction(types.makeInstanceDict(types.MultiFieldLhsSlot, {"slotName" : 0, "slotValue" : "content"}))
+                .setParseAction(makeInstanceDict(types.MultiFieldLhsSlot, {"slotName" : 0, "slotValue" : "content"}))
         
         
         self.subparsers['LhsSlotParser'] = (self._sb("SingleFieldLhsSlotParser")
@@ -302,12 +384,12 @@ class Parser(object):
                 .setParseAction(forwardParsed(key=0))
         
         self.subparsers['OrderedPatternCEParser'] = (LPAR + self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("ConstraintParser")) + RPAR)\
-                .setParseAction(types.makeInstance(types.OrderedPatternCE, position=None))
+                .setParseAction(makeInstance(types.OrderedPatternCE, position=None))
 
         self.subparsers['TemplatePatternCEParser'] = (LPAR + self._sb("SymbolParser").setResultsName("templateName") + 
                                                         pp.Group(pp.ZeroOrMore(self._sb("LhsSlotParser"))).setResultsName("templateSlots") + 
                                                       RPAR)\
-                .setParseAction(types.makeInstanceDict(types.TemplatePatternCE, {"templateName" : "templateName", 
+                .setParseAction(makeInstanceDict(types.TemplatePatternCE, {"templateName" : "templateName", 
                                                                                  "templateSlots" : "templateSlots", 
                                                                                  "scope": self._modulesManager.currentScope
                                                                                  }))
@@ -317,10 +399,10 @@ class Parser(object):
                 .setParseAction(forwardParsed(key=0))
                 
         self.subparsers['AssignedPatternCEParser'] = (self._sb("SingleFieldVariableParser") 
-                                                        + pp.Literal("<-").suppress()
-                                                        + self._sb("PatternCEParser")
+                                                        - pp.Literal("<-").suppress()
+                                                        - self._sb("PatternCEParser")
                                                     )\
-                .setParseAction(types.makeInstanceDict(types.AssignedPatternCE, {"variable": 0, "pattern": 1}))
+                .setParseAction(makeInstanceDict(types.AssignedPatternCE, {"variable": 0, "pattern": 1}))
 
         # recursive parser in And/Not/Or
         self.subparsers['ConditionalElementParser'] = pp.Forward()
@@ -328,31 +410,31 @@ class Parser(object):
         
         self.subparsers['NotCEParser'] = (LPAR 
                                             + pp.Keyword("not") 
-                                            + self._sb("ConditionalElementParser") 
-                                            + RPAR)\
-                .setParseAction(types.makeInstance(types.NotPatternCE, 1))
+                                            - self._sb("ConditionalElementParser") 
+                                            - RPAR)\
+                .setParseAction(makeInstance(types.NotPatternCE, 1))
 
         self.subparsers['AndCEParser'] = (LPAR 
                                             + pp.Keyword("and") 
-                                            + pp.Group(pp.OneOrMore(self._sb("ConditionalElementParser"))) 
-                                            + RPAR)\
-                .setParseAction(types.makeInstance(types.AndPatternCE, 1))
+                                            - pp.Group(pp.OneOrMore(self._sb("ConditionalElementParser"))) 
+                                            - RPAR)\
+                .setParseAction(makeInstance(types.AndPatternCE, 1))
 
         self.subparsers['TestCEParser'] = (LPAR 
                                             + pp.Keyword("test") 
-                                            + self._sb("FunctionCallParser") 
-                                            + RPAR)\
-                .setParseAction(types.makeInstance(types.TestPatternCE, 1))
+                                            - self._sb("FunctionCallParser") 
+                                            - RPAR)\
+                .setParseAction(makeInstance(types.TestPatternCE, 1))
         
         self.subparsers['ConditionalElementParser'] << (self._sb("NotCEParser") # not before pattern, or not will be parsed as template name
-                                                        | self._sb("AndCEParser") # and before pattern, or not will be parsed as template name
-                                                        | self._sb("TestCEParser") # test before pattern, or test will be parsed as template name
-                                                        | self._sb("AssignedPatternCEParser") 
-                                                        | self._sb("PatternCEParser") 
-                                                        #^ self._sb("OrCEParser")
-                                                        #^ self._sb("LogicalCEParser") 
-                                                        #^ self._sb("ExistsCEParser")
-                                                        #^ self._sb("ForallCEParser")
+                                                            | self._sb("AndCEParser") # and before pattern, or and will be parsed as template name
+                                                            | self._sb("TestCEParser") # test before pattern, or test will be parsed as template name
+                                                            | self._sb("AssignedPatternCEParser") 
+                                                            | self._sb("PatternCEParser") 
+                                                            #^ self._sb("OrCEParser")
+                                                            #^ self._sb("LogicalCEParser") 
+                                                            #^ self._sb("ExistsCEParser")
+                                                            #^ self._sb("ForallCEParser")
                                                         )\
                 .setParseAction(forwardParsed(key=0))
                 
@@ -361,15 +443,15 @@ class Parser(object):
                 .addParseAction(valutateScopeChange(self._modulesManager.currentScope))
         
         self.subparsers['DefRuleConstructParser'] = (LPAR + pp.Keyword("defrule").suppress()  
-                                                        + self._sb("DefRuleNameParser").setResultsName('rulename')
-                                                            + pp.Optional(self._sb("CommentParser")).setName("defruleComment").setResultsName("comment")
-                                                            + pp.Optional(self._sb("DeclarationParser")).setName("defruleDeclaration").setResultsName("declaration")
-                                                            + pp.Optional(pp.Group(pp.ZeroOrMore(self._sb("ConditionalElementParser")))).setResultsName("lhs")\
+                                                        - self._sb("DefRuleNameParser").setResultsName('rulename')
+                                                            - pp.Optional(self._sb("CommentParser")).setName("defruleComment").setResultsName("comment")
+                                                            - pp.Optional(self._sb("DeclarationParser")).setName("defruleDeclaration").setResultsName("declaration")
+                                                            - pp.Optional(pp.Group(pp.ZeroOrMore(self._sb("ConditionalElementParser")))).setResultsName("lhs")\
                                                                     .setParseAction(forwardParsed())
-                                                        + pp.Literal("=>").suppress()
-                                                        + pp.Group(pp.ZeroOrMore(self._sb("ActionParser"))).setResultsName("rhs")
-                                                     + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefRuleConstruct, {"defruleName" : 'rulename', 
+                                                        - pp.Literal("=>").suppress()
+                                                        - pp.Group(pp.ZeroOrMore(self._sb("ActionParser"))).setResultsName("rhs")
+                                                     - RPAR)\
+                .setParseAction(makeInstanceDict(types.DefRuleConstruct, {"defruleName" : 'rulename', 
                                                                                 "defruleComment" : "comment", 
                                                                                 "defruleDeclaration" : "declaration", 
                                                                                 "lhs" : "lhs", 
@@ -381,12 +463,12 @@ class Parser(object):
         ### DEFTEMPLATE
 
         self.subparsers["DefaultAttributeParser"] = (LPAR + pp.Keyword("default").suppress()
-                                                        + ( pp.Keyword("?DERIVE")
+                                                        - ( pp.Keyword("?DERIVE")
                                                             | pp.Keyword("?NONE")
                                                             | self._sb("ExpressionParser")
                                                            )
-                                                     + RPAR)\
-                .setParseAction(types.makeInstance(types.DefaultAttribute, 0))
+                                                     - RPAR)\
+                .setParseAction(makeInstance(types.DefaultAttribute, 0))
         
         self.subparsers["TypeSpecificationParser"] = (pp.Group( 
                                                         pp.OneOrMore(
@@ -396,9 +478,9 @@ class Parser(object):
                 .setParseAction(forwardParsed())
         
         self.subparsers["TypeAttributeParser"] = (LPAR + pp.Keyword("type").suppress()
-                                                    + self._sb("TypeSpecificationParser")
-                                                    + RPAR)\
-                .setParseAction(types.makeInstance(types.TypeAttribute, 0))                                                  
+                                                    - self._sb("TypeSpecificationParser")
+                                                    - RPAR)\
+                .setParseAction(makeInstance(types.TypeAttribute, 0))                                                  
         
         # Re-enable when other constraints will be implemented
         #self.subparsers["ConstraintAttributeParser"] = self._sb("TypeAttributeParser").copy()\
@@ -412,16 +494,16 @@ class Parser(object):
                 .setParseAction(forwardParsed(key=0))
 
         self.subparsers["SingleSlotDefinitionParser"] = (LPAR + pp.Keyword("slot").suppress()
-                                                            + self._sb("SymbolParser")
-                                                            + pp.Group( pp.ZeroOrMore( self._sb("TemplateAttributeParser") ))
-                                                         + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.SingleSlotDefinition, {"slotName": 0, "attributes": 1}))
+                                                            - self._sb("SymbolParser")
+                                                            - pp.Group( pp.ZeroOrMore( self._sb("TemplateAttributeParser") ))
+                                                         - RPAR)\
+                .setParseAction(makeInstanceDict(types.SingleSlotDefinition, {"slotName": 0, "attributes": 1}))
 
         self.subparsers["MultiSlotDefinitionParser"] = (LPAR + pp.Keyword("multislot").suppress()
-                                                            + self._sb("SymbolParser")
-                                                            + pp.Group( pp.ZeroOrMore( self._sb("TemplateAttributeParser") ))
-                                                         + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.MultiSlotDefinition, {"slotName": 0, "attributes": 1}))
+                                                            - self._sb("SymbolParser")
+                                                            - pp.Group( pp.ZeroOrMore( self._sb("TemplateAttributeParser") ))
+                                                         - RPAR)\
+                .setParseAction(makeInstanceDict(types.MultiSlotDefinition, {"slotName": 0, "attributes": 1}))
         
         self.subparsers["SlotDefinitionParser"] = ( self._sb("MultiSlotDefinitionParser")
                                                     | self._sb("SingleSlotDefinitionParser")
@@ -433,11 +515,11 @@ class Parser(object):
                 .addParseAction(valutateScopeChange(self._modulesManager.currentScope))
         
         self.subparsers["DefTemplateConstructParser"] = (LPAR + pp.Keyword("deftemplate").suppress()  
-                                                        + self._sb("DefTemplateNameParser").setResultsName('templateName')
-                                                            + pp.Optional(self._sb("CommentParser")).setName("templateComment").setResultsName("templateComment")
-                                                        + pp.Group(pp.ZeroOrMore(self._sb("SlotDefinitionParser"))).setResultsName("slots")
-                                                        + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefTemplateConstruct, {"templateName" : 'templateName',
+                                                        - self._sb("DefTemplateNameParser").setResultsName('templateName')
+                                                            - pp.Optional(self._sb("CommentParser")).setName("templateComment").setResultsName("templateComment")
+                                                        - pp.Group(pp.ZeroOrMore(self._sb("SlotDefinitionParser"))).setResultsName("slots")
+                                                        - RPAR)\
+                .setParseAction(makeInstanceDict(types.DefTemplateConstruct, {"templateName" : 'templateName',
                                                                                     "templateComment" : "templateComment", 
                                                                                     "slots" : "slots", 
                                                                                     "scope": self._modulesManager.currentScope
@@ -447,19 +529,19 @@ class Parser(object):
         ### DEFGLOBALS
         
         self.subparsers["GlobalAssignmentParser"] = (self._sb("GlobalVariableParser").copy()
-                                                        .setParseAction(types.makeInstanceDict(types.GlobalVariable, {'content': 1, 
+                                                        .setParseAction(makeInstanceDict(types.GlobalVariable, {'content': 1, 
                                                                               "scope": self._modulesManager.currentScope,
                                                                               "ignoreCheck": True
                                                                               }))
                                                      + pp.Literal("=").suppress()
                                                      + self._sb("ExpressionParser"))\
-                .setParseAction(types.makeInstanceDict(types.GlobalAssignment, {"variable": 0, "value": 1}))
+                .setParseAction(makeInstanceDict(types.GlobalAssignment, {"variable": 0, "value": 1}))
         
         self.subparsers["DefGlobalConstructParser"] = (LPAR + pp.Keyword("defglobal").suppress()
-                                                            + pp.Optional(self._sb("SymbolParser")).setResultsName("moduleName")
-                                                        + pp.Group(pp.ZeroOrMore(self._sb("GlobalAssignmentParser"))).setResultsName("assignments")
-                                                        + RPAR)\
-                .setParseAction(types.makeInstanceDict(types.DefGlobalConstruct, {"assignments": "assignments", 
+                                                            - pp.Optional(self._sb("SymbolParser")).setResultsName("moduleName")
+                                                        - pp.Group(pp.ZeroOrMore(self._sb("GlobalAssignmentParser"))).setResultsName("assignments")
+                                                        - RPAR)\
+                .setParseAction(makeInstanceDict(types.DefGlobalConstruct, {"assignments": "assignments", 
                                                                                   "moduleName": "moduleName", 
                                                                                   "scope": self._modulesManager.currentScope
                                                                                   }))
@@ -483,6 +565,7 @@ class Parser(object):
                                                     #| self._sb("DefFunctionConstructParser")
                                                     #| self._sb("DefModuleConstructParser")
                                                     | self._sb("MyClipsDirectiveParser")
+                                                    | pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
                                                     )
         else:
             self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
@@ -491,6 +574,7 @@ class Parser(object):
                                                     | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefFunctionConstructParser")
                                                     #| self._sb("DefModuleConstructParser")
+                                                    | pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
                                                     )
             
         self.subparsers["ConstructParser"]\
@@ -525,41 +609,45 @@ class Parser(object):
     _sb = getSParser
     
     def parse(self, text):
-        return self.getSParser('CLIPSProgramParser').parseString(text).asList()
+        try:
+            return self.getSParser('CLIPSProgramParser').parseString(text, True).asList()
+        except pp.ParseBaseException, e:
+            if self._lastParseError != None and e.msg != self._lastParseError:
+                raise pp.ParseFatalException(e.pstr,
+                                             e.loc,
+                                             e.msg + ". Possible cause: " + self._lastParseError )
+            else:
+                raise e
+            
     
     def _changeDebug(self):
         for p in self.subparsers:
             p.setDebug(self._debug)
-    
+            
+    @staticmethod
+    def ExceptionPPrint(err, original_string, prev_lines=10, after_lines=5, customMsg=False, returnArray=False):
+        splitted = original_string.splitlines()
+        lines_padding = len(str(len(splitted))) + 1
+        format_string = "% " + str(lines_padding) + "d| %s"
+        rVal = [err.__class__.__name__]
+        rVal += [format_string%(i+1+max(0,err.lineno-prev_lines),x) for (i,x) in enumerate(splitted[max(0,err.lineno-prev_lines):err.lineno-1])]
+        rVal.append(format_string%(err.lineno,err.line))
+        rVal.append(" "*(err.column+lines_padding+1) + "^")
+        if customMsg == False: 
+            rVal.append(str(err))
+        else:
+            rVal.append(str(customMsg))
+        rVal.append("")
+        rVal += [format_string%(i+1+err.lineno,x) for (i,x) in enumerate(splitted[err.lineno:err.lineno+after_lines])]
+        
+        if not returnArray:
+            rVal = "\n".join(rVal)
+        
+        return rVal    
 if __name__ == '__main__':
 
 
     import pprint
-    # definizioni di base
-
-    
-#    tests = [
-#             (SymbolParser, "wefoijefwoijefoi", 0),
-#             (StringParser, '"ciao"', 0),
-#             (IntegerParser, "1", 0),
-#             (IntegerParser, "213121", 0),
-#             (IntegerParser, "+132211", 0),
-#             (IntegerParser, "-1123123", 0),
-#             (FloatParser, "-1123123", 0),
-#             (FloatParser, "+1123123", 0),
-#             (FloatParser, "-112.3123", 0),
-#             (FloatParser, "-1.45e-10", 0),
-#             ]
-#    
-#    for (PARSER, STR, POS) in tests:
-#        print "Parsing {0} with {1}".format(STR, repr(PARSER.func))
-#        res = PARSER().parseString(STR)           
-#        print "\tResult: ", res.asList()
-#        print "\tContent[{0}] (RAW): ".format(POS), res[POS].content
-#        print "\tType[{0}] (RAW): ".format(POS), res[POS].content.__class__
-#        print "\tContent[{0}]: ".format(POS), res[POS].evaluate()
-#        print "\tType[{0}]: ".format(POS), res[POS].evaluate().__class__
-#        print
 
 
     complete_test = r"""

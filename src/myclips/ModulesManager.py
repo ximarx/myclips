@@ -19,6 +19,13 @@ class ModulesManager(object):
         
     def isDefined(self, moduleName):
         return self._modules.has_key(moduleName)
+    
+    def addMainScope(self):
+        from myclips.Scope import Scope, ScopeExport
+        Scope("MAIN", self, exports=[
+                ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
+            ]) 
+        
 
     def addScope(self, scope):
         if self.isDefined(scope.moduleName):

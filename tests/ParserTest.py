@@ -978,17 +978,17 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.GlobalVariable)        
 
     def test_VariableParser_GlobalVariable_AvoidWSBeforeVariableSymbol(self):
-        self.assertRaises(ParseException, self._testImpl, 'VariableParser', r"""
+        self.assertRaises(ParseFatalException, self._testImpl, 'VariableParser', r"""
         ?* gff*
         """)
 
     def test_VariableParser_GlobalVariable_AvoidWSAfterVariableSymbol(self):
-        self.assertRaises(ParseException, self._testImpl, 'VariableParser', r"""
+        self.assertRaises(ParseFatalException, self._testImpl, 'VariableParser', r"""
         ?*gff *
         """)
 
     def test_VariableParser_GlobalVariable_AvoidWSAfterBeforeVariableSymbol(self):
-        self.assertRaises(ParseException, self._testImpl, 'VariableParser', r"""
+        self.assertRaises(ParseFatalException, self._testImpl, 'VariableParser', r"""
         ?* gff *
         """)
 

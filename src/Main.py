@@ -1,7 +1,8 @@
 from myclips.parser.Parser import Parser
-from myclips.parser.Functions import _SampleFunctionsInit
 import sys
-from myclips.parser.Modules import ModulesManager, ModuleDefinition
+from myclips.Scope import Scope
+from myclips.ModulesManager import ModulesManager
+from pyparsing import ParseSyntaxException, ParseFatalException
 
 def constructs_prettyprint(constr_string, INDENT=0):
     output = sys.stdout
@@ -17,7 +18,7 @@ def constructs_prettyprint(constr_string, INDENT=0):
         else:
             output.write(c)
         c_i += 1
-    
+        
 
 if __name__ == '__main__':
     
@@ -28,6 +29,7 @@ if __name__ == '__main__':
 """
 
     s2 = r"""
+
 (deffacts MOD::bla
     (A B C)
 )
@@ -35,19 +37,32 @@ if __name__ == '__main__':
 (defrule A::r1
     (declare
         (salience 100))
-    (A ?*a* C)
+    ?a <- (A ?a&:(efwohoi 1 2 3) C)
+    (template (A 1))
 =>
+    (printout t ?*a*)
 )
+
+
 """
 
-    s += s2
+    s = s + s2
 
     #import pprint
     
-    _SampleFunctionsInit()
     MM = ModulesManager()
-    MM.addModule(ModuleDefinition("modulo"))
-    MM.addModule(ModuleDefinition("MOD"))
-    MM.addModule(ModuleDefinition("A"))
+    MM.addMainScope()
+    Scope("MOD", MM)
+    Scope("modulo", MM)
+    Scope("A", MM)
+    MM.changeCurrentScope("MAIN")
     
-    [constructs_prettyprint(repr(x)) for x in Parser(modulesManager=MM).parse(s)]
+    try:
+    
+        [constructs_prettyprint(repr(x)) for x in Parser(modulesManager=MM, debug=False).parse(s)]
+        
+        for scopeName in MM.getModulesNames():
+            print MM.getScope(scopeName)
+            
+    except Exception, err:
+        print Parser.ExceptionPPrint(err, s)
