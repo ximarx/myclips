@@ -6,6 +6,7 @@ Created on 17/lug/2012
 from myclips.Observable import Observable
 from myclips.RestrictedManager import RestrictedManager, RestrictedDefinition,\
     MultipleDefinitionError
+import myclips
 
 
 class FunctionsManager(RestrictedManager, Observable):
@@ -25,6 +26,7 @@ class FunctionsManager(RestrictedManager, Observable):
         RestrictedManager.__init__(self, scope)
         
         # need to import system function definitions
+        # bypass registerSystemFunction to avoid debug logger
         self._systemsFunctions = Functions_ImportSystemDefinitions()
         
         
@@ -47,8 +49,9 @@ class FunctionsManager(RestrictedManager, Observable):
         # if definition scope different from this one
         # i need to mark the function as not forward
         # and lock redefinition
-        if definition.moduleName != self.scope.moduleName:
+        if definition.moduleName != self.scope.moduleName and definition.isForward:
             definition.isForward = False
+            myclips.logger.debug("DefFunction %s::%s imported. Can't be redefined", definition.moduleName, definition.name)
              
         RestrictedManager.addDefinition(self, definition)
         
@@ -70,10 +73,11 @@ class FunctionsManager(RestrictedManager, Observable):
                         "?SYSTEM?"
                     ))
         self._systemsFunctions[definition.name] = definition
+        myclips.logger.debug("System function %s registered", definition.name)
             
         
 class FunctionDefinition(RestrictedDefinition):
-    def __init__(self, moduleName, defName, linkedType, returnTypes, handler=None, constraints=None, forward=False):
+    def __init__(self, moduleName, defName, linkedType, returnTypes, handler=None, constraints=None, forward=True):
         RestrictedDefinition.__init__(self, moduleName, defName, "deffunction", linkedType)
         self._handler = handler
         self._returnTypes = returnTypes if isinstance(returnTypes, tuple) else (returnTypes,)
@@ -100,6 +104,10 @@ class FunctionDefinition(RestrictedDefinition):
     @property
     def isForward(self):
         return self._forward
+    
+    @isForward.setter
+    def isForward(self, value):
+        self._forward = value
     
     def isValidCall(self, args):
         for c in self._constraints:
@@ -216,7 +224,7 @@ def Functions_ImportSystemDefinitions():
             [
                 Constraint_MinArgsLength(2),
                 Constraint_ArgType(Number)
-            ])
+            ],forward=False)
     
     def r_mul(sequence):
         return (sequence[0] if len(sequence) == 1 
@@ -226,7 +234,7 @@ def Functions_ImportSystemDefinitions():
             [
                 Constraint_MinArgsLength(2),
                 Constraint_ArgType(Number)
-            ])
+            ],forward=False)
     
     FUNCTIONS_DEFINITIONS["eq"] = FunctionDefinition("?SYSTEM?", "eq", object(), True.__class__, lambda *args: not any([
                                                                 (t.evaluate() if isinstance(t, BaseParsedType) else t) 
@@ -236,7 +244,7 @@ def Functions_ImportSystemDefinitions():
             [
                 Constraint_MinArgsLength(2),
                 Constraint_ArgType(Lexeme)
-            ])
+            ],forward=False)
     
     FUNCTIONS_DEFINITIONS["neq"] = FunctionDefinition("?SYSTEM?", "neq", object(), True.__class__, lambda *args: not any([
                                                                 (t.evaluate() if isinstance(t, BaseParsedType) else t) 
@@ -246,7 +254,7 @@ def Functions_ImportSystemDefinitions():
             [
                 Constraint_MinArgsLength(2),
                 Constraint_ArgType(Lexeme)
-            ])
+            ],forward=False)
     
     FUNCTIONS_DEFINITIONS["="] = FunctionDefinition("?SYSTEM?", "=", object(), True.__class__, lambda *args: not any([
                                                                 (t.evaluate() if isinstance(t, BaseParsedType) else t) 
@@ -256,7 +264,7 @@ def Functions_ImportSystemDefinitions():
             [
                 Constraint_MinArgsLength(2),
                 Constraint_ArgType(Number)
-            ])
+            ],forward=False)
     
     FUNCTIONS_DEFINITIONS["<>"] = FunctionDefinition("?SYSTEM?", "<>", object(), True.__class__, lambda *args: not any([
                                                                 (t.evaluate() if isinstance(t, BaseParsedType) else t) 
@@ -266,27 +274,27 @@ def Functions_ImportSystemDefinitions():
             [
                 Constraint_MinArgsLength(2),
                 Constraint_ArgType(Number)
-            ])
+            ],forward=False)
     
     FUNCTIONS_DEFINITIONS["printout"] = FunctionDefinition("?SYSTEM?", "printout", object(), None.__class__, lambda *args: sys.stdout.writelines(args[1:]),
             [
                 Constraint_MinArgsLength(2),
-            ])
+            ],forward=False)
 
     FUNCTIONS_DEFINITIONS["float"] = FunctionDefinition("?SYSTEM?", "float", object(), Float, lambda arg: Float(arg.evaluate()),
             [
                 Constraint_ArgType(Number),
                 Constraint_ExactArgsLength(1)
-            ])
+            ],forward=False)
     
     FUNCTIONS_DEFINITIONS["assert"] = FunctionDefinition("?SYSTEM?", "assert", object(), None.__class__, lambda *args: args,
             [
                 Constraint_MinArgsLength(1),
-            ])
+            ],forward=False)
     
     FUNCTIONS_DEFINITIONS["retract"] = FunctionDefinition("?SYSTEM?", "retract", object(), None.__class__, lambda *args: args,
             [
                 Constraint_MinArgsLength(1),
-            ])
+            ],forward=False)
     
     return FUNCTIONS_DEFINITIONS

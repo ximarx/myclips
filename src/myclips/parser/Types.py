@@ -770,7 +770,7 @@ class DefFunctionConstruct(ParsedType, HasScope):
             # system functions aren't always forwards
             # valutate systemFunction only for 
             # custom error
-            if self.scope.function.hasSystemFunction(functionName):
+            if self.scope.functions.hasSystemFunction(functionName):
                 raise TypeInstanceCreationError("Deffunctions are not allowed to replace external functions: %s"%functionName)
             else:
                 raise TypeInstanceCreationError("Cannot define deffunction %s because of an import/export conflict"%functionName)

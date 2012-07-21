@@ -23,48 +23,19 @@ if __name__ == '__main__':
     
     s = r"""
     
-    
-(defmodule MOD
-    (export defglobal b))
-
-(defglobal MOD
-    ?*b* = 2
-)
-
-(deffacts MOD::bla
-    (A B C)
-)
-
 (defmodule A
-    (import MOD defglobal b))
+    (export deffunction funzione))
+
+(deffunction A::funzione (?A)
+    (printout t ?A)
+)
+
+(defmodule B 
+    (import A deffunction funzione))
     
-(defglobal A
-    ?*a* = 2
+(deffunction B::funzione (?B)
+    (printout t ?B)
 )
-
-(deftemplate A::template 
-    (slot A (type INTEGER)))
-    
-(deffunction A::forwardDef ())
-
-(deffunction A::fakefun (?a ?b $?gene)
-    (forwardDef ?a ?b)
-    (printout ?a ?b $?gene)
-)
-
-(deffunction A::forwardDef (?a ?b)
-    (fakefun ?a ?b)
-)
-
-(defrule A::r1
-    (declare
-        (salience 100))
-    ?a <- (A ?a&:(+ 1 2 3) C)
-    (template (A 1))
-=>
-    (printout t ?*a* ?*b*)
-)
-
 
 """
 
