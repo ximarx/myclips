@@ -39,7 +39,22 @@ class FunctionsManager(RestrictedManager, Observable):
         return self._systemsFunctions.has_key(funcName)
 
     def has(self, definitionName):
-        return (self.hasSystemFunction(definitionName) or RestrictedManager.has(self, definitionName))
+        return ((self.hasSystemFunction(definitionName) or RestrictedManager.has(self, definitionName))
+                    and not self.getDefinition(definitionName).isForward)
+    
+    def addDefinition(self, definition):
+        # need to check definition:
+        # if definition scope different from this one
+        # i need to mark the function as not forward
+        # and lock redefinition
+        if definition.moduleName != self.scope.moduleName:
+            definition.isForward = False
+             
+        RestrictedManager.addDefinition(self, definition)
+        
+        # after i added the definition, i need to fire the event
+        self.fire(self.__class__.EVENT_NEW_DEFINITION, definition)
+        
     
     def getDefinition(self, defName):
         try:
@@ -58,11 +73,12 @@ class FunctionsManager(RestrictedManager, Observable):
             
         
 class FunctionDefinition(RestrictedDefinition):
-    def __init__(self, moduleName, defName, linkedType, returnTypes, handler, constraints=None):
+    def __init__(self, moduleName, defName, linkedType, returnTypes, handler=None, constraints=None, forward=False):
         RestrictedDefinition.__init__(self, moduleName, defName, "deffunction", linkedType)
         self._handler = handler
         self._returnTypes = returnTypes if isinstance(returnTypes, tuple) else (returnTypes,)
-        self._constraints = constraints if isinstance(constraints, list) else [] 
+        self._constraints = constraints if isinstance(constraints, list) else []
+        self._forward = bool(forward)
         
     @property
     def handler(self):
@@ -80,6 +96,10 @@ class FunctionDefinition(RestrictedDefinition):
         @rtype: tuple
         '''
         return self._returnTypes
+    
+    @property
+    def isForward(self):
+        return self._forward
     
     def isValidCall(self, args):
         for c in self._constraints:

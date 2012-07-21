@@ -613,7 +613,27 @@ class Parser(object):
                                                                             "modulesManager": self._modulesManager
                                                                             }))
         
-
+        ### DEFFUNCTION
+        
+        self.subparsers['DefFunctionNameParser'] = self._sb("SymbolParser").copy()\
+                .addParseAction(valutateScopeChange(self.getModulesManager()))
+        
+        self.subparsers["DefFunctionConstructParser"] = (LPAR + pp.Keyword("deffunction").suppress()  
+                                                        - self._sb("DefFunctionNameParser").setResultsName('functionName')
+                                                            - pp.Optional(self._sb("CommentParser")).setResultsName("comment")
+                                                        - LPAR
+                                                            - pp.Group( pp.ZeroOrMore(self._sb("SingleFieldVariableParser"))
+                                                                - pp.Optional(self._sb("MultiFieldVariableParser"))
+                                                                ).setResultsName("params")
+                                                        - RPAR
+                                                        - pp.Group(pp.ZeroOrMore(self._sb("ActionParser"))).setResultsName("actions")
+                                                        - RPAR)\
+                .setParseAction(makeInstanceDict(types.DefFunctionConstruct, {"functionName" : 'functionName',
+                                                                              "comment" : "comment",
+                                                                              "params" : "params", 
+                                                                              "actions" : "actions", 
+                                                                              "modulesManager": self._modulesManager
+                                                                            }))        
                 
         
         ### HIGH-LEVEL PARSERS
@@ -631,7 +651,7 @@ class Parser(object):
                                                     | self._sb("DefGlobalConstructParser")
                                                     | self._sb("DefRuleConstructParser")
                                                     | self._sb("DefTemplateConstructParser")
-                                                    #| self._sb("DefFunctionConstructParser")
+                                                    | self._sb("DefFunctionConstructParser")
                                                     | self._sb("DefModuleConstructParser")
                                                     | self._sb("MyClipsDirectiveParser")
                                                     | pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
@@ -641,7 +661,7 @@ class Parser(object):
                                                     | self._sb("DefGlobalConstructParser")
                                                     | self._sb("DefRuleConstructParser")
                                                     | self._sb("DefTemplateConstructParser")
-                                                    #| self._sb("DefFunctionConstructParser")
+                                                    | self._sb("DefFunctionConstructParser")
                                                     | self._sb("DefModuleConstructParser")
                                                     | pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
                                                     )

@@ -23,6 +23,12 @@ class TemplatesManager(RestrictedManager, Observable):
             ])
         RestrictedManager.__init__(self, scope)
         
+    def addDefinition(self, definition):
+        RestrictedManager.addDefinition(self, definition)
+        
+        # after i added the definition, i need to fire the event
+        self.fire(self.__class__.EVENT_NEW_DEFINITION, definition)
+        
         
 class TemplateDefinition(RestrictedDefinition):
     def __init__(self, moduleName, defName, linkedType, slots=None):

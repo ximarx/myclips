@@ -97,7 +97,7 @@ class ParserTest(unittest.TestCase):
 
 
     def test_DefFactsConstructParser_TemplateRhsPattern(self):
-        '''Check if deffacts content is correctly parsed if it's a template fact'''
+        '''Check if deffacts content is correctly parsed if there is a template fact'''
         # need to add template definition first
         self._testImpl('DefTemplateConstructParser', r"""
         (deftemplate templateName 

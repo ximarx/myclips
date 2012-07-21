@@ -27,7 +27,7 @@ class GlobalsManager(RestrictedManager, Observable):
         RestrictedManager.addDefinition(self, definition)
         
         # after i added the definition, i need to fire the event
-        self.fire(GlobalsManager.EVENT_NEW_DEFINITION, definition)
+        self.fire(self.__class__.EVENT_NEW_DEFINITION, definition)
         
         
 class GlobalVarDefinition(RestrictedDefinition):

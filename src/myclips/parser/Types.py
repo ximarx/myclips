@@ -5,6 +5,8 @@ from myclips.TemplatesManager import SlotDefinition as TemplateSlotDefinition,\
 from myclips.GlobalsManager import GlobalVarDefinition
 from myclips.Scope import Scope, ScopeImport, ScopeExport
 from myclips.MyClipsException import MyClipsException
+from myclips.FunctionsManager import FunctionDefinition,\
+    Constraint_ExactArgsLength, Constraint_MinArgsLength
 
 class ParsedType(object):
     '''
@@ -745,6 +747,68 @@ class DefModuleConstruct(ParsedType, HasScope):
         # HasScope init must che the last thing to be done, after scope creation
         HasScope.__init__(self, modulesManager)
         
+        
+class DefFunctionConstruct(ParsedType, HasScope):
+    
+    def __init__(self, functionName, modulesManager, params=None, actions=None, comment=None ):
+        functionName = HasScope.cleanName(functionName.evaluate() if isinstance(functionName, BaseParsedType) else functionName)
+        ParsedType.__init__(self, functionName)
+        HasScope.__init__(self, modulesManager)
+        
+        self.functionName = functionName
+        self.comment = comment.evaluate().strip('"') if isinstance(comment, BaseParsedType) else comment
+        self.params = [] if params is None else params
+        self.actions = [] if actions is None else actions
+        
+        self.functionDefinition = None
+        
+        # lets create the function definition
+        if self.scope.functions.has(functionName):
+            # has function return True
+            # is exists a definition
+            # and it is not a forward declaration
+            # system functions aren't always forwards
+            # valutate systemFunction only for 
+            # custom error
+            if self.scope.function.hasSystemFunction(functionName):
+                raise TypeInstanceCreationError("Deffunctions are not allowed to replace external functions: %s"%functionName)
+            else:
+                raise TypeInstanceCreationError("Cannot define deffunction %s because of an import/export conflict"%functionName)
+
+        # generate constraints from params
+        
+        constraints = []
+        
+        # args length
+        
+        minParams = len([x for x in self.params if isinstance(x, SingleFieldVariable)])
+        hasMax = not ( minParams != len(self.params) and isinstance(self.params[-1], MultiFieldVariable ) )
+        
+        if not hasMax:
+            constraints.append( Constraint_ExactArgsLength(minParams) )
+        else :
+            constraints.append( Constraint_MinArgsLength(minParams) )
+            
+        fDef = FunctionDefinition(self.scope.moduleName, functionName,
+                                    linkedType=self, 
+                                    returnTypes=(self.actions[-1].funcDefinition.returnTypes 
+                                                    if len(self.actions) > 0 
+                                                        else Symbol), 
+                                    handler=None, 
+                                    constraints=constraints, 
+                                    forward=True)
+                
+        self.scope.functions.addDefinition(fDef)
+
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}::{2},comment={3},params={4},actions={5}>".format(
+                        self.__class__.__name__,
+                        self.scope.moduleName,
+                        self.functionName,
+                        '"'+self.comment+'"' if self.comment != None else '""',
+                        self.params,
+                        self.actions
+                    )
     
 class NullValue(BaseParsedType):
     

@@ -1,6 +1,5 @@
 from myclips.parser.Parser import Parser
 import sys
-from myclips.Scope import Scope, ScopeImport, ScopeExport
 from myclips.ModulesManager import ModulesManager
 from myclips.parser.Types import ParsedType
 
@@ -24,6 +23,7 @@ if __name__ == '__main__':
     
     s = r"""
     
+    
 (defmodule MOD
     (export defglobal b))
 
@@ -44,6 +44,17 @@ if __name__ == '__main__':
 
 (deftemplate A::template 
     (slot A (type INTEGER)))
+    
+(deffunction A::forwardDef ())
+
+(deffunction A::fakefun (?a ?b $?gene)
+    (forwardDef ?a ?b)
+    (printout ?a ?b $?gene)
+)
+
+(deffunction A::forwardDef (?a ?b)
+    (fakefun ?a ?b)
+)
 
 (defrule A::r1
     (declare
@@ -60,9 +71,6 @@ if __name__ == '__main__':
 
     MM = ModulesManager()
     MM.addMainScope()
-    #Scope("MOD", MM, exports=[ScopeExport(Scope.PROMISE_TYPE_GLOBAL, Scope.PROMISE_NAME_ALL)])
-    #Scope("A", MM, imports=[ScopeImport("MOD", Scope.PROMISE_TYPE_GLOBAL, Scope.PROMISE_NAME_ALL)])
-    #MM.changeCurrentScope("MAIN")
     
     try:
     
