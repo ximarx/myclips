@@ -86,10 +86,10 @@ class Parser(object):
                     self._lastParseError = None
                     return i
                 except types.TypeRecoverableInstanceCreationError as e:
-                    self._lastParseError = e.getMessage()
+                    self._lastParseError = e.message
                     raise pp.ParseException(s,l, self._lastParseError)
                 except types.TypeInstanceCreationError as e:
-                    raise pp.ParseFatalException(s,l,e.getMessage())
+                    raise pp.ParseFatalException(s,l,e.message)
             
                     
             return makeAction
@@ -120,10 +120,10 @@ class Parser(object):
                     self._lastParseError = None
                     return i
                 except types.TypeRecoverableInstanceCreationError as e:
-                    self._lastParseError = e.getMessage()
+                    self._lastParseError = e.message
                     raise pp.ParseException(s,l, self._lastParseError)
                 except types.TypeInstanceCreationError as e:
-                    raise pp.ParseFatalException(s,l,e.getMessage())
+                    raise pp.ParseFatalException(s,l,e.message)
                 
             return makeDictAction
         
@@ -542,16 +542,17 @@ class Parser(object):
                                                                                     })) 
         
         
-        ### DEFGLOBALS
+        ### DEFGLOBAL
         
         self.subparsers["GlobalAssignmentParser"] = (self._sb("GlobalVariableParser").copy()
                                                         .setParseAction(makeInstanceDict(types.GlobalVariable, {'content': 1, 
-                                                                              "modulesManager": self._modulesManager,
-                                                                              "ignoreCheck": True
-                                                                              }))
+                                                                                                                "modulesManager": self._modulesManager,
+                                                                                                                "ignoreCheck": True
+                                                                                                                }))
                                                      + pp.Literal("=").suppress()
                                                      + self._sb("ExpressionParser"))\
-                .setParseAction(makeInstanceDict(types.GlobalAssignment, {"variable": 0, "value": 1}))
+                .setParseAction(makeInstanceDict(types.GlobalAssignment, {"variable": 0,
+                                                                          "value": 1}))
                 
         self.subparsers['DefGlobalModuleParser'] = self._sb("SymbolParser").copy()\
                 .addParseAction(doScopeChange(self.getModulesManager()))
@@ -561,9 +562,58 @@ class Parser(object):
                                                         - pp.Group(pp.ZeroOrMore(self._sb("GlobalAssignmentParser"))).setResultsName("assignments")
                                                         - RPAR)\
                 .setParseAction(makeInstanceDict(types.DefGlobalConstruct, {"assignments": "assignments", 
-                                                                                  "moduleName": "moduleName", 
-                                                                                  "modulesManager": self._modulesManager
-                                                                                  }))
+                                                                            "moduleName": "moduleName", 
+                                                                            "modulesManager": self._modulesManager
+                                                                            }))
+        
+        
+        ### DEFMODULE
+        
+        self.subparsers["PortConstructParser"] = pp.oneOf(["deftemplate", "defglobal", "deffunction"])\
+                .setParseAction(makeInstance(types.Symbol))
+        
+        self.subparsers["PortItemParser"] = (pp.Keyword("?ALL")
+                                                | pp.Keyword("?NONE")
+                                                | pp.Group(
+                                                        self._sb("PortConstructParser")
+                                                        - ( pp.Keyword("?ALL")
+                                                            | pp.Keyword("?NONE")
+                                                            |  pp.Group(pp.OneOrMore(self._sb("SymbolParser"))))
+                                                    )
+                                             )\
+                .setParseAction(makeInstance(types.PortItem, position=0))
+        
+
+        self.subparsers["PortSpecificationImportParser"] = (LPAR + pp.Keyword("import").suppress()
+                                                            - self._sb("SymbolParser")
+                                                            - self._sb("PortItemParser")
+                                                            - RPAR)\
+                .setParseAction(makeInstanceDict(types.ImportSpecification, {"moduleName": 0,
+                                                                             "item": 1,
+                                                                             "modulesManager": self._modulesManager
+                                                                             }))
+        
+        self.subparsers["PortSpecificationExportParser"] = (LPAR + pp.Keyword("export").suppress()
+                                                            - self._sb("PortItemParser")
+                                                            - RPAR)\
+                .setParseAction(makeInstance(types.ExportSpecification, position=0))
+        
+        self.subparsers["PortSpecificationParser"] = (self._sb("PortSpecificationImportParser")
+                                                        | self._sb("PortSpecificationExportParser"))\
+                .setParseAction(forwardParsed(key=0))
+
+        self.subparsers["DefModuleConstructParser"] = (LPAR + pp.Keyword("defmodule").suppress()
+                                                        - self._sb("SymbolParser").setResultsName("moduleName")
+                                                            - pp.Optional(self._sb("CommentParser")).setResultsName("comment")
+                                                        - pp.Group(pp.ZeroOrMore(self._sb("PortSpecificationParser"))).setResultsName("specifications")
+                                                        - RPAR)\
+                .setParseAction(makeInstanceDict(types.DefModuleConstruct, {"specifications": "specifications",
+                                                                            "comment": "comment",
+                                                                            "moduleName": "moduleName", 
+                                                                            "modulesManager": self._modulesManager
+                                                                            }))
+        
+
                 
         
         ### HIGH-LEVEL PARSERS
@@ -582,7 +632,7 @@ class Parser(object):
                                                     | self._sb("DefRuleConstructParser")
                                                     | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefFunctionConstructParser")
-                                                    #| self._sb("DefModuleConstructParser")
+                                                    | self._sb("DefModuleConstructParser")
                                                     | self._sb("MyClipsDirectiveParser")
                                                     | pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
                                                     )
@@ -592,7 +642,7 @@ class Parser(object):
                                                     | self._sb("DefRuleConstructParser")
                                                     | self._sb("DefTemplateConstructParser")
                                                     #| self._sb("DefFunctionConstructParser")
-                                                    #| self._sb("DefModuleConstructParser")
+                                                    | self._sb("DefModuleConstructParser")
                                                     | pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
                                                     )
             
@@ -636,7 +686,7 @@ class Parser(object):
                                              e.loc,
                                              e.msg + ". Possible cause: " + self._lastParseError )
             else:
-                raise e
+                raise
             
     
     def _changeDebug(self):
@@ -645,24 +695,36 @@ class Parser(object):
             
     @staticmethod
     def ExceptionPPrint(err, original_string, prev_lines=10, after_lines=5, customMsg=False, returnArray=False):
-        splitted = original_string.splitlines()
-        lines_padding = len(str(len(splitted))) + 1
-        format_string = "% " + str(lines_padding) + "d| %s"
-        rVal = [err.__class__.__name__]
-        rVal += [format_string%(i+1+max(0,err.lineno-prev_lines),x) for (i,x) in enumerate(splitted[max(0,err.lineno-prev_lines):err.lineno-1])]
-        rVal.append(format_string%(err.lineno,err.line))
-        rVal.append(" "*(err.column+lines_padding+1) + "^")
-        if customMsg == False: 
-            rVal.append(str(err))
-        else:
-            rVal.append(str(customMsg))
-        rVal.append("")
-        rVal += [format_string%(i+1+err.lineno,x) for (i,x) in enumerate(splitted[err.lineno:err.lineno+after_lines])]
-        
-        if not returnArray:
-            rVal = "\n".join(rVal)
-        
-        return rVal    
+        try:
+            if err.loc == 0:
+                raise Exception()
+            
+            splitted = original_string.splitlines()
+            lines_padding = len(str(len(splitted))) + 1
+            format_string = "% " + str(lines_padding) + "d| %s"
+            rVal = [err.__class__.__name__]
+            rVal += [format_string%(i+1+max(0,err.lineno-prev_lines),x) for (i,x) in enumerate(splitted[max(0,err.lineno-prev_lines):err.lineno-1])]
+            rVal.append(format_string%(err.lineno,err.line))
+            rVal.append(" "*(err.column+lines_padding+1) + "^")
+            if customMsg == False: 
+                rVal.append(str(err))
+            else:
+                rVal.append(str(customMsg))
+            rVal.append("")
+            rVal += [format_string%(i+1+err.lineno,x) for (i,x) in enumerate(splitted[err.lineno:err.lineno+after_lines])]
+            
+            if not returnArray:
+                rVal = "\n".join(rVal)
+            
+            return rVal
+        except:
+            # if an error is found (for example if no lineno attr available in err
+            rVal = ["*** No error location available ***", str(err)]
+            
+            if not returnArray:
+                rVal = "\n".join(rVal)
+            
+            return rVal
 if __name__ == '__main__':
 
 

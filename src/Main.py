@@ -23,9 +23,9 @@ def constructs_prettyprint(constr_string, INDENT=0):
 if __name__ == '__main__':
     
     s = r"""
-(defglobal A
-    ?*a* = 2
-)
+    
+(defmodule MOD
+    (export defglobal b))
 
 (defglobal MOD
     ?*b* = 2
@@ -33,6 +33,13 @@ if __name__ == '__main__':
 
 (deffacts MOD::bla
     (A B C)
+)
+
+(defmodule A
+    (import MOD defglobal b))
+    
+(defglobal A
+    ?*a* = 2
 )
 
 (deftemplate A::template 
@@ -53,9 +60,9 @@ if __name__ == '__main__':
 
     MM = ModulesManager()
     MM.addMainScope()
-    Scope("MOD", MM, exports=[ScopeExport(Scope.PROMISE_TYPE_GLOBAL, Scope.PROMISE_NAME_ALL)])
-    Scope("A", MM, imports=[ScopeImport("MOD", Scope.PROMISE_TYPE_GLOBAL, Scope.PROMISE_NAME_ALL)])
-    MM.changeCurrentScope("MAIN")
+    #Scope("MOD", MM, exports=[ScopeExport(Scope.PROMISE_TYPE_GLOBAL, Scope.PROMISE_NAME_ALL)])
+    #Scope("A", MM, imports=[ScopeImport("MOD", Scope.PROMISE_TYPE_GLOBAL, Scope.PROMISE_NAME_ALL)])
+    #MM.changeCurrentScope("MAIN")
     
     try:
     

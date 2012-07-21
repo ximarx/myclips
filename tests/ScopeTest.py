@@ -59,6 +59,34 @@ class ScopeTest(unittest.TestCase):
         self.assertTrue(scope.isImportable(Scope.PROMISE_TYPE_FUNCTION, "function"))
         self.assertTrue(scope.isImportable(Scope.PROMISE_TYPE_GLOBAL, "*global*"))
 
+    def test_ExportAListOfConstructsIsPossible(self):
+        scope = Scope("MAIN", ModulesManager(), exports=[
+                            ScopeExport(Scope.PROMISE_TYPE_GLOBAL, ["?*a*","?*b*","?*c*" ])
+                        ])
+        
+        self.assertTrue(scope.isImportable(Scope.PROMISE_TYPE_GLOBAL, "?*a*"))
+        self.assertTrue(scope.isImportable(Scope.PROMISE_TYPE_GLOBAL, "?*b*"))
+        self.assertTrue(scope.isImportable(Scope.PROMISE_TYPE_GLOBAL, "?*c*"))
+        self.assertFalse(scope.isImportable(Scope.PROMISE_TYPE_GLOBAL, "?*unknown*"))
+        
+    def test_ImportAListOfConstructsIsPossible(self):
+        MM = ModulesManager()
+        scopeM = Scope("MAIN", MM, exports=[
+                            ScopeExport(Scope.PROMISE_TYPE_GLOBAL, ["?*a*","?*b*","?*c*" ])
+                        ])
+        
+        scopeM.globalsvars.addDefinition(GlobalVarDefinition(scopeM.moduleName, "?*a*", object()))
+        scopeM.globalsvars.addDefinition(GlobalVarDefinition(scopeM.moduleName, "?*b*", object()))
+        scopeM.globalsvars.addDefinition(GlobalVarDefinition(scopeM.moduleName, "?*c*", object()))
+        
+        
+        scope1 = Scope("FIRST", MM, imports=[
+                            ScopeImport("MAIN", Scope.PROMISE_TYPE_GLOBAL, ["?*a*", "?*b*"])
+                        ])
+        
+        self.assertTrue(scope1.globalsvars.has("?*a*"))
+        self.assertTrue(scope1.globalsvars.has("?*b*"))
+        self.assertFalse(scope1.globalsvars.has("?*c*"))
         
     def test_ExportEverythingIsImportableAlways(self):
         scope = Scope("MAIN", ModulesManager(), exports=[

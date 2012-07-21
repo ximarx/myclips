@@ -3,6 +3,8 @@ import myclips
 from myclips.TemplatesManager import SlotDefinition as TemplateSlotDefinition,\
     Attribute_TypeConstraint, TemplateDefinition
 from myclips.GlobalsManager import GlobalVarDefinition
+from myclips.Scope import Scope, ScopeImport, ScopeExport
+from myclips.MyClipsException import MyClipsException
 
 class ParsedType(object):
     '''
@@ -631,6 +633,118 @@ class GlobalAssignment(ParsedType):
         return "<{0}:{1} = {2}>".format(self.__class__.__name__,
                                         self.variable,
                                         self.value)
+        
+        
+class PortItem(ParsedType):
+    def __init__(self, content):
+        # content can be:
+        #    ?ALL | ?NONE | list
+        # list can be:
+        #    [Symbol, [Symbol] ] | [Symbol, ?ALL] | [Symbol, ?NONE]
+        # first list Symbol can be:
+        #    deftemplate | defglobal | deffunction
+        # second list Symbol is a list of construct names 
+        #    (the type of construct it restricted by first Symbol)
+        
+        self.portType = None
+        self.portNames = None
+        
+        # first check construct type
+        if isinstance(content, list):
+            # need to go deeper
+            type2PromiseMap = {"deftemplate": Scope.PROMISE_TYPE_TEMPLATE,
+                               "defglobal": Scope.PROMISE_TYPE_GLOBAL,
+                               "deffunction": Scope.PROMISE_TYPE_FUNCTION}
+            try:
+                self.portType = type2PromiseMap[content[0].evaluate()]
+            except KeyError:
+                raise TypeInstanceCreationError("Syntax Error: Check appropriate syntax for defmodule export specification")
+            
+            # now i need to valutate the name of the construct
+            if isinstance(content[1], list):
+                # i got a list, so all symbols are construct name
+                # but i can't check if they are valid here
+                # need to pospone check on defmodule/import/export creation
+                self.portNames = [x.evaluate() if self.portType != Scope.PROMISE_TYPE_GLOBAL
+                                        else "?*%s*"%x.evaluate()
+                                    for x in content[1]] # only cast to real str
+            else:
+                if content == "?ALL":
+                    self.portNames = Scope.PROMISE_NAME_ALL
+                elif content == "?NONE":
+                    self.portNames = Scope.PROMISE_NAME_NONE
+                else:
+                    raise TypeInstanceCreationError("Syntax Error: Check appropriate syntax for defmodule export specification")
+                
+        else:
+            if content == "?ALL":
+                self.portType = Scope.PROMISE_NAME_ALL
+                self.portNames = Scope.PROMISE_NAME_ALL
+            elif content == "?NONE":
+                self.portType = Scope.PROMISE_NAME_NONE
+                self.portNames = Scope.PROMISE_NAME_NONE
+            else:
+                raise TypeInstanceCreationError("Syntax Error: Check appropriate syntax for defmodule export specification")
+        # not end object construction
+        ParsedType.__init__(self, self.portType)
+        
+        
+        
+class ImportSpecification(ParsedType):
+    def __init__(self, moduleName, item, modulesManager):
+        moduleName = moduleName.evaluate() if isinstance(moduleName, BaseParsedType) else moduleName # cast to raw
+        ParsedType.__init__(self, moduleName)
+        self.moduleName = moduleName
+        self.item = item
+        
+        # check if the scope of that name exists
+        if not modulesManager.isDefined(moduleName):
+            raise TypeInstanceCreationError("Unable to find defmodule %s"%moduleName)
+        
+        
+class ExportSpecification(ParsedType):
+    def __init__(self, item):
+        ParsedType.__init__(self, item)
+        self.item = item
+        
+
+class DefModuleConstruct(ParsedType, HasScope):
+    def __init__(self, moduleName, modulesManager, specifications=None, comment=None):
+        moduleName = moduleName.evaluate() if isinstance(moduleName, BaseParsedType) else moduleName
+        comment = comment.evaluate().strip('"') if isinstance(comment, BaseParsedType) else comment
+        specifications = specifications if isinstance(specifications, list) else []
+        
+        ParsedType.__init__(self, moduleName)
+        self.moduleName = moduleName
+        self.comment = comment
+        self.specifications = specifications
+        
+        # time to create che new Scope
+        
+        try:
+            Scope(moduleName, modulesManager, imports=[
+                        ScopeImport(imp.moduleName, imp.item.portType, imp.item.portNames)
+                            for imp in self.specifications if isinstance(imp, ImportSpecification)
+                    ], exports=[
+                        ScopeExport(exp.item.portType, exp.item.portNames)
+                            for exp in self.specifications if isinstance(exp, ExportSpecification)
+                    ])
+        except Exception, e:
+            # causes of failure:
+            #    moduleName already exists
+            #    import from unknown module
+            #    import of an unknown construct
+            #    name conflicts
+            # i can use the original name
+            raise TypeInstanceCreationError(e.args[0])
+        
+        # scope is automatically changed to the new one.
+        # now i can complete HasScope init and the scope
+        # is the new create scope
+        
+        # HasScope init must che the last thing to be done, after scope creation
+        HasScope.__init__(self, modulesManager)
+        
     
 class NullValue(BaseParsedType):
     
@@ -661,12 +775,9 @@ TYPES = {
         : Number
 }
 
-class TypeBaseError(Exception):
-    def getMessage(self):
-        return self.message
 
-class TypeInstanceCreationError(TypeBaseError):
+class TypeInstanceCreationError(MyClipsException):
     pass
 
-class TypeRecoverableInstanceCreationError(TypeBaseError):
+class TypeRecoverableInstanceCreationError(MyClipsException):
     pass

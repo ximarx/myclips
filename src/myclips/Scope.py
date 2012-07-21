@@ -262,11 +262,17 @@ class Scope(Observer):
         
         if eName is None or eName == Scope.PROMISE_NAME_ALL:
             return [(eName, typeMap[eType].getDefinition(eName)) for eName in exDefs.keys() if eName != Scope.PROMISE_NAME_ALL]
+        elif isinstance(eName, list):
+            # i want a selection of exports
+            return [(dName, typeMap[eType].getDefinition(dName)) for dName in exDefs.keys() if dName in eName]
         else:
             # this ensure the export for the name exists
             # otherwise a KeyError is raised
             exDefs[eName]
             return [(eName, typeMap[eType].getDefinition(eName))]
+        
+    def __repr__(self):
+        return "<" + "::".join((self.__class__.__name__,self.moduleName)) + ">"
         
     def __str__(self, *args, **kwargs):
         retStr = [super(Scope, self).__repr__(*args, **kwargs)]
@@ -324,6 +330,10 @@ class _ScopeExportPromise(object):
                 if exDef.eName == Scope.PROMISE_NAME_NONE:
                     # empty this promise dict type
                     setattr(self, _ScopeExportPromise._typeMap[exDef.eType], {})
+                elif isinstance(exDef.eName, list):
+                    pDict = getattr(self, _ScopeExportPromise._typeMap[exDef.eType])
+                    for rName in exDef.eName:
+                        pDict[rName] = ScopeExport(exDef.eType, rName)
                 else:
                     pDict = getattr(self, _ScopeExportPromise._typeMap[exDef.eType])
                     pDict[exDef.eName] = exDef

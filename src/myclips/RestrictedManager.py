@@ -42,6 +42,9 @@ class RestrictedManager(object):
         
         self._definitions[definition.name] = definition
     
+    def __repr__(self, *args, **kwargs):
+        return "::".join((self.scope.moduleName, self.__class__.__name__))
+    
 class RestrictedDefinition(object):
     
     def __init__(self, moduleName, defName, defType, linkedType ):
