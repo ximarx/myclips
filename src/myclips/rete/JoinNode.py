@@ -99,7 +99,7 @@ class JoinNode(Node, HasJoinTests, AlphaInput, BetaInput):
         Delete the JoinNode
         """
         Node.delete(self)
-        #EventManager.trigger(EventManager.E_NODE_REMOVED, self)
+        
         
     def __str__(self, *args, **kwargs):
         return "<%sJoinNode,children:%d,tests:%s>"%("Dummy" if self.isLeftRoot() else "",

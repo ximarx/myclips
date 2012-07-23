@@ -34,6 +34,7 @@ class Token(object):
         # i can use a dict, using token.hash for index 
         self._children = {}
         
+        self._negativeJoinResults = []
         
         # IF THIS ISN'T A ROOT TOKEN
         # at the end of token creation, i have to 
@@ -111,6 +112,15 @@ class Token(object):
         # children list is updated at every call
         while len(self._children.values()) > 0:
             self._children.values()[0].delete()
+        
+    def hasNegativeJoinResults(self):
+        return len(self._negativeJoinResults) > 0
+        
+    def linkNegativeJoinResults(self, njr):
+        self._negativeJoinResults.append(njr)
+        
+    def unlinkNegativeJoinResults(self, njr):
+        self._negativeJoinResults.remove(njr)
         
     @property
     def wme(self):

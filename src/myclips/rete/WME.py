@@ -57,6 +57,15 @@ class WME(object):
     def unlinkToken(self, token):
         del self._tokens[token]
         
+    def hasNegativeJoinResults(self):
+        return len(self._negativeJoinResults) > 0
+        
+    def linkNegativeJoinResults(self, njr):
+        self._negativeJoinResults.append(njr)
+        
+    def unlinkNegativeJoinResults(self, njr):
+        self._negativeJoinResults.remove(njr)
+        
     def __hash__(self, *args, **kwargs):
         return self.factId
     
