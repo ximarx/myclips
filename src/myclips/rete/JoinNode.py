@@ -46,11 +46,15 @@ class JoinNode(Node, HasJoinTests, AlphaInput, BetaInput):
             if self.isValid(token, wme):
                 # join test is valid for token + wme
                 # create new token and propagate
-                for child in self.childrenIterator():
+                for child in self.children:
                     child.leftActivation(token, wme)
             
         
-    def leftActivation(self, token):
+    def leftActivation(self, token, _=None):
+        """
+        Execute tests about a token propagated
+        vs wme from alpha memory
+        """
         
         if not isinstance(self.rightParent, Memory):
             myclips.logger.critical("Rete compiler right linked a JoinNode to a non-Memory node %s"%self.rightParent.__class__.__name__)
@@ -58,7 +62,7 @@ class JoinNode(Node, HasJoinTests, AlphaInput, BetaInput):
         
         for wme in self.rightParent.items:
             if self.isValid(token, wme):
-                for child in self.childrenIterator():
+                for child in self.children:
                     child.leftActivation(token, wme)
         
     

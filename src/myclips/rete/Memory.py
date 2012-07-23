@@ -18,7 +18,11 @@ class Memory(object):
 
     @property
     def items(self):
-        return self._items
+        return self._items.values()
+    
+    @property
+    def keys(self):
+        return self._items.keys()
 
     def addItem(self, item): 
         self._items[item] = item

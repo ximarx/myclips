@@ -68,14 +68,11 @@ class Node(object):
         self.children.remove(child)
     
     def prependChild(self, child):
-        self._children.leftAppend(child)
+        self._children.appendLeft(child)
         
     def appendChild(self, child):
         self._children.append(child)
         
-    def childrenIterator(self):
-        yield self._children
-
     def isLeaf(self):
         return len(self.children) == 0
     
@@ -107,6 +104,7 @@ class Node(object):
             if self.rightParent.isLeaf():
                 self.rightParent.delete()
         
+        #EventManager.trigger(EventManager.E_NODE_REMOVED, self)
     
     def __str__(self, *args, **kwargs):
         if self.isRoot():

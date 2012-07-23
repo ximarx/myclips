@@ -26,7 +26,7 @@ class AlphaMemory(Node, Memory, AlphaInput):
         '''
         Constructor
         '''
-        Node.__init__(self, rightParent=None)
+        Node.__init__(self, rightParent=parent, leftParent=None)
         Memory.__init__(self)
         
         
@@ -56,4 +56,27 @@ class AlphaMemory(Node, Memory, AlphaInput):
         
         for child in self.childrenIterator():
             child.rightActivation(wme)
+    
+    def delete(self):
+        """
+        Remove the alpha-memory from the network
+        """
+        
+        # before to call the Node.delete,
+        # references to this alpha-memory 
+        # have to be removed
+        # from all wme object
+        for wme in self.items:
+            wme.unlinkAlphaMemory(self)
             
+        Node.delete(self)
+        
+    def updateChild(self, child):
+        """
+        Force right activation of the child
+        with all local results stored in this
+        alpha-memory
+        """
+        for wme in self.items:
+            child.rightActivation(wme)
+        

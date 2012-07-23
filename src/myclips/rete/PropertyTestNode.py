@@ -41,8 +41,8 @@ class PropertyTestNode(Node, HasMemory, HasTests, AlphaInput):
                 self.memory.addItem(wme)
             
             # propagate this wme to all childs
-            for child in self.childrenIterator():
-                child.rightActivation()
+            for child in self.children:
+                child.rightActivation(wme)
             
     
     # alias for rightActivation
