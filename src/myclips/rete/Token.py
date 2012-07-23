@@ -4,6 +4,7 @@ Created on 23/lug/2012
 @author: Francesco Capozzo
 '''
 import collections
+import myclips
 
 class Token(object):
     '''
@@ -70,6 +71,46 @@ class Token(object):
             current = current.parent
         
         return list(wmes)
+        
+    def delete(self):
+        """
+        Delete this token and all children
+        (without a parent token, all children are
+        invalidated)
+        """
+        self.deleteChildren()    
+        
+        # remove reference to this token
+        # from the creator node
+        # (could fail delete isn't called
+        # from a parent token invalidation)
+        
+        # In old version there was an undocumented
+        #if not isinstance(self._node, NccPartnerNode):
+        myclips.logger.debug("FIXME: add check for NccPartnerNode")
+        self._node.removeItem()
+        
+        # wme could be None if match comes
+        # from negative/ncc nodes
+        if self.wme is not None:
+            self.wme.unlinkToken(self)
+            
+        # remove reference to the child 
+        # from the parent
+        if not self.isRoot():
+            del self._children[self]
+            
+        myclips.logger.debug("FIXME: add check for other special cases in token::delete()")
+        
+    def deleteChildren(self):
+        
+        # call delete of all children
+        # while loop is required (and values must be revalutated
+        # everytime because child token reference removal from parent dict
+        # must be required by the child token
+        # children list is updated at every call
+        while len(self._children.values()) > 0:
+            self._children.values()[0].delete()
         
     @property
     def wme(self):

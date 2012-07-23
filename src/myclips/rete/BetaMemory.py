@@ -74,9 +74,10 @@ class BetaMemory(Node, Memory, BetaInput):
         # to combine partial matches
         # must be deleted (and automatically all successors)
         while len(self.items) > 0:
-            token = self.items.pop(0)
-            token.delete()
-            del token
+            # token deletion from the creator
+            # not is invoked from the token.delete()
+            # so i can't remove the reference from the storage now
+            self.items[0].delete()
             
         # then i can call parent destructor
         Node.delete(self)
