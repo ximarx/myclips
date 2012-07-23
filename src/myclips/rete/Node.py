@@ -18,7 +18,7 @@ class Node(object):
         self._rightParent = rightParent
         self._leftParent = leftParent
         self._children = collections.deque()
-
+        
     @property
     def rightParent(self):
         """
@@ -64,6 +64,9 @@ class Node(object):
     def children(self):
         return self._children
     
+    def removeChild(self, child):
+        self.children.remove(child)
+    
     def prependChild(self, child):
         self._children.leftAppend(child)
         
@@ -76,7 +79,36 @@ class Node(object):
     def isLeaf(self):
         return len(self.children) == 0
     
-    def __repr__(self, *args, **kwargs):
+    def updateChild(self, child):
+        """
+        Propagate all partial instantiations
+        available to this not to the child
+        """
+        raise NotImplementedError()
+    
+    def delete(self):
+        """
+        Execute standard operations for
+        node removal from the network
+        and notify listeners for node removal
+        """
+        
+        if not self.isLeftRoot():
+            #EventManager.trigger(EventManager.E_NODE_UNLINKED, self, self.leftRoot)
+            self.leftParent.removeChild(self)
+            # check if leftParent is still usefull
+            # otherwise forward deletion to it
+            if self.leftParent.isLeaf():
+                self.leftParent.delete()
+                
+        if not self.isRightRoot():
+            #EventManager.trigger(EventManager.E_NODE_UNLINKED, self, self.rightRoot)
+            self.rightParent.removeChild(self)
+            if self.rightParent.isLeaf():
+                self.rightParent.delete()
+        
+    
+    def __str__(self, *args, **kwargs):
         if self.isRoot():
             return "<RootNode>"
         elif self.isLeftRoot():

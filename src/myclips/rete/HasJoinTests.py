@@ -4,7 +4,7 @@ Created on 04/lug/2012
 @author: ximarx
 '''
 
-class HasTests(object):
+class HasJoinTests(object):
     '''
     Interface to identify node with with tests
     to perform on activation
@@ -14,7 +14,7 @@ class HasTests(object):
         '''
         Constructor
         '''
-        self._tests = tests
+        self._tests = [] if tests is None else tests
         
     def hasTests(self):
         '''
@@ -43,9 +43,9 @@ class HasTests(object):
         self._tests = tests
         
     
-    def isValid(self, wme):
+    def isValid(self, token, wme):
         if self.hasTests():
             for test in self.tests:
-                if not test.isValid(wme):
+                if not test.isValid(token, wme):
                     return False
         return True

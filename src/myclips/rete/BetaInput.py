@@ -9,5 +9,5 @@ class BetaInput(object):
     An interface for nodes right-activable
     '''
 
-    def leftActivation(self, token):
+    def leftActivation(self, token, wme):
         raise NotImplementedError()

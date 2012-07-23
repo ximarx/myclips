@@ -16,3 +16,11 @@ class MyClipsException(Exception):
     @property
     def message(self):
         return self._message
+    
+    
+class MyClipsBugException(MyClipsException):
+    """
+    Special exception class to raise if
+    myclips is in an unrecoverable failure state
+    """
+    pass
