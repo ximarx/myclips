@@ -11,7 +11,7 @@ class WME(object):
     '''
 
 
-    def __init__(self, factId, values):
+    def __init__(self, factId, fact):
         '''
         Constructor
         '''
@@ -19,7 +19,7 @@ class WME(object):
         self._tokens = {}
         self._negativeJoinResults = []
         self._factId = factId
-        self._values = values
+        self._fact = fact
         
         
     def delete(self):
@@ -67,12 +67,12 @@ class WME(object):
         self._factId = value
         
     @property
-    def values(self):
-        return self._values
-    
-    @values.setter
-    def values(self, values):
-        self._values = values
+    def fact(self):
+        return self._fact
+        
+    @fact.setter
+    def fact(self, value):
+        self._fact = value
         
     def linkAlphaMemory(self, alphaMemory):
         """

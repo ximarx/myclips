@@ -24,17 +24,23 @@ if __name__ == '__main__':
     s = r"""
     
 (defmodule A
-    (export deffunction funzione))
+    (export ?ALL))
 
 (deffunction A::funzione (?A)
     (printout t ?A)
 )
 
-(defmodule B 
-    (import A deffunction funzione))
-    
-(deffunction B::funzione (?B)
-    (printout t ?B)
+(deftemplate A::template
+    (slot A)
+    (slot B)
+    (multislot C)
+)
+
+(defrule A::regola
+    (template (A 1) (B 2) (C $?c1s3))
+    ?c2 <- (template (A ?))
+    (A 2 c 4)
+=>
 )
 
 """
