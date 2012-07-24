@@ -35,6 +35,8 @@ class Token(object):
         self._children = {}
         
         self._negativeJoinResults = []
+        self._nccResults = {}
+        self._nccOwner = None
         
         # IF THIS ISN'T A ROOT TOKEN
         # at the end of token creation, i have to 
@@ -121,6 +123,28 @@ class Token(object):
         
     def unlinkNegativeJoinResults(self, njr):
         self._negativeJoinResults.remove(njr)
+        
+    def hasNccResults(self):
+        return (len(self._nccResults) > 0)
+        
+    def linkNccResult(self, token):
+        self._nccResults[token] = token
+        token.nccOnwer = self
+        
+    def unlinkNccResult(self, token):
+        del self._nccResults[token]
+        token.nccOwner = None
+        
+    @property
+    def nccOwner(self):
+        return self._nccOwner
+    
+    @nccOwner.setter
+    def nccOwner(self, owner):
+        self._nccOwner = owner
+        
+    def hasNccOwner(self):
+        return (self._nccOwner is not None)
         
     @property
     def wme(self):
