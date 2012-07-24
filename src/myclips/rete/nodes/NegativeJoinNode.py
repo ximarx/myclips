@@ -3,7 +3,7 @@ Created on 23/lug/2012
 
 @author: Francesco Capozzo
 '''
-from myclips.rete.JoinNode import JoinNode
+from myclips.rete.nodes.JoinNode import JoinNode
 from myclips.rete.Memory import Memory
 from myclips.rete.Token import Token
 

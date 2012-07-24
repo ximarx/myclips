@@ -3,8 +3,8 @@ Created on 24/lug/2012
 
 @author: Francesco Capozzo
 '''
-from myclips.rete.BetaMemory import BetaMemory
-from myclips.rete.NccPartnerNode import NccPartnerNode
+from myclips.rete.nodes.BetaMemory import BetaMemory
+from myclips.rete.nodes.NccPartnerNode import NccPartnerNode
 from myclips.rete.Token import Token
 
 class NccNode(BetaMemory):
@@ -32,6 +32,7 @@ class NccNode(BetaMemory):
         BetaMemory.__init__(self, leftParent=leftParent)
         
         self._partner = NccPartnerNode(leftParent=rightParent, partnerCircuitLength, self)
+        
         
     def leftActivation(self, token, wme):
         
