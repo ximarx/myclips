@@ -58,6 +58,42 @@ class WME(object):
             
         self._negativeJoinResults = [] # for garbage collector ?
         
+    def delete(self):
+        """
+        Revoke all activations made by this wme
+        and delete the wme itself
+        """
+        
+        # at first, remove this wme from all
+        # alpha memories and reset the container
+        for memory in self._alphaMemories:
+            memory.removeItem(self)
+        self._alphaMemories = []
+        
+        # then, revoke all token where this wme
+        # has a role
+        while len(self._tokens) > 0:
+            # token removal from wme dict
+            # must be required by the token itself
+            # so i just pick every time a random token
+            # and require removal until all token has been removed
+            self._tokens[self._tokens.keys()[0]].delete()
+            
+        # last but not least, njr cleanup
+        #from myclips.rete.nodes.NegativeJoinNode import NegativeJoinResult
+        for njr in self._negativeJoinResults:
+            #assert isinstance(njr, NegativeJoinResult)
+            njr.token.unlinkNegativeJoinResult(njr)
+            # after i removed a negative join result from a token
+            # i need to revaluate if the njr was the last one.
+            # if true, then token must be propagated
+            # to token creator node's children 
+            if not njr.token.hasNegativeJoinResults():
+                for child in njr.token.node.children:
+                    child.leftActivation(njr.token, None)
+            
+            
+        
     @property
     def factId(self):
         return self._factId
