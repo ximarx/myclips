@@ -4,7 +4,7 @@ Created on 23/lug/2012
 @author: Francesco Capozzo
 '''
 import collections
-import myclips
+from myclips.rete.Memory import Memory
 
 class Token(object):
     '''
@@ -88,10 +88,12 @@ class Token(object):
         # (could fail delete isn't called
         # from a parent token invalidation)
         
-        # In old version there was an undocumented
-        #if not isinstance(self._node, NccPartnerNode):
-        myclips.logger.debug("FIXME: add check for NccPartnerNode")
-        self._node.removeItem()
+        # self._node has a reference to the node that created the token
+        # and for all types except one (ncc-partner) the node store
+        # the activation in a local memory storage. ncc-partner instead
+        # doesn't. It's easy to isolate that case: ncc-partner isn't a Memory instance
+        if isinstance(self._node, Memory):
+            self._node.removeItem(self)
         
         # wme could be None if match comes
         # from negative/ncc nodes
@@ -103,7 +105,52 @@ class Token(object):
         if not self.isRoot():
             del self._children[self]
             
-        myclips.logger.debug("FIXME: add check for other special cases in token::delete()")
+        # there are special cases when token deletion
+        # need more love:
+        #     - negative join node must check again on token removal
+        #        if activations have to be propagated
+        #     - ncc/ncc-partner must check again if ncc results left,
+        #        otherwise propagate activation
+        
+        # BUT: i really need to know the kind of node is linked?
+        #    why can't i simply make cleanup for special case?
+        #    if the token isn't created by special node, then
+        #    nccr/njr will be empty.
+        
+        #from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode, NegativeJoinResult
+        if (True \
+            #and isinstance(self._node, NegativeJoinNode)
+            ):
+            while self.hasNegativeJoinResults():
+                njr = self._negativeJoinResults.pop()
+                njr.wme.unlinkNegativeJoinResult(njr)
+                del njr
+         
+        #from myclips.rete.nodes.NccNode import NccNode
+        if (True \
+            #and isinstance(self._node, NccNode)
+            ):
+            while self.hasNccResults():
+                nccr = self._nccResults.pop(self._nccResults.keys()[0])
+                nccr.wme.unlinkToken(nccr)
+                nccr.parent.removeChild(nccr)
+                del nccr
+                
+        #from myclips.rete.nodes.NccPartnerNode import NccPartnerNode
+        #from myclips.rete.nodes.NccNode import NccNode
+        if ( self.hasNccOwner()
+              #and isinstance(self._node, NccPartnerNode)
+             ):
+            nccOwner = self.nccOwner
+            self.nccOwner.unlinkNccResult(self)
+            # if the token has the owner, then the _node is an ncc-partner
+            for child in self._node.nccNode.child:
+                child.leftActivation(nccOwner, None)
+            
+        
+        
+    def removeChild(self, token):
+        del self._children[token]
         
     def deleteChildren(self):
         
@@ -118,10 +165,10 @@ class Token(object):
     def hasNegativeJoinResults(self):
         return len(self._negativeJoinResults) > 0
         
-    def linkNegativeJoinResults(self, njr):
+    def linkNegativeJoinResult(self, njr):
         self._negativeJoinResults.append(njr)
         
-    def unlinkNegativeJoinResults(self, njr):
+    def unlinkNegativeJoinResult(self, njr):
         self._negativeJoinResults.remove(njr)
         
     def hasNccResults(self):
@@ -129,7 +176,7 @@ class Token(object):
         
     def linkNccResult(self, token):
         self._nccResults[token] = token
-        token.nccOnwer = self
+        token.nccOwner = self
         
     def unlinkNccResult(self, token):
         del self._nccResults[token]
@@ -148,7 +195,11 @@ class Token(object):
         
     @property
     def wme(self):
-        return self.wme
+        return self._wme
+    
+    @property
+    def node(self):
+        return self._node
     
     @property
     def hashString(self):
