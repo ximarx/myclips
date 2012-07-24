@@ -261,14 +261,17 @@ class RuleProperty(ParsedType):
 class PatternCE(ParsedType):
     pass
 
-class OrderedPatternCE(PatternCE):
-    def __init__(self, content):
-        PatternCE.__init__(self, content)
-        self.constraints = content
+class OrderedPatternCE(PatternCE, HasScope):
+    def __init__(self, constraints, modulesManager):
+        PatternCE.__init__(self, constraints)
+        HasScope.__init__(self, modulesManager)
+        self.constraints = constraints
         
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1}>".format(self.__class__.__name__,
-                                    self.constraints
+        return "<{0}:constraints={1},module={2}>".format(
+                                        self.__class__.__name__,
+                                        self.constraints,
+                                        self.scope.moduleName
                                     )
 
 class TemplatePatternCE(PatternCE, HasScope):

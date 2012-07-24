@@ -399,8 +399,8 @@ class Parser(object):
                                             | self._sb("MultiFieldLhsSlotParser"))\
                 .setParseAction(forwardParsed(key=0))
         
-        self.subparsers['OrderedPatternCEParser'] = (LPAR + self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("ConstraintParser")) + RPAR)\
-                .setParseAction(makeInstance(types.OrderedPatternCE, position=None))
+        self.subparsers['OrderedPatternCEParser'] = (LPAR + pp.Group(self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("ConstraintParser"))) + RPAR)\
+                .setParseAction(makeInstanceDict(types.OrderedPatternCE, {"constraints": 0, "modulesManager": self._modulesManager}))
 
         self.subparsers['TemplatePatternCEParser'] = (LPAR + self._sb("SymbolParser").setResultsName("templateName") + 
                                                         pp.Group(pp.ZeroOrMore(self._sb("LhsSlotParser"))).setResultsName("templateSlots") + 
