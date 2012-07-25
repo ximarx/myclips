@@ -75,7 +75,6 @@ class VariableBindingTest(BetaTest):
             # Another type of exception catch
             # better log this
             myclips.logger.warning("Unexpected exception catch in %s: token=%s, wme=%s, exception=%s", self, token, wme, repr(e))
-            raise
             # anyway test failed
             return False
     
