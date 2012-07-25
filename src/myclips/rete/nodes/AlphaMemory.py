@@ -54,7 +54,7 @@ class AlphaMemory(Node, Memory, AlphaInput):
         # then: propagate the new wme to the
         #     beta network
         
-        for child in self.childrenIterator():
+        for child in self.children:
             child.rightActivation(wme)
     
     def delete(self):

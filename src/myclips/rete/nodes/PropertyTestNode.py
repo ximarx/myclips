@@ -37,7 +37,7 @@ class PropertyTestNode(Node, HasMemory, HasTests, AlphaInput):
         if self.isValid(wme):
             # add this wme to local storage
             if self.hasMemory():
-                self.memory.addItem(wme)
+                self.memory.rightActivation(wme)
             
             # propagate this wme to all childs
             for child in self.children:

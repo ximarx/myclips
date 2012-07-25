@@ -10,6 +10,7 @@ from myclips.rete.Memory import Memory
 from myclips.rete.HasJoinTests import HasJoinTests
 from myclips.MyClipsException import MyClipsBugException
 import myclips
+from myclips.rete.Token import Token
 
 class JoinNode(Node, HasJoinTests, AlphaInput, BetaInput):
     '''
@@ -35,8 +36,8 @@ class JoinNode(Node, HasJoinTests, AlphaInput, BetaInput):
         leftItems = []
         
         # check if this is not a dummy node
-        if self.isLeftRoot() or not isinstance(self.leftParent, Memory):
-            leftItems = [None]
+        if self.isLeftRoot(): # or not isinstance(self.leftParent, Memory):
+            leftItems = [Token(None, None, None)]
         else:
             # left parent is a Memory or a subclass of Memory
             leftItems = self.leftParent.items

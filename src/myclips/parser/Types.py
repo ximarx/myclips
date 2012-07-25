@@ -496,14 +496,14 @@ class NegativeTerm(Term):
     
     
 class FieldLhsSlot(ParsedType):
-    def __init__(self, slotName):
+    def __init__(self, slotName, slotValue):
         ParsedType.__init__(self, slotName)
         self.slotName = slotName.evaluate() if isinstance(slotName, BaseParsedType) else slotName
+        self.slotValue = slotValue
 
 class MultiFieldLhsSlot(FieldLhsSlot):
     def __init__(self, slotName, slotValue=None):
-        FieldLhsSlot.__init__(self, slotName)
-        self.slotValue = slotValue if slotValue != None else []
+        FieldLhsSlot.__init__(self, slotName, slotValue if slotValue != None else [])
 
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1},value={2}>".format(self.__class__.__name__,
@@ -512,8 +512,7 @@ class MultiFieldLhsSlot(FieldLhsSlot):
 
 class SingleFieldLhsSlot(FieldLhsSlot):
     def __init__(self, slotName, slotValue):
-        FieldLhsSlot.__init__(self, slotName)
-        self.slotValue = slotValue
+        FieldLhsSlot.__init__(self, slotName, slotValue)
 
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1},value={2}>".format(self.__class__.__name__,
