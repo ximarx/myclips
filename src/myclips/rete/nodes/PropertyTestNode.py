@@ -73,7 +73,12 @@ class PropertyTestNode(Node, HasMemory, HasTests, AlphaInput):
         myclips.logger.warn("Deprecated old activation used")
         return self.rightActivation(wme)
     
-    def __repr__(self, *args, **kwargs):
-        # visualizzare informazioni su test
-        return "<PropertyTestNode>"
+    def __str__(self, *args, **kwargs):
+        return "<{0}: parent={1}, memory={4}, children={2}, tests={3}>".format(
+                self.__class__.__name__,
+                str(not self.isRightRoot()),
+                len(self.children),
+                [str(t) for t in self.tests],
+                self.hasMemory()
+            )
         

@@ -115,15 +115,8 @@ class NegativeJoinNode(JoinNode, Memory):
         Remove the negative join node from the network
         and delete all tokens created by this node
         """
-        # before to call the Node.delete,
-        # all tokens created by this node 
-        # to combine partial matches
-        # must be deleted (and automatically all successors)
-        while len(self.items) > 0:
-            # token deletion from the creator
-            # not is invoked from the token.delete()
-            # so i can't remove the reference from the storage now
-            self.items[0].delete()
+        # destroy tokens in memory
+        Memory.delete(self)
             
         # then i can call parent destructor
         JoinNode.delete(self)

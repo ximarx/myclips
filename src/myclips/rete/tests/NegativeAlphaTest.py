@@ -24,3 +24,6 @@ class NegativeAlphaTest(AlphaTest):
     @property
     def test(self):
         return self._test
+    
+    def __str__(self, *args, **kwargs):
+        return "NOT(%s)"%self.test     

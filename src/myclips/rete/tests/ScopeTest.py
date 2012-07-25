@@ -24,4 +24,7 @@ class ScopeTest(AlphaTest):
     
     def isValid(self, wme):
         assert isinstance(wme, WME)
-        return wme.fact.moduleName == self.moduleName 
+        return wme.fact.moduleName == self.moduleName
+    
+    def __str__(self, *args, **kwargs):
+        return "Scope=%s"%self.moduleName 

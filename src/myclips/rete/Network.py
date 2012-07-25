@@ -13,6 +13,8 @@ from myclips.rete.tests.ConstantValueAtIndexTest import ConstantValueAtIndexTest
 from myclips.rete.tests.NegativeAlphaTest import NegativeAlphaTest
 from myclips.rete.nodes.AlphaMemory import AlphaMemory
 from myclips.rete.nodes.RootNode import RootNode
+from myclips.rete.WME import WME
+from myclips.rete.nodes.BetaMemory import BetaMemory
 
 class Network(object):
     '''
@@ -31,13 +33,14 @@ class Network(object):
         
         
     def assertFact(self, fact):
-        pass
+        self._root.rightActivation(WME(0, fact))
         
     def retractFact(self, fact):
         pass
     
     def addRule(self, defrule):
         lastNode = self._makeNetwork(None, defrule.lhs, None, None)
+        return lastNode
         #pnode = PNode(lastNode)
     
     def removeRule(self, pnode):
@@ -85,10 +88,10 @@ class Network(object):
                     patternCE = patternCE.pattern
                 
                 # requires a simple alpha circuit,
-                # then a join + beta node if needed
+                # then a join + beta node if needed (beta join circuit)
                 alphaMemory = self._makeAlphaCircuit(patternCE, testsQueue)
+                node = self._makeBetaJoinCircuit(node, alphaMemory, patternCE, prevPatterns, variables)
                 
-                #TODO Continuare da QUI!!!!
                 
             elif isinstance(patternCE, types.NotPatternCE):
                 # need to check inside the pattern
@@ -118,6 +121,7 @@ class Network(object):
             
             prevPatterns.append(patternCE)
             
+        return node
             
     def _makeAlphaCircuit(self, patternCE, testQueue):
             
@@ -138,7 +142,7 @@ class Network(object):
                 # this is easy to do:
                 # first field is a symbol for parser constraints, but manually
                 # submitted rules could have any types of value as first
-                for (fieldIndex, fieldConstraint) in patternCE.constraints:
+                for (fieldIndex, fieldConstraint) in enumerate(patternCE.constraints):
                     
                     # ordered fact constraint could be:
                     #    BaseParsedType: (usually the first field is always a Symbol if rule is parsed)
@@ -188,6 +192,16 @@ class Network(object):
             # it's time to link an alpha memory at the end of them
             
             lastCircuitNode = self._shareNode_AlphaMemoryNode(lastCircuitNode)
+            
+            return lastCircuitNode
+        
+    def _makeBetaJoinCircuit(self, lastBetaCircuitNode, alphaMemory, patternCE, prevPatterns, variables):
+        
+        if lastBetaCircuitNode != None:
+            lastBetaCircuitNode = self._shareNode_BetaMemory(lastBetaCircuitNode)
+            
+        # build tests for join node
+        
 
     def _shareNode_AlphaMemoryNode(self, lastCircuitNode):
         """
@@ -223,12 +237,13 @@ class Network(object):
             
     def _shareNode_PropertyTestNode(self, lastCircuitNode, tests):
         
-        for child in lastCircuitNode.children:
-            if isinstance(child, PropertyTestNode)\
-                and child.tests == tests:
-                # found a node with same contraints
-                # i can share it
-                return child
+        if lastCircuitNode != None:
+            for child in lastCircuitNode.children:
+                if isinstance(child, PropertyTestNode)\
+                    and child.tests == tests:
+                    # found a node with same contraints
+                    # i can share it
+                    return child
         
         # if a checked all children and found nothing
         # i need to create a new node for it
@@ -239,3 +254,27 @@ class Network(object):
         myclips.logger.info("New node: %s", newChild)
         myclips.logger.info("Linked node: %s to %s", newChild, lastCircuitNode)
         
+        return newChild
+    
+    def _shareNode_BetaMemory(self, lastCircuitNode):
+        
+        # beta node are needed only if there is a parent node
+        # otherwise dummy node only
+        if lastCircuitNode is None:
+            return lastCircuitNode
+        
+        # try to share the beta if possible    
+        for child in lastCircuitNode.children:
+            if isinstance(child, BetaMemory):
+                return child
+            
+         
+        # otherwise make a new one
+        newChild = BetaMemory(lastCircuitNode)
+        lastCircuitNode.prependChild(newChild)    
+            
+        myclips.logger.info("New node: %s", newChild)
+        myclips.logger.info("Linked node: %s to %s", newChild, lastCircuitNode)
+        
+        return newChild
+            

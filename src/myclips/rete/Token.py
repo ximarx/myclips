@@ -5,8 +5,9 @@ Created on 23/lug/2012
 '''
 import collections
 from myclips.rete.Memory import Memory
+from myclips.rete.MemoryItem import MemoryItem
 
-class Token(object):
+class Token(MemoryItem):
     '''
     classdocs
     '''

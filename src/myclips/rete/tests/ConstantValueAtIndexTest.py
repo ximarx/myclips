@@ -30,12 +30,14 @@ class ConstantValueAtIndexTest(AlphaTest):
     
     @property
     def value(self):
-        return self._value.evaluate()
+        return self._value
     
     def isValid(self, wme):
         assert isinstance(wme, WME)
         return (isinstance(wme.fact[self.index], self.valueType) # first check if type is ok 
-                    and wme.fact[self.index] == self.value) # then check if value itself is ok
+                    and wme.fact[self.index].evaluate() == self.value.evaluate()) # then check if value itself is ok
     
     
-    
+    def __str__(self, *args, **kwargs):
+        return "[%s]=%s"%(self.index,
+                               self.value)     

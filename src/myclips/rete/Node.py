@@ -24,11 +24,11 @@ class Node(object):
         """
         Reference to right parent of node
         """
-        return self._parent
+        return self._rightParent
     
     @rightParent.setter
     def rightParent(self, newP):
-        self._parent = newP
+        self._rightParent = newP
 
     @property
     def leftParent(self):
@@ -68,7 +68,10 @@ class Node(object):
         self.children.remove(child)
     
     def prependChild(self, child):
-        self._children.appendLeft(child)
+        self._children.appendleft(child)
+        
+    # alias for prependChild
+    addChild = prependChild
         
     def appendChild(self, child):
         self._children.append(child)
@@ -107,12 +110,12 @@ class Node(object):
         #EventManager.trigger(EventManager.E_NODE_REMOVED, self)
     
     def __str__(self, *args, **kwargs):
-        if self.isRoot():
-            return "<RootNode>"
-        elif self.isLeftRoot():
-            return "<DummyNode>"
-        else:
-            return "<Node>"
+        return "<{0}: leftParent={1}, rightParent={2}, children={3}>".format(
+                self.__class__.__name__,
+                str(not self.isLeftRoot()),
+                str(not self.isRightRoot()),
+                len(self.children)
+            )
     
     
     

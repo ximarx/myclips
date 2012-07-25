@@ -3,11 +3,13 @@ Created on 24/lug/2012
 
 @author: Francesco Capozzo
 '''
-from myclips.rete.nodes.BetaMemory import BetaMemory
 from myclips.rete.nodes.NccPartnerNode import NccPartnerNode
 from myclips.rete.Token import Token
+from myclips.rete.Node import Node
+from myclips.rete.Memory import Memory
+from myclips.rete.BetaInput import BetaInput
 
-class NccNode(BetaMemory):
+class NccNode(Node, Memory, BetaInput):
     '''
     Left part of the Ncc/NccPartner duo
     for negative condition of a subconditions chain
@@ -29,7 +31,8 @@ class NccNode(BetaMemory):
         '''
         Create the new ncc node
         '''
-        BetaMemory.__init__(self, leftParent=leftParent)
+        Node.__init__(self, rightParent=None, leftParent=leftParent)
+        Memory.__init__(self)
         
         self._partner = NccPartnerNode(leftParent=rightParent, partnerCircuitLength, self)
         
@@ -67,7 +70,8 @@ class NccNode(BetaMemory):
         # then destroy the partner
         self.partner.delete()
         # and last destroy this node itself
-        BetaMemory.delete(self)
+        Memory.delete(self)
+        Node.delete(self)
         
     def updateChild(self, child):
         """

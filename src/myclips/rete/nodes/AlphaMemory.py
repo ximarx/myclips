@@ -66,6 +66,9 @@ class AlphaMemory(Node, Memory, AlphaInput):
         # references to this alpha-memory 
         # have to be removed
         # from all wme object
+        # but wme.delete()
+        # isn't called because a-memory
+        # delete doens't mean fact retract
         for wme in self.items:
             wme.unlinkAlphaMemory(self)
             
@@ -79,4 +82,13 @@ class AlphaMemory(Node, Memory, AlphaInput):
         """
         for wme in self.items:
             child.rightActivation(wme)
+        
+        
+    def __str__(self, *args, **kwargs):
+        return "<{0}: parent={1}, children={2}, items={3}>".format(
+                self.__class__.__name__,
+                str(not self.isRightRoot()),
+                len(self.children),
+                len(self.items)
+            )
         
