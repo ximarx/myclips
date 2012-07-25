@@ -3,9 +3,9 @@ Created on 24/lug/2012
 
 @author: Francesco Capozzo
 '''
-from myclips.rete.tests.AlphaTest import AlphaTest
+from myclips.rete.tests.BetaTest import BetaTest
 
-class NegativeAlphaTest(AlphaTest):
+class NegativeBetaTest(BetaTest):
     '''
     Reverse the result of the test embedded inside this
     '''
@@ -15,11 +15,11 @@ class NegativeAlphaTest(AlphaTest):
         '''
         Build a new Negative alpha test
         '''
-        assert isinstance(test, AlphaTest)
+        assert isinstance(test, BetaTest)
         self._test = test
         
-    def isValid(self, wme):
-        return not self.test.isValid(wme)
+    def isValid(self, token, wme):
+        return not self.test.isValid(token, wme)
     
     @property
     def test(self):

@@ -32,7 +32,7 @@ class BetaTest(object):
         
     @staticmethod
     def getWmeFragmentValue(wme, coordinates):
-        assert isinstance(wme, WME)
+        assert isinstance(wme, WME), wme.__class__.__name__
         
         wmeValue = wme.fact
         

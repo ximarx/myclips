@@ -27,4 +27,9 @@ class ScopeTest(AlphaTest):
         return wme.fact.moduleName == self.moduleName
     
     def __str__(self, *args, **kwargs):
-        return "Scope=%s"%self.moduleName 
+        return "Scope=%s"%self.moduleName
+    
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ \
+                and self.moduleName == other.moduleName
+                

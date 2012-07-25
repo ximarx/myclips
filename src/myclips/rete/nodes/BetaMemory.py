@@ -53,10 +53,10 @@ class BetaMemory(Node, Memory, BetaInput):
                                                                                             wme))
         
         # create a new token to combine the token + wme    
-        newToken = Token(self, token, wme)
+        token = Token(self, token, wme)
         
         # store it in the local storage
-        self.addItem(newToken)
+        self.addItem(token)
         
         # then: propagate the new token to
         #     all children (JoinNode/NegativeNode/etcetc...)

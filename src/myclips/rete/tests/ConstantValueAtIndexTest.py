@@ -40,4 +40,10 @@ class ConstantValueAtIndexTest(AlphaTest):
     
     def __str__(self, *args, **kwargs):
         return "[%s]=%s"%(self.index,
-                               self.value)     
+                               self.value)
+        
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ \
+                and self.index == other.index \
+                and self.value == other.value
+                

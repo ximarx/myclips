@@ -17,6 +17,7 @@ from myclips.rete.WME import WME
 from myclips.rete.nodes.BetaMemory import BetaMemory
 from myclips.rete.tests.VariableBindingTest import VariableBindingTest
 from myclips.rete.nodes.JoinNode import JoinNode
+from myclips.rete.tests.NegativeBetaTest import NegativeBetaTest
 
 class Network(object):
     '''
@@ -225,9 +226,14 @@ class Network(object):
                 if isinstance(value, types.ConnectedConstraint):
                     myclips.logger.error("FIXME: Connected contraints alternative values ignored in join tests: %s", value.connectedConstraints)
                     value = value.constraint
+
+                isPositive = True
                     
-                if isinstance(value, types.Term):
-                    myclips.logger.error("FIXME: Possible Negative term ignored in join tests: %s")
+                if isinstance(value, types.NegativeTerm):
+                    isPositive = False
+                    value = value.term
+
+                if isinstance(value, types.PositiveTerm):
                     value = value.term
 
                 # unnamed variables doesn't need join test constraints
@@ -247,6 +253,9 @@ class Network(object):
                         test = VariableBindingTest(wmePositionIndex=[index],
                                                             tokenRelativeIndex=len(prevPatterns) - patternIndex,
                                                             tokenPositionIndex=positionIndex)
+                        
+                        if not isPositive:
+                            test = NegativeBetaTest(test)
                         
                         tests.append(test)
                     else:

@@ -114,4 +114,4 @@ class WME(MemoryItem):
         return not self.__eq__(other)
     
     def __str__(self):
-        return "<WME:f-%d,%s>"%(self.factId, self.values)
+        return "<WME:f-%d,%s>"%(self.factId, self.fact)

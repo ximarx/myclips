@@ -71,15 +71,23 @@ class VariableBindingTest(BetaTest):
             # This make the test fail
             return False
         
-        except:
+        except Exception, e:
             # Another type of exception catch
             # better log this
-            myclips.logger.warning("Unexpected exception catch in %s: token=%s, wme=%s", self, token, wme)
+            myclips.logger.warning("Unexpected exception catch in %s: token=%s, wme=%s, exception=%s", self, token, wme, repr(e))
+            raise
             # anyway test failed
             return False
     
     def __str__(self, *args, **kwargs):
-        return "wme[%s]=%s[%s]"%(self._wmePositionIndex,
-                                        "token[%d]"%(-1 * self._tokenRelativeIndex) if self._tokenRelativeIndex > 0 else "wme"
-                                        "][".join(self._tokenPositionIndex)
-                                        )     
+        return "wme{0}={1}{2}[{3}]".format(self._wmePositionIndex,
+                                    "token" if self._tokenRelativeIndex > 0 else "wme",
+                                    "[" + str(self._tokenRelativeIndex * -1) + "]" if self._tokenRelativeIndex > 0 else "", 
+                                    "][".join([str(x) for x in self._tokenPositionIndex])
+                                    )
+        
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ \
+                and self._wmePositionIndex == other._wmePositionIndex \
+                and self._tokenRelativeIndex == other._tokenRelativeIndex \
+                and self._tokenPositionIndex == other._tokenPositionIndex

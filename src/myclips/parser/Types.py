@@ -44,6 +44,10 @@ class BaseParsedType(ParsedType):
     def evaluate(self):
         return self.content
 
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ \
+                and self.evaluate() == other.evaluate()
+
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1},converted={2}:{3}>".format(self.__class__.__name__,
                                                         self.content, 
@@ -105,11 +109,13 @@ class MultiFieldVariable(Variable):
 
 class UnnamedSingleFieldVariable(Variable):
     converter = lambda self, t: "?"
-    pass
+    def __init__(self):
+        Variable.__init__(self, None)
 
 class UnnamedMultiFieldVariable(Variable):
     converter = lambda self, t: "?$"
-    pass
+    def __init__(self):
+        Variable.__init__(self, None)
 
 class GlobalVariable(Variable, HasScope):
     converter = lambda self, t: "?*"+self.content.evaluate()+"*"

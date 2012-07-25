@@ -29,7 +29,7 @@ class JoinNode(Node, HasJoinTests, AlphaInput, BetaInput):
         '''
         Node.__init__(self, rightParent, leftParent)
         HasJoinTests.__init__(self, tests)
-        myclips.logger.debug("JoinNode created: %s", self)
+        #myclips.logger.debug("JoinNode created: %s", self)
         
     def rightActivation(self, wme):
         
@@ -88,7 +88,7 @@ class JoinNode(Node, HasJoinTests, AlphaInput, BetaInput):
                                     # the new child
                                     
         # 2)                
-        for wme in self.rightParent.items():
+        for wme in self.rightParent.items:
             self.rightActivation(wme)
             
             
@@ -101,12 +101,16 @@ class JoinNode(Node, HasJoinTests, AlphaInput, BetaInput):
         """
         Node.delete(self)
         
-        
-    def __str__(self, *args, **kwargs):
-        return "<%sJoinNode,children:%d,tests:%s>"%("Dummy" if self.isLeftRoot() else "",
-                                                    len(self.children), 
-                                                    self.tests)
     
+    def __str__(self, *args, **kwargs):
+        return "<{0}{1}: tests={3}, children={2}>".format(
+                    "Dummy" if self.isLeftRoot() else "",
+                    self.__class__.__name__,
+                    len(self.children),
+                    [str(t) for t in self.tests]
+                )
         
+    
+    
 if __name__ == '__main__':
     print JoinNode()
