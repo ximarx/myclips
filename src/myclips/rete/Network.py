@@ -20,7 +20,8 @@ from myclips.rete.nodes.JoinNode import JoinNode
 from myclips.rete.tests.NegativeBetaTest import NegativeBetaTest
 from myclips.rete.tests.OrderedFactLengthTest import OrderedFactLengthTest
 from myclips.rete.tests.locations import VariableLocation, AtomLocation
-from myclips.rete.analysis import analyzePattern
+from myclips.rete.analysis import analyzePattern, normalizeAtom
+from myclips.rete.tests.TemplateNameTest import TemplateNameTest
 
 class Network(object):
     '''
@@ -135,16 +136,79 @@ class Network(object):
             # to create the correct list of tests
             
             lastCircuitNode = self._root
+
+            # first thing to do is add a filter per-module
+            # ordered facts are visible only in the module
+            # who assert them
+            lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [ScopeTest(patternCE.scope.moduleName)])
             
             if isinstance(patternCE, types.TemplatePatternCE):
                 myclips.logger.error("FIXME: TemplatePatternCE ignored: %s", patternCE)
                 
-            elif isinstance(patternCE, types.OrderedPatternCE):
+                lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [TemplateNameTest(patternCE.templateName)])
                 
-                # first thing to do is add a filter per-module
-                # ordered facts are visible only in the module
-                # who assert them
-                lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [ScopeTest(patternCE.scope.moduleName)])
+                for slot in patternCE.templateSlots:
+                    
+                    if isinstance(slot, types.MultiFieldLhsSlot):
+                        
+                        multiFieldCount = 0
+                        
+                        for atomIndex, slotAtom in enumerate(slot.slotValue):
+                            
+                            atom, isNegative, connectedConstraints = normalizeAtom(slotAtom)
+                            
+                            # not fieldConstraint is a BaseParsedType | Variable
+                            # only check for BaseParsedType, variables ignored
+                            if isinstance(atom, types.BaseParsedType):
+                                
+                                indexLocation = AtomLocation()
+                                indexLocation.slotName = slot.slotName
+                                
+                                if multiFieldCount > 0:
+                                    indexLocation.fromEnd = True
+                                    indexLocation.endIndex = len(slot.slotValue) - atomIndex - 1
+                                else:
+                                    indexLocation.fromBegin = True
+                                    indexLocation.beginIndex = atomIndex
+                                
+                                # share or create a property test node for each type/value at index
+                                tests = [ConstantValueAtIndexTest(indexLocation, atom)]
+                                
+                                # if this is a NegativeTest, i need to reverse all tests
+                                if isNegative:
+                                    tests = [NegativeAlphaTest(t) for t in tests]
+                                    
+                                lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, tests)
+                                
+                            elif isinstance(atom, types.MultiFieldVariable):
+                                
+                                # if i got a multifield variable in the multislot,
+                                # any index of constant value must be computed from the end
+                                multiFieldCount += 1
+                            
+                    
+                    elif isinstance(slot, types.SingleFieldLhsSlot):
+                        atom, isNegative, connectedConstraints = normalizeAtom(slot.slotValue)
+                        
+                        if isinstance(atom, types.Variable):
+                            continue
+                        
+                        indexLocation = AtomLocation(slotName=slot.slotName)
+                        indexLocation.isMultiField = False
+                        indexLocation.fullSlot = True
+                        
+                        tests = [ConstantValueAtIndexTest(indexLocation, atom)]
+                        
+                        if isNegative:
+                            tests = [NegativeAlphaTest(t) for t in tests]
+                            
+                        lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, tests)
+                    
+                    else:
+                        myclips.logger.error("Unknown slot type in TemplatePatternCE: %s", slot.__class__.__name__)
+                        raise MyClipsBugException("Unknown slot type: %s"%slot.__class__.__name__)
+                
+            elif isinstance(patternCE, types.OrderedPatternCE):
                 
                 multiFieldDelta = 0
                 

@@ -29,7 +29,7 @@ def analyzeSequence(sequence, variables):
     
     for (fIndex, field) in enumerate(sequence):
         
-        field, isNegative, connectedConstraints = _normalizeAtom(field)
+        field, isNegative, connectedConstraints = normalizeAtom(field)
         if len(connectedConstraints) > 0:
             myclips.logger.error("FIXME: Connected contraints ignored in sequence analysis: %s", connectedConstraints)
         
@@ -178,7 +178,7 @@ def VariableAnalysis(thePatterns, variables = None, joinConstraints = None, inde
         
     return (variables, joinConstraints)
 
-def _normalizeAtom(atom):
+def normalizeAtom(atom):
     
     isNegative = False
     connected = []
@@ -212,7 +212,7 @@ def analyzePattern(thePattern, patternIndex, variables):
             if isinstance(slot, types.SingleFieldLhsSlot):
                 
                 # normalize to basetype or variable
-                slotValue, isNegative, connectedConstraints = _normalizeAtom(slot.slotValue)
+                slotValue, isNegative, connectedConstraints = normalizeAtom(slot.slotValue)
                 if len(connectedConstraints) > 0:
                     myclips.logger.error("FIXME: Connected contraints ignored in pattern analysis: %s", connectedConstraints)
                 

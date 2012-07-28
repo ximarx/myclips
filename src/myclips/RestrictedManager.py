@@ -73,7 +73,7 @@ class RestrictedDefinition(object):
                     attribute = splitted[0]
                     
                 if getattr(objRefThis, attribute) != getattr(objRefOther, attribute):
-                    myclips.logger.error("Different item %s: %s vs %s", 
+                    myclips.logger.debug("Different item %s: %s vs %s", 
                                             test, 
                                             str(getattr(objRefThis, attribute)), 
                                             getattr(objRefOther, attribute))
@@ -83,7 +83,7 @@ class RestrictedDefinition(object):
             return True
         except Exception, e:
             # error? -> not equal
-            myclips.logger.error("Exception on comparison %s: %s", 
+            myclips.logger.debug("Exception on comparison %s: %s", 
                                     test, 
                                     str(e))
             return False
