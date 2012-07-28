@@ -168,6 +168,7 @@ class ScopeTest(unittest.TestCase):
         self.assertEqual(scope2.globalsvars.getDefinition("?*A*").moduleName, "MAIN")
         
     def test_GuardOnRecursiveInclusion(self):
+        
         MM = ModulesManager()
         
         scopeM = Scope("MAIN", MM, exports=[

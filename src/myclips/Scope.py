@@ -204,9 +204,10 @@ class Scope(Observer):
                 # otherwise it's ok: i already know about this definition
                 # just like in case (2)
             
-            # this is a new definition
-            # i need to add this to my scope
-            manager.addDefinition(definition)
+            else:
+                # this is a new definition
+                # i need to add this to my scope
+                manager.addDefinition(definition)
             
         # otherwise it's ok:
         # <-> inclusion just like in case (1)

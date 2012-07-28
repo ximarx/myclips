@@ -5,6 +5,8 @@ Created on 24/lug/2012
 '''
 from myclips.rete.tests.BetaTest import BetaTest
 import myclips
+from myclips.rete.tests.locations import VariableReference
+from myclips.rete.tests import getTokenAnchestor, getWmeFragmentValue
 
 class VariableBindingTest(BetaTest):
     '''
@@ -13,35 +15,36 @@ class VariableBindingTest(BetaTest):
     '''
 
 
-    def __init__(self, wmePositionIndex, tokenRelativeIndex, tokenPositionIndex):
+    def __init__(self, reference):
         '''
         Create a new VariableBindingTest. This test make sure
         that if a variable is used in multiple locations,
         it has a consistent value across all locations
-        The index of the value in the current wme can be expressed
-        as a list of index. Empty list means that the complete fact will be used
-        Multiple indexes allow to access more position deeper in the fact instance
-        Same coordinate expression must be used for token position index
-        The previous wme to check to must be expressed using the relative
-        distance in the token tree
         
-        @param wmePositionIndex: a list of coordinates to descrive the fact slot/index
-        @type wmePositionIndex: list
-        @param tokenRelativeIndex: the number of parents token where the wme can be found
-        @type tokenRelativeIndex: int [0 for same wme]
-        @param tokenPositionIndex: a list of coordinates to descrive the fact slot/index
-        @type tokenPositionIndex: list
+        @param reference: is a location with a reference to a previous binded variable
+        @type reference: VariableReference
         @return: False if test fail, True otherwise
         @rtype: Boolean  
         '''
-        self._wmePositionIndex = wmePositionIndex
-        self._tokenRelativeIndex = tokenRelativeIndex
-        self._tokenPositionIndex = tokenPositionIndex   # this is an array of position. 
+        
+        self._reference = reference
+        
+        
+#        self._wmePositionIndex = wmePositionIndex
+#        self._tokenRelativeIndex = tokenRelativeIndex
+#        self._tokenPositionIndex = tokenPositionIndex   # this is an array of position. 
                                                         # This allow to go deep inside fact-index 
                                                         # and multifield-index in fact index 
-        
+    @property
+    def reference(self):
+        return self._reference
     
     def isValid(self, token, wme):
+
+        reference = self._reference
+
+        assert isinstance(reference, VariableReference)        
+        
 
         try:
             
@@ -49,20 +52,22 @@ class VariableBindingTest(BetaTest):
             # test performed in the beta network
             # this means that the wme where the variable was found first
             # is the same where the variable was found again
-            if self._tokenRelativeIndex > 0:
-                token = BetaTest.getTokenAnchestor(token, self._tokenRelativeIndex - 1)
+            if reference.relPatternIndex != 0:
+                token = getTokenAnchestor(token, (-1 * reference.relPatternIndex) - 1)
     
                 # get the exact wme value of the token where variable for used first
-                valueInTokenWme = BetaTest.getWmeFragmentValue(token.wme, self._tokenPositionIndex)
+                valueInTokenWme = getWmeFragmentValue(token.wme, reference.reference)
             else:
-                valueInTokenWme = BetaTest.getWmeFragmentValue(wme, self._tokenPositionIndex)
+                valueInTokenWme = getWmeFragmentValue(wme, reference.reference)
             
             # get the value in current wme there variable must have the same value
-            valueInWme = BetaTest.getWmeFragmentValue(wme, self._wmePositionIndex)
+            valueInWme = getWmeFragmentValue(wme, self.reference)
         
             # when i've found them all
             # i can compare them
-            return (valueInTokenWme == valueInWme)
+            # for eq or neq based on reference.isNegative value
+            eqResult = (valueInTokenWme == valueInWme)
+            return eqResult if reference.isNegative is not True else not eqResult
         
         except KeyError:
             # it's ok. If a catch this exception
@@ -79,14 +84,10 @@ class VariableBindingTest(BetaTest):
             return False
     
     def __str__(self, *args, **kwargs):
-        return "wme{0}={1}{2}[{3}]".format(self._wmePositionIndex,
-                                    "token" if self._tokenRelativeIndex > 0 else "wme",
-                                    "[" + str(self._tokenRelativeIndex * -1) + "]" if self._tokenRelativeIndex > 0 else "", 
-                                    "][".join([str(x) for x in self._tokenPositionIndex])
-                                    )
+        return "test: "+str(self._reference)
         
     def __eq__(self, other):
         return self.__class__ == other.__class__ \
-                and self._wmePositionIndex == other._wmePositionIndex \
-                and self._tokenRelativeIndex == other._tokenRelativeIndex \
-                and self._tokenPositionIndex == other._tokenPositionIndex
+                and self._reference == other._reference
+    def __neq__(self, other):
+        return not self.__eq__(other)

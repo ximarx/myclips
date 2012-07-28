@@ -90,7 +90,6 @@ class Parser(object):
                     raise pp.ParseException(s,l, self._lastParseError)
                 except types.TypeInstanceCreationError as e:
                     raise pp.ParseFatalException(s,l,e.message)
-            
                     
             return makeAction
         

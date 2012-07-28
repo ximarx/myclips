@@ -63,16 +63,19 @@ class Observable(object):
     
     def fire(self, event, *args, **kargs):
         try:
-            if len(self._observers[event]) > 0:
+            observers = self._observers[event]
+        except Exception, e:
+                myclips.logger.error("Invalid event %s \n\tfor %s",
+                                            repr(event),
+                                            repr(self))
+        else:
+            if len(observers) > 0:
                 myclips.logger.debug("Firing %s.%s \n\twith %s \n\tto %s observer(s)",
                                            repr(self),
                                            repr(event),
                                            repr(args),
-                                           str(len(self._observers)))
-                for observer in self._observers[event]:
+                                           str(len(observers)))
+                for observer in observers:
                     observer.notify(event, *args, **kargs)
-        except:
-                myclips.logger.error("Invalid event %s \n\tfor %s",
-                                            repr(event),
-                                            repr(self))
+            
         

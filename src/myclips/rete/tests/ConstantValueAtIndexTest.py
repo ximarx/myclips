@@ -5,11 +5,14 @@ Created on 24/lug/2012
 '''
 from myclips.rete.tests.AlphaTest import AlphaTest
 from myclips.rete.WME import WME
+import myclips
+from myclips.rete.tests import getWmeFragmentValue
 
 class ConstantValueAtIndexTest(AlphaTest):
     '''
     Check if a constant value of type Symbol, Integer, Float, String
-    is place at a specified index
+    is place at a specified index. Index could be a exact index
+    or an minimu index
     '''
 
 
@@ -34,12 +37,39 @@ class ConstantValueAtIndexTest(AlphaTest):
     
     def isValid(self, wme):
         assert isinstance(wme, WME)
-        return (isinstance(wme.fact[self.index], self.valueType) # first check if type is ok 
-                    and wme.fact[self.index].evaluate() == self.value.evaluate()) # then check if value itself is ok
-    
+        try:
+            wmeValue = getWmeFragmentValue(wme, self.index)
+            
+            if self.valueType == list:
+                # need to valuate vs a multifield
+                # check the wmeValue if is a comparable with a multifield
+                if not isinstance(wmeValue, list):
+                    return False
+                
+                if len(self.value) != len(wmeValue):
+                    return False
+                
+                for (offset, value) in enumerate(self.value):
+                    if value.__class__ != wmeValue[offset].__class__:
+                        return False
+                    
+                    if value.evaluate() != wmeValue[offset].evaluate():
+                        return False
+                
+                return True    
+                
+            else:
+                
+                return self.valueType == wmeValue.__class__ and self.value.evaluate() == wmeValue.evaluate()
+                
+        except KeyError:
+            return False
+        except Exception, e:
+            myclips.logger.warn("Unexpected exception catched in ConstantValueAtIndexTest: %s", repr(e))
+            return False
     
     def __str__(self, *args, **kwargs):
-        return "[%s]=%s"%(self.index,
+        return "%s=%s"%(self.index,
                                self.value)
         
     def __eq__(self, other):

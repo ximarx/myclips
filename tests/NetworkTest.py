@@ -17,7 +17,7 @@ from myclips.rete.AlphaInput import AlphaInput
 from myclips.rete.BetaInput import BetaInput
 
 # disable all logging from modules
-logging.disable(logging.CRITICAL)
+logging.disable(logging.INFO)
 
 class fact(object):
     def __init__(self, v):
@@ -25,6 +25,9 @@ class fact(object):
         self.moduleName = "MAIN"
     def __getitem__(self, attr, *argv, **argks):
         return self._fact[attr]
+    def values(self):
+        return self._fact
+    
 
 class activationCatcher(AlphaInput, BetaInput):
     def __init__(self):
@@ -63,8 +66,9 @@ class Test(unittest.TestCase):
         self.assertIsInstance(self.network._root.children[0].children[0], PropertyTestNode)
         self.assertIsInstance(self.network._root.children[0].children[0].children[0], PropertyTestNode)
         self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0], PropertyTestNode)
-        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].memory, AlphaMemory)
-        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0], PropertyTestNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory, AlphaMemory)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
 
     def test_DummyJoinNodeCreationAfterFirstPatternCE(self):
 
@@ -76,8 +80,8 @@ class Test(unittest.TestCase):
                     ], self.MM)
             ]))
         
-        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
-        self.assertTrue(self.network._root.children[0].children[0].children[0].children[0].memory.children[0].isLeftRoot())
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
+        self.assertTrue(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.children[0].isLeftRoot())
 
 
 
@@ -93,10 +97,10 @@ class Test(unittest.TestCase):
 
         self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
 
-        self.assertEqual(len(self.network._root.children[0].children[0].children[0].children[0].memory.items), 1)
-        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].memory.items[0], WME)
-        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].memory.items[0].fact, fact)
-        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].memory.items[0].fact[0], types.Symbol)
+        self.assertEqual(len(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items), 1)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items[0], WME)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items[0].fact, fact)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items[0].fact[0], types.Symbol)
 
 
     def test_DummyJoinNodePropagation(self):
@@ -109,11 +113,11 @@ class Test(unittest.TestCase):
                     ], self.MM)
             ]))
         
-        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
         
         trap = activationCatcher()
         
-        self.network._root.children[0].children[0].children[0].children[0].memory.children[0].appendChild(trap)
+        self.network._root.children[0].children[0].children[0].children[0].children[0].memory.children[0].appendChild(trap)
         
         self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
         
@@ -130,11 +134,11 @@ class Test(unittest.TestCase):
                     ], self.MM)
             ]))
         
-        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
         
         trap = activationCatcher()
         
-        self.network._root.children[0].children[0].children[0].children[0].memory.appendChild(trap)
+        self.network._root.children[0].children[0].children[0].children[0].children[0].memory.appendChild(trap)
         
         
         self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
@@ -157,18 +161,19 @@ class Test(unittest.TestCase):
                     ], self.MM)
             ]))
         
-        self.assertIsInstance(self.network._root.children[0].children[0].children[0].memory.children[0], JoinNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
         
-        self.assertFalse(self.network._root.children[0].children[0].children[0].memory.children[0].isLeftRoot())
+        self.assertFalse(self.network._root.children[0].children[0].children[0].children[0].memory.children[0].isLeftRoot())
         
         trap = activationCatcher()
         
-        self.network._root.children[0].children[0].children[0].memory.children[0].appendChild(trap)
+        self.network._root.children[0].children[0].children[0].children[0].memory.children[0].appendChild(trap)
         
         self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
 
         f = fact([types.Symbol("B"), types.Symbol("A"), types.Symbol("C")])        
         self.network.assertFact(f)
+
        
         self.assertTrue(trap.leftCatch)
         
@@ -188,13 +193,13 @@ class Test(unittest.TestCase):
                     ], self.MM)
             ]))
         
-        self.assertIsInstance(self.network._root.children[0].children[0].memory.children[0], JoinNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].memory.children[0], JoinNode)
         
-        self.assertFalse(self.network._root.children[0].children[0].memory.children[0].isLeftRoot())
+        self.assertFalse(self.network._root.children[0].children[0].children[0].memory.children[0].isLeftRoot())
         
         trap = activationCatcher()
         
-        self.network._root.children[0].children[0].memory.children[0].appendChild(trap)
+        self.network._root.children[0].children[0].children[0].memory.children[0].appendChild(trap)
         
         f = fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")])
                 
@@ -213,17 +218,17 @@ class Test(unittest.TestCase):
                     ], self.MM)
             ]))
         
-        self.assertIsInstance(self.network._root.children[0].children[0].memory.children[0], JoinNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].memory.children[0], JoinNode)
         
-        self.assertTrue(self.network._root.children[0].children[0].memory.children[0].isLeftRoot())
+        self.assertTrue(self.network._root.children[0].children[0].children[0].memory.children[0].isLeftRoot())
         
         trap = activationCatcher()
         
-        self.network._root.children[0].children[0].memory.children[0].appendChild(trap)
+        self.network._root.children[0].children[0].children[0].memory.children[0].appendChild(trap)
         
         f = fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")])
         self.network.assertFact(f)
-       
+        
         self.assertFalse(trap.leftCatch)
 
         f = fact([types.Symbol("A"), types.Symbol("A"), types.Symbol("C")])
@@ -231,8 +236,32 @@ class Test(unittest.TestCase):
         
         self.assertTrue(trap.leftCatch)
         
-
-
+        
+    def test_AlphaCircuitWithMultifield(self):
+        
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrderedPatternCE([
+                        types.Symbol("A"),
+                        types.MultiFieldVariable(types.Symbol("varB")),
+                        types.Symbol("C"),
+                    ], self.MM)
+            ]))
+        
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].memory, AlphaMemory)
+        
+        #self.assertTrue(self.network._root.children[0].children[0].memory.children[0].isLeftRoot())
+        
+        trap = activationCatcher()
+        
+        self.network._root.children[0].children[0].children[0].memory.prependChild(trap)
+        
+        f = fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("B2"), types.Symbol("C")])
+        self.network.assertFact(f)
+       
+        self.assertNotEqual(len(self.network._root.children[0].children[0].children[0].memory.items), 0)
+        
+        self.assertTrue(trap.rightCatch)
+        
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

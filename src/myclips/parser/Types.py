@@ -104,17 +104,17 @@ class SingleFieldVariable(Variable):
     pass
 
 class MultiFieldVariable(Variable):
-    converter = lambda self, t: "?$"+self.content.evaluate()
+    converter = lambda self, t: "$?"+self.content.evaluate()
     pass
 
 class UnnamedSingleFieldVariable(Variable):
     converter = lambda self, t: "?"
-    def __init__(self):
+    def __init__(self, *args, **kargs):
         Variable.__init__(self, None)
 
 class UnnamedMultiFieldVariable(Variable):
-    converter = lambda self, t: "?$"
-    def __init__(self):
+    converter = lambda self, t: "$?"
+    def __init__(self, *args, **kargs):
         Variable.__init__(self, None)
 
 class GlobalVariable(Variable, HasScope):
@@ -534,6 +534,9 @@ class SlotDefinition(ParsedType):
             raise TypeInstanceCreationError("Multiple definition for same type of attribute")
 
 class SingleSlotDefinition(SlotDefinition):
+    
+    def __init__(self, slotName, attributes=None):
+        SlotDefinition.__init__(self, slotName, attributes=attributes)
 
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1},attributes={2}>".format(self.__class__.__name__,
@@ -541,6 +544,9 @@ class SingleSlotDefinition(SlotDefinition):
                                         self.attributes)    
 
 class MultiSlotDefinition(SlotDefinition):
+
+    def __init__(self, slotName, attributes=None):
+        SlotDefinition.__init__(self, slotName, attributes=attributes)
 
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1},attributes={2}>".format(self.__class__.__name__,
@@ -569,7 +575,7 @@ class TypeAttribute(Attribute):
                                         self.allowedTypes)    
 
 class DefTemplateConstruct(ParsedType, HasScope):
-    def __init__(self, templateName, modulesManager, templateComment=None, slots=None, templatesManager=None):
+    def __init__(self, templateName, modulesManager, templateComment=None, slots=None):
         ParsedType.__init__(self, templateName)
         HasScope.__init__(self, modulesManager)
         

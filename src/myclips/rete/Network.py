@@ -18,6 +18,9 @@ from myclips.rete.nodes.BetaMemory import BetaMemory
 from myclips.rete.tests.VariableBindingTest import VariableBindingTest
 from myclips.rete.nodes.JoinNode import JoinNode
 from myclips.rete.tests.NegativeBetaTest import NegativeBetaTest
+from myclips.rete.tests.OrderedFactLengthTest import OrderedFactLengthTest
+from myclips.rete.tests.locations import VariableLocation, AtomLocation
+from myclips.rete.analysis import analyzePattern
 
 class Network(object):
     '''
@@ -87,8 +90,7 @@ class Network(object):
                 # i use the assigned only to store info about variable
                 # use old way to store variables coordinates, waiting for a new one
                 if isinstance(patternCE, types.AssignedPatternCE):
-                    variables[patternCE.variable.evaluate()] = {"patternIndex": pIndex,
-                                                                "positionIndex": []}
+                    variables[patternCE.variable.evaluate()] = VariableLocation(patternCE.variable.evaluate(), patternIndex=pIndex, fullFact=True)
                     patternCE = patternCE.pattern
                 
                 # requires a simple alpha circuit,
@@ -144,6 +146,8 @@ class Network(object):
                 # who assert them
                 lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [ScopeTest(patternCE.scope.moduleName)])
                 
+                multiFieldDelta = 0
+                
                 # this is easy to do:
                 # first field is a symbol for parser constraints, but manually
                 # submitted rules could have any types of value as first
@@ -180,14 +184,39 @@ class Network(object):
                     # not fieldConstraint is a BaseParsedType | Variable
                     # only check for BaseParsedType, variables ignored
                     if isinstance(fieldConstraint, types.BaseParsedType):
+                        
+                        indexLocation = AtomLocation()
+                        
+                        if multiFieldDelta > 0:
+                            indexLocation.fromEnd = True
+                            indexLocation.endIndex = len(patternCE.constraints) - fieldIndex - 1
+                        else:
+                            indexLocation.fromBegin = True
+                            indexLocation.beginIndex = fieldIndex 
+                        
                         # share or create a property test node for each type/value at index
-                        tests = [ConstantValueAtIndexTest(fieldIndex, fieldConstraint)]
+                        tests = [ConstantValueAtIndexTest(indexLocation, fieldConstraint)]
                         
                         # if this is a NegativeTest, i need to reverse all tests
                         if not isPositive:
                             tests = [NegativeAlphaTest(t) for t in tests]
                             
                         lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, tests)
+                        
+                    elif isinstance(fieldConstraint, types.MultiFieldVariable):
+                        
+                        # if i got a multifield variable in a field of the ordered, any
+                        # field constant value index after this it's not an exact index
+                        # position, but is a "minimum index"
+                        multiFieldDelta += 1
+                        
+                # at the end of the loop
+                # i need to check if i have to add a lenght test over
+                # the circuit (if no multifield variable is used)
+                if multiFieldDelta == 0:
+                    lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [
+                                    OrderedFactLengthTest(fieldIndex + 1)
+                                ])
                         
             else:
                 myclips.logger.critical("Unknown patternCE type: %s", patternCE.__class__.__name__)
@@ -208,63 +237,15 @@ class Network(object):
         # build tests for join node
         tests = []
         
-        if isinstance(patternCE, types.TemplatePatternCE):
-            iterateOver = [(lhsSlot.slotName, lhsSlot.slotValue) for lhsSlot in patternCE.templateSlots]
-            
-        elif isinstance(patternCE, types.OrderedPatternCE):
-            iterateOver = enumerate(patternCE.constraints)
+        (newBindings, references) = analyzePattern(patternCE, len(prevPatterns), variables)
         
-        for (index, value) in iterateOver:
+        # need to merge new bindings in variables
+        variables.update(dict([(var.name, var) for var in newBindings]))
+    
+        # need to create a test of each reference in references
+        for reference in references:
+            tests.append(VariableBindingTest(reference))
             
-            # special case: multifield
-            if isinstance(value, list):
-                pass
-            else:
-                if isinstance(value, types.Constraint):
-                    value = value.constraint
-                
-                if isinstance(value, types.ConnectedConstraint):
-                    myclips.logger.error("FIXME: Connected contraints alternative values ignored in join tests: %s", value.connectedConstraints)
-                    value = value.constraint
-
-                isPositive = True
-                    
-                if isinstance(value, types.NegativeTerm):
-                    isPositive = False
-                    value = value.term
-
-                if isinstance(value, types.PositiveTerm):
-                    value = value.term
-
-                # unnamed variables doesn't need join test constraints
-                # they are used only as anonymous placeholder
-                # to force the existence of an item at an index
-                # not to make consistency binding
-                if isinstance(value, (types.SingleFieldVariable, types.MultiFieldVariable) ):
-                    # found variable
-                    # check if a binding test is needed
-                    if variables.has_key(value.evaluate()):
-                        # i've already found this variable earlier
-                        # to i need to create a test to make sure that
-                        # values are valid for both variable places
-                        patternIndex = variables[value.evaluate()]["patternIndex"]
-                        positionIndex = variables[value.evaluate()]["positionIndex"]
-                        
-                        test = VariableBindingTest(wmePositionIndex=[index],
-                                                            tokenRelativeIndex=len(prevPatterns) - patternIndex,
-                                                            tokenPositionIndex=positionIndex)
-                        
-                        if not isPositive:
-                            test = NegativeBetaTest(test)
-                        
-                        tests.append(test)
-                    else:
-                        # i never found this variable before
-                        # so i need to create a new definition
-                        # and set the location where
-                        # i found it
-                        variables[value.evaluate()] = {"patternIndex": len(prevPatterns), # this is the position of the pattern in the lhs
-                                                       "positionIndex": [index]} # this is the position in the pattern of the slot/index
          
         return self._shareNode_JoinNode(lastBetaCircuitNode, alphaMemory, tests )           
         

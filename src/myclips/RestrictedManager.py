@@ -3,6 +3,7 @@ Created on 19/lug/2012
 
 @author: Francesco Capozzo
 '''
+import myclips
 
 class RestrictedManager(object):
     '''
@@ -54,6 +55,41 @@ class RestrictedDefinition(object):
         self._linkedType = linkedType
         # dict of Scope().moduleName : Scope()
         self._scopes = {}
+        
+    def __eq__(self, other):
+        toTestItems = ['__class__', 'name', 'moduleName', 'definitionType',
+                       'linkedType']
+        try:
+            for test in toTestItems:
+                # try to split for the inner reference comparison
+                splitted = test.split(".", 2)
+                if len(splitted) == 2:
+                    objRefThis = getattr(self, splitted[0])
+                    objRefOther = getattr(other, splitted[0])
+                    attribute = splitted[1]
+                else:
+                    objRefThis = self
+                    objRefOther = other
+                    attribute = splitted[0]
+                    
+                if getattr(objRefThis, attribute) != getattr(objRefOther, attribute):
+                    myclips.logger.error("Different item %s: %s vs %s", 
+                                            test, 
+                                            str(getattr(objRefThis, attribute)), 
+                                            getattr(objRefOther, attribute))
+                    return False
+                
+            # everything is the same
+            return True
+        except Exception, e:
+            # error? -> not equal
+            myclips.logger.error("Exception on comparison %s: %s", 
+                                    test, 
+                                    str(e))
+            return False
+        
+    def __neq__(self, other):
+        return not self.__eq__(other)
     
     @property    
     def name(self):
