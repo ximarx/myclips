@@ -143,7 +143,6 @@ class Network(object):
             lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [ScopeTest(patternCE.scope.moduleName)])
             
             if isinstance(patternCE, types.TemplatePatternCE):
-                myclips.logger.error("FIXME: TemplatePatternCE ignored: %s", patternCE)
                 
                 lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [TemplateNameTest(patternCE.templateName)])
                 

@@ -15,14 +15,16 @@ import logging
 from myclips.rete.nodes.JoinNode import JoinNode
 from myclips.rete.AlphaInput import AlphaInput
 from myclips.rete.BetaInput import BetaInput
+#from myclips.TemplatesManager import TemplateDefinition, SlotDefinition
 
 # disable all logging from modules
 logging.disable(logging.INFO)
 
 class fact(object):
-    def __init__(self, v):
+    def __init__(self, v, template=None):
         self._fact = v
         self.moduleName = "MAIN"
+        self.templateName = template
     def __getitem__(self, attr, *argv, **argks):
         return self._fact[attr]
     def values(self):
@@ -51,7 +53,7 @@ class Test(unittest.TestCase):
         self.MM.addMainScope()
 
 
-    def test_AlphaCircuitCompilation(self):
+    def test_AlphaCircuitCompilationOrdered(self):
 
         self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
                 types.OrderedPatternCE([
@@ -69,6 +71,33 @@ class Test(unittest.TestCase):
         self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0], PropertyTestNode)
         self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory, AlphaMemory)
         self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
+
+
+    def test_AlphaCircuitCompilationTemplate(self):
+
+        types.DefTemplateConstruct("aTemplate", self.MM, None, [
+                types.SingleSlotDefinition("A"),
+                types.SingleSlotDefinition("B"),
+                types.SingleSlotDefinition("C")
+            ])
+
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.TemplatePatternCE("aTemplate", self.MM, [
+                        types.SingleFieldLhsSlot("A", types.Symbol("A")),
+                        types.SingleFieldLhsSlot("B", types.Symbol("B")),
+                        types.SingleFieldLhsSlot("C", types.Symbol("C"))
+                    ])
+            ]))
+        
+        self.assertIsInstance(self.network._root, RootNode)
+        self.assertIsInstance(self.network._root.children[0], PropertyTestNode)
+        self.assertIsInstance(self.network._root.children[0].children[0], PropertyTestNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0], PropertyTestNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0], PropertyTestNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0], PropertyTestNode)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory, AlphaMemory)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
+    
 
     def test_DummyJoinNodeCreationAfterFirstPatternCE(self):
 
@@ -124,7 +153,7 @@ class Test(unittest.TestCase):
         self.assertTrue(trap.leftCatch)
         
         
-    def test_AlphaMemoryPropagation(self):
+    def test_AlphaMemoryPropagationOrdered(self):
         
         self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
                 types.OrderedPatternCE([
@@ -142,6 +171,34 @@ class Test(unittest.TestCase):
         
         
         self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
+        
+        self.assertTrue(trap.rightCatch)
+        
+
+    def test_AlphaMemoryPropagationTemplate(self):
+        
+        types.DefTemplateConstruct("aTemplate", self.MM, None, [
+                types.SingleSlotDefinition("A"),
+                types.SingleSlotDefinition("B"),
+                types.SingleSlotDefinition("C")
+            ])
+
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.TemplatePatternCE("aTemplate", self.MM, [
+                        types.SingleFieldLhsSlot("A", types.Symbol("A")),
+                        types.SingleFieldLhsSlot("B", types.Symbol("B")),
+                        types.SingleFieldLhsSlot("C", types.Symbol("C"))
+                    ])
+            ]))
+                
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.children[0], JoinNode)
+        
+        trap = activationCatcher()
+        
+        self.network._root.children[0].children[0].children[0].children[0].children[0].memory.appendChild(trap)
+        
+        
+        self.network.assertFact(fact({"A": types.Symbol("A"), "B": types.Symbol("B"), "C": types.Symbol("C")}, "aTemplate"))
         
         self.assertTrue(trap.rightCatch)
         

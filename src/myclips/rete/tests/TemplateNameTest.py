@@ -23,8 +23,11 @@ class TemplateNameTest(AlphaTest):
         return self._templateName
     
     def isValid(self, wme):
-        assert isinstance(wme, WME)
-        return wme.fact.templateName == self.templateName
+        try:
+            assert isinstance(wme, WME)
+            return wme.fact.templateName == self.templateName
+        except:
+            return False
     
     def __str__(self, *args, **kwargs):
         return "Template=%s"%self.templateName
