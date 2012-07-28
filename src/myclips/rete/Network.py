@@ -22,6 +22,7 @@ from myclips.rete.tests.OrderedFactLengthTest import OrderedFactLengthTest
 from myclips.rete.tests.locations import VariableLocation, AtomLocation
 from myclips.rete.analysis import analyzePattern, normalizeAtom
 from myclips.rete.tests.TemplateNameTest import TemplateNameTest
+from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
 
 class Network(object):
     '''
@@ -111,7 +112,10 @@ class Network(object):
                 
                 else:
                     # a simple negative join node is required
-                    pass
+
+                    alphaMemory = self._makeAlphaCircuit(patternCE, testsQueue)
+                    node = self._makeBetaNegativeJoinCircuit(node, alphaMemory, patternCE, prevPatterns, variables)
+
                 
             elif isinstance(patternCE, types.TestPatternCE):
                 # a special filter must be applied to
@@ -312,6 +316,28 @@ class Network(object):
          
         return self._shareNode_JoinNode(lastBetaCircuitNode, alphaMemory, tests )           
         
+
+    def _makeBetaNegativeJoinCircuit(self, lastBetaCircuitNode, alphaMemory, patternCE, prevPatterns, variables):
+        
+        if lastBetaCircuitNode != None:
+            lastBetaCircuitNode = self._shareNode_BetaMemory(lastBetaCircuitNode)
+            
+        # build tests for join node
+        tests = []
+        
+        (newBindings, references) = analyzePattern(patternCE, len(prevPatterns), variables)
+        
+        # need to merge new bindings in variables
+        variables.update(dict([(var.name, var) for var in newBindings]))
+    
+        # need to create a test of each reference in references
+        for reference in references:
+            tests.append(VariableBindingTest(reference))
+            
+         
+        return self._shareNode_NegativeJoinNode(lastBetaCircuitNode, alphaMemory, tests )           
+        
+
         
 
     def _shareNode_AlphaMemoryNode(self, lastCircuitNode):
@@ -449,3 +475,68 @@ class Network(object):
         
         
         return newChild
+    
+    
+    def _shareNode_NegativeJoinNode(self, lastCircuitNode, alphaMemory, tests):
+            
+        # check if i can share looking at beta network first
+        if lastCircuitNode is not None:
+            
+            for child in lastCircuitNode.children:
+                
+                # i can't use isinstance, child must be exactly a JoinNode
+                # otherwise negative node could be shared and this is a problem
+                if (child.__class__ == JoinNode
+                    # is a join node
+                    and child.rightParent == alphaMemory
+                        # alpha memory is the same
+                        and child.tests == tests):
+                            # tests are the same too
+                    
+                    # i can share the node
+                    return child
+        
+        else:
+            # try to share node looking at the alphaMemory
+            # this could allow to share dummy join nodes
+            for child in alphaMemory.children:
+                # i can't use isinstance, child must be exactly a JoinNode
+                # otherwise negative node could be shared and this is a problem
+                if (child.__class__ == NegativeJoinNode
+                    # is a join node
+                    and child.isLeftRoot()
+                        # like the node i will create, this one is left dummy
+                        and child.tests == tests):
+                            # tests are the same too
+                    
+                    # i can share the node
+                    return child
+            
+        # i can't share an old node
+        # it's time to create a new one
+        
+        newChild = NegativeJoinNode(rightParent=alphaMemory, leftParent=lastCircuitNode, tests=tests)
+        # link the new join to the right alpha memory
+        alphaMemory.prependChild(newChild)
+        
+        if lastCircuitNode is not None:
+            # link the join node to the parent
+            lastCircuitNode.prependChild(newChild)
+            
+            # try to update from the left
+            lastCircuitNode.updateChild(newChild)
+            
+        else:
+            
+            # try to update from the right
+            alphaMemory.updateChild(newChild)
+            
+        
+        
+        myclips.logger.info("New node: %s", newChild)
+        myclips.logger.info("Right-linked node: %s to %s", newChild, alphaMemory)
+        myclips.logger.info("Left-linked node: %s to %s", newChild, lastCircuitNode)
+        
+        
+        return newChild    
+    
