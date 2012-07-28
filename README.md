@@ -1,4 +1,4 @@
-myclips-parser
+myclips
 ==============
 
-myclips-parser
+myclips
