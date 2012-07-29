@@ -8,6 +8,7 @@ import myclips.parser.Types as types
 from myclips.rete.tests.locations import VariableLocation, VariableReference
 from myclips.MyClipsException import MyClipsBugException
 import myclips
+from copy import copy
 
 def getVar(varName, variables, inPatternVariables):
     if variables.has_key(varName):
@@ -245,3 +246,108 @@ def analyzePattern(thePattern, patternIndex, variables):
 
     return (inPatternVariables, inPatternReferences)
 
+
+
+def normalizeLHS(lhs):
+    """
+    Change patterns orders (and nested patterns order)
+    to normalize lhs in a Or (And ( normal form 
+    """
+    if isinstance(lhs, list):
+        # wrap the pattern list with an AndCE
+        lhs = types.AndPatternCE(lhs)
+        
+    if isinstance(lhs, types.AndPatternCE):
+        # wrap the AndCE with an OrCE
+        lhs = types.OrPatternCE([lhs])
+        
+    # then normalize lhs in a
+    # form that has
+    # all or inside the lhs reduced to
+    # a single or at the top level of
+    # the rule
+    
+    while _browseOr(lhs):
+        continue
+    
+    # then compact all
+    # (or (or
+    # and
+    # (and (and
+    # as a single container
+    
+    while _compactPatterns(lhs):
+        continue
+        
+    return lhs
+
+            
+def _browseOr(Or):
+    changed = False
+    for (index, inOrPattern) in enumerate(Or.patterns):
+        if isinstance(inOrPattern, types.AndPatternCE):
+            changed = _swapAndOr(inOrPattern, Or.patterns, index) or changed
+        if isinstance(inOrPattern, types.OrPatternCE):
+            changed = _browseOr(inOrPattern) or changed
+            
+    return changed
+            
+def _swapAndOr(And, AndParent, AndIndex):
+    changed = False
+    for index, inAndPattern in enumerate(And.patterns):
+        if isinstance(inAndPattern, types.OrPatternCE):
+            newOrPatterns = []
+            for orPattern in inAndPattern.patterns:
+                #newOrPatterns = And.patterns[0:index] + [orPattern] + And.patterns[index+1:None]
+                newOrPatterns.append(types.AndPatternCE(And.patterns[0:index] + [orPattern] + And.patterns[index+1:None]))
+            newOr = types.OrPatternCE(newOrPatterns)
+            AndParent[AndIndex] = newOr
+            changed = True
+        elif isinstance(inAndPattern, types.AndPatternCE):
+            changed = _swapAndOr(inAndPattern, And.patterns, index) or changed
+        
+    return changed
+    
+def _compactPatterns(Combiner):
+    """
+    Remove useless patterns container
+    like ( Or ( Or )) or ( And ( And ))
+    """
+    changed = False
+    restart = True
+    while restart:
+        restart = False
+        for index, inCombinerPattern in enumerate(Combiner.patterns):
+            # (or (or [] -> (or []
+            if isinstance(inCombinerPattern, (types.AndPatternCE, types.OrPatternCE)):
+                while _compactPatterns(inCombinerPattern):
+                    changed = True
+                if inCombinerPattern.__class__ == Combiner.__class__:
+                    tmpList = Combiner.patterns
+                    tmpList = tmpList[0:index+1] + inCombinerPattern.patterns + tmpList[index+1:None]
+                    del tmpList[index]
+                    Combiner.patterns = tmpList
+                    restart = True
+                    changed = True
+                    break # force to restart the reduceOrOr with the new list 
+        
+    return changed
+if __name__ == '__main__':
+    
+    lhs = [types.AndPatternCE([
+                types.OrPatternCE(["A", "B"]),
+                types.OrPatternCE(["C", "D",
+                    types.AndPatternCE(["Z",
+                            types.OrPatternCE(["W", "X"]) 
+                        ])
+                    ])
+        ])]
+    
+    import pprint
+    
+    lhs = normalizeLHS(lhs)
+    
+    
+    pprint.pprint(lhs)
+    
+    

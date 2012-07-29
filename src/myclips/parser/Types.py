@@ -427,6 +427,19 @@ class AndPatternCE(PatternCE):
                                     self.patterns
                                     )
 
+class OrPatternCE(PatternCE):
+    def __init__(self, patterns):
+        if len(patterns) > 0 and isinstance(patterns[0], AssignedPatternCE):
+            raise TypeInstanceCreationError("Syntax Error:  Check appropriate syntax for the first field of a pattern.")
+        PatternCE.__init__(self, patterns)
+        self.patterns = patterns
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}>".format(self.__class__.__name__,
+                                    self.patterns
+                                    )
+
+
 class TestPatternCE(PatternCE):
     def __init__(self, function):
         PatternCE.__init__(self, function)
