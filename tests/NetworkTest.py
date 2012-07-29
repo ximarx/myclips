@@ -15,6 +15,7 @@ import logging
 from myclips.rete.nodes.JoinNode import JoinNode
 from myclips.rete.AlphaInput import AlphaInput
 from myclips.rete.BetaInput import BetaInput
+from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
 #from myclips.TemplatesManager import TemplateDefinition, SlotDefinition
 
 # disable all logging from modules
@@ -318,6 +319,82 @@ class Test(unittest.TestCase):
         self.assertNotEqual(len(self.network._root.children[0].children[0].children[0].memory.items), 0)
         
         self.assertTrue(trap.rightCatch)
+        
+        
+    def test_NegativeJoinBetaCircuitTrueCondition(self):
+        
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrderedPatternCE([
+                        types.Symbol("A"),
+                        types.Symbol("B"),
+                        types.Symbol("C"),
+                    ], self.MM),
+                types.NotPatternCE(
+                    types.OrderedPatternCE([
+                            types.Symbol("C"),
+                            types.Symbol("B"),
+                            types.Symbol("A"),
+                        ], self.MM))
+            ]))
+
+        self.assertIsInstance(self.network._root
+                                .children[0] #MAIN
+                                .children[0] #C
+                                .children[0] #B
+                                .children[0] #A
+                                .children[0] #LEN
+                                .memory #AM
+                                .children[0], NegativeJoinNode)
+        
+        trap = activationCatcher()
+        
+        (self.network._root.children[0] #MAIN
+                        .children[0]    #C
+                        .children[0]    #B
+                        .children[0]    #A
+                        .children[0]    #LEN
+                        .memory         #AM
+                        .children[0]).prependChild(trap)
+
+        self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
+        
+        self.assertTrue(trap.leftCatch)
+        
+        
+    def test_NegativeJoinBetaCircuitFalseCondition(self):
+        
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrderedPatternCE([
+                        types.Symbol("A"),
+                        types.Symbol("B"),
+                        types.Symbol("C"),
+                    ], self.MM),
+                types.NotPatternCE(
+                    types.OrderedPatternCE([
+                            types.Symbol("C"),
+                            types.Symbol("B"),
+                            types.Symbol("A"),
+                        ], self.MM))
+            ]))
+
+        
+        trap = activationCatcher()
+        
+        (self.network._root.children[0] #MAIN
+                        .children[0]    #C
+                        .children[0]    #B
+                        .children[0]    #A
+                        .children[0]    #LEN
+                        .memory         #AM
+                        .children[0]).prependChild(trap)
+
+        self.network.assertFact(fact([types.Symbol("C"), types.Symbol("B"), types.Symbol("A")]))
+        
+        self.assertFalse(trap.leftCatch)
+        
+        self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
+        
+        self.assertFalse(trap.leftCatch)
         
 
 if __name__ == "__main__":

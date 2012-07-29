@@ -98,10 +98,10 @@ class WME(MemoryItem):
     def hasNegativeJoinResults(self):
         return len(self._negativeJoinResults) > 0
         
-    def linkNegativeJoinResults(self, njr):
+    def linkNegativeJoinResult(self, njr):
         self._negativeJoinResults.append(njr)
         
-    def unlinkNegativeJoinResults(self, njr):
+    def unlinkNegativeJoinResult(self, njr):
         self._negativeJoinResults.remove(njr)
         
     def __hash__(self, *args, **kwargs):

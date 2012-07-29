@@ -37,7 +37,7 @@ class NegativeJoinNode(JoinNode, Memory):
         # and a negative join result must be created to store
         # the match
         
-        for token in self.items():
+        for token in self.items:
             if self.isValid(token, wme):
                 # found a match between token and wme
                 # checking if something has been propagated by the token

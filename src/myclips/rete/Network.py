@@ -113,7 +113,7 @@ class Network(object):
                 else:
                     # a simple negative join node is required
 
-                    alphaMemory = self._makeAlphaCircuit(patternCE, testsQueue)
+                    alphaMemory = self._makeAlphaCircuit(patternCE.pattern, testsQueue)
                     node = self._makeBetaNegativeJoinCircuit(node, alphaMemory, patternCE, prevPatterns, variables)
 
                 
