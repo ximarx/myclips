@@ -16,6 +16,8 @@ from myclips.rete.nodes.JoinNode import JoinNode
 from myclips.rete.AlphaInput import AlphaInput
 from myclips.rete.BetaInput import BetaInput
 from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
+from myclips.rete.nodes.NccNode import NccNode
+from myclips.rete.nodes.NccPartnerNode import NccPartnerNode
 #from myclips.TemplatesManager import TemplateDefinition, SlotDefinition
 
 # disable all logging from modules
@@ -320,8 +322,8 @@ class Test(unittest.TestCase):
         
         self.assertTrue(trap.rightCatch)
         
-        
-    def test_NegativeJoinBetaCircuitTrueCondition(self):
+
+    def test_NegativeJoinBetaCircuitCompilation(self):
         
         self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
                 types.OrderedPatternCE([
@@ -345,6 +347,22 @@ class Test(unittest.TestCase):
                                 .children[0] #LEN
                                 .memory #AM
                                 .children[0], NegativeJoinNode)
+
+    def test_NegativeJoinBetaCircuitTrueCondition(self):
+        
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrderedPatternCE([
+                        types.Symbol("A"),
+                        types.Symbol("B"),
+                        types.Symbol("C"),
+                    ], self.MM),
+                types.NotPatternCE(
+                    types.OrderedPatternCE([
+                            types.Symbol("C"),
+                            types.Symbol("B"),
+                            types.Symbol("A"),
+                        ], self.MM))
+            ]))
         
         trap = activationCatcher()
         
@@ -359,7 +377,8 @@ class Test(unittest.TestCase):
         self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
         
         self.assertTrue(trap.leftCatch)
-        
+
+
         
     def test_NegativeJoinBetaCircuitFalseCondition(self):
         
@@ -395,7 +414,273 @@ class Test(unittest.TestCase):
         self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
         
         self.assertFalse(trap.leftCatch)
+
+
+
+    def test_NccBetaCircuitCompilation(self):
         
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrderedPatternCE([
+                        types.Symbol("A"),
+                        types.Symbol("B"),
+                        types.Symbol("C"),
+                    ], self.MM),
+                types.NotPatternCE(
+                    types.AndPatternCE([
+                        types.OrderedPatternCE([
+                                types.Symbol("Z"),
+                                types.Symbol("Z"),
+                                types.Symbol("Z"),
+                            ], self.MM),
+                        types.OrderedPatternCE([
+                                types.Symbol("W"),
+                                types.Symbol("W"),
+                                types.Symbol("W"),
+                            ], self.MM)
+                        ]))
+            ]))
+
+        # check main branch
+        self.assertIsInstance(self.network._root
+                                .children[0] #MAIN
+                                .children[-1] #A
+                                .children[-1] #B
+                                .children[-1] #C
+                                .children[-1] #LEN 3
+                                .memory #AM
+                                .children[-1] #DUMMYJOIN
+                                .children[-1] #NCC
+                                , NccNode)        
+
+        # check partner branch
+        self.assertIsInstance(self.network._root
+                                .children[0] #MAIN
+                                .children[-2] #Z
+                                .children[-1] #Z
+                                .children[-1] #Z
+                                .children[-1] #LEN 3
+                                .memory #AM
+                                .children[-1] #DUMMYJOIN
+                                .children[-1] #BETA
+                                .children[-1] #JOIN
+                                .children[-1]
+                                , NccPartnerNode)        
+
+        # check if nccPartner is linked to nccNode
+        self.assertEqual(self.network._root
+                                .children[0] #MAIN
+                                .children[-2] #Z
+                                .children[-1] #Z
+                                .children[-1] #Z
+                                .children[-1] #LEN 3
+                                .memory #AM
+                                .children[-1] #DUMMYJOIN
+                                .children[-1] #BETA
+                                .children[-1] #JOIN
+                                .children[-1].nccNode
+                                ,
+                        self.network._root
+                                .children[0] #MAIN
+                                .children[-1] #A
+                                .children[-1] #B
+                                .children[-1] #C
+                                .children[-1] #LEN 3
+                                .memory #AM
+                                .children[-1] #DUMMYJOIN
+                                .children[-1] #NCC
+                        )        
+
+        # check if NccNode is linked to NccPartner
+        self.assertEqual(self.network._root
+                                .children[0] #MAIN
+                                .children[-2] #Z
+                                .children[-1] #Z
+                                .children[-1] #Z
+                                .children[-1] #LEN 3
+                                .memory #AM
+                                .children[-1] #DUMMYJOIN
+                                .children[-1] #BETA
+                                .children[-1] #JOIN
+                                .children[-1]
+                                ,
+                        self.network._root
+                                .children[0] #MAIN
+                                .children[-1] #A
+                                .children[-1] #B
+                                .children[-1] #C
+                                .children[-1] #LEN 3
+                                .memory #AM
+                                .children[-1] #DUMMYJOIN
+                                .children[-1].partner
+                        )        
+
+
+    def test_NccBetaCircuitPropagationBothSubMissing(self):
+        
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrderedPatternCE([
+                        types.Symbol("A"),
+                        types.Symbol("B"),
+                        types.Symbol("C"),
+                    ], self.MM),
+                types.NotPatternCE(
+                    types.AndPatternCE([
+                        types.OrderedPatternCE([
+                                types.Symbol("Z"),
+                                types.Symbol("Z"),
+                                types.Symbol("Z"),
+                            ], self.MM),
+                        types.OrderedPatternCE([
+                                types.Symbol("W"),
+                                types.Symbol("W"),
+                                types.Symbol("W"),
+                            ], self.MM)
+                        ]))
+            ]))
+
+        trap = activationCatcher()
+        
+        (self.network._root.children[0] #MAIN
+                            .children[-1] #A
+                            .children[-1] #B
+                            .children[-1] #C
+                            .children[-1] #LEN 3
+                            .memory #AM
+                            .children[-1] #DUMMYJOIN
+                            .children[-1] #NCC
+                            ).prependChild(trap)
+
+        self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
+        
+        self.assertTrue(trap.leftCatch)
+        
+
+    def test_NccBetaCircuitPropagationSecondSubMissing(self):
+        
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrderedPatternCE([
+                        types.Symbol("A"),
+                        types.Symbol("B"),
+                        types.Symbol("C"),
+                    ], self.MM),
+                types.NotPatternCE(
+                    types.AndPatternCE([
+                        types.OrderedPatternCE([
+                                types.Symbol("Z"),
+                                types.Symbol("Z"),
+                                types.Symbol("Z"),
+                            ], self.MM),
+                        types.OrderedPatternCE([
+                                types.Symbol("W"),
+                                types.Symbol("W"),
+                                types.Symbol("W"),
+                            ], self.MM)
+                        ]))
+            ]))
+
+        trap = activationCatcher()
+        
+        (self.network._root.children[0] #MAIN
+                            .children[-1] #A
+                            .children[-1] #B
+                            .children[-1] #C
+                            .children[-1] #LEN 3
+                            .memory #AM
+                            .children[-1] #DUMMYJOIN
+                            .children[-1] #NCC
+                            ).prependChild(trap)
+
+        self.network.assertFact(fact([types.Symbol("Z"), types.Symbol("Z"), types.Symbol("Z")]))
+
+        self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
+        
+        self.assertTrue(trap.leftCatch)
+        
+    def test_NccBetaCircuitPropagationFirstSubMissing(self):
+        
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrderedPatternCE([
+                        types.Symbol("A"),
+                        types.Symbol("B"),
+                        types.Symbol("C"),
+                    ], self.MM),
+                types.NotPatternCE(
+                    types.AndPatternCE([
+                        types.OrderedPatternCE([
+                                types.Symbol("Z"),
+                                types.Symbol("Z"),
+                                types.Symbol("Z"),
+                            ], self.MM),
+                        types.OrderedPatternCE([
+                                types.Symbol("W"),
+                                types.Symbol("W"),
+                                types.Symbol("W"),
+                            ], self.MM)
+                        ]))
+            ]))
+
+        trap = activationCatcher()
+        
+        (self.network._root.children[0] #MAIN
+                            .children[-1] #A
+                            .children[-1] #B
+                            .children[-1] #C
+                            .children[-1] #LEN 3
+                            .memory #AM
+                            .children[-1] #DUMMYJOIN
+                            .children[-1] #NCC
+                            ).prependChild(trap)
+
+        self.network.assertFact(fact([types.Symbol("W"), types.Symbol("W"), types.Symbol("W")]))
+
+        self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
+        
+        self.assertTrue(trap.leftCatch)
+        
+    def test_NccBetaCircuitNotPropagation(self):
+        
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrderedPatternCE([
+                        types.Symbol("A"),
+                        types.Symbol("B"),
+                        types.Symbol("C"),
+                    ], self.MM),
+                types.NotPatternCE(
+                    types.AndPatternCE([
+                        types.OrderedPatternCE([
+                                types.Symbol("Z"),
+                                types.Symbol("Z"),
+                                types.Symbol("Z"),
+                            ], self.MM),
+                        types.OrderedPatternCE([
+                                types.Symbol("W"),
+                                types.Symbol("W"),
+                                types.Symbol("W"),
+                            ], self.MM)
+                        ]))
+            ]))
+
+        trap = activationCatcher()
+        
+        (self.network._root.children[0] #MAIN
+                            .children[-1] #A
+                            .children[-1] #B
+                            .children[-1] #C
+                            .children[-1] #LEN 3
+                            .memory #AM
+                            .children[-1] #DUMMYJOIN
+                            .children[-1] #NCC
+                            ).prependChild(trap)
+
+        self.network.assertFact(fact([types.Symbol("Z"), types.Symbol("Z"), types.Symbol("Z")]))
+
+        self.network.assertFact(fact([types.Symbol("W"), types.Symbol("W"), types.Symbol("W")]))
+
+        self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
+        
+        self.assertFalse(trap.leftCatch)
+        
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

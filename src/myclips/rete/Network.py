@@ -23,6 +23,7 @@ from myclips.rete.tests.locations import VariableLocation, AtomLocation
 from myclips.rete.analysis import analyzePattern, normalizeAtom
 from myclips.rete.tests.TemplateNameTest import TemplateNameTest
 from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
+from myclips.rete.nodes.NccNode import NccNode
 
 class Network(object):
     '''
@@ -81,6 +82,8 @@ class Network(object):
         
         for (pIndex, patternCE) in enumerate(patterns):
             
+            avoidAppend = False
+            
             # get the pattern type:
             if isinstance(patternCE, (types.TemplatePatternCE, 
                                       types.AssignedPatternCE, 
@@ -108,8 +111,12 @@ class Network(object):
                 
                 if isinstance(patternCE.pattern, types.AndPatternCE):
                     # that's it: ncc required
-                    pass
-                
+                    
+                    # this build the normal circuit
+                    lastNccCircuitNode = self._makeNetwork(node, patternCE.pattern.patterns, prevPatterns, variables, testsQueue)
+                    node = self._makeBetaNccCircuit(node, lastNccCircuitNode, len(patternCE.pattern.patterns))
+                    # inner conditions already appended by recursive call
+                    avoidAppend = True
                 else:
                     # a simple negative join node is required
 
@@ -121,16 +128,21 @@ class Network(object):
                 # a special filter must be applied to
                 # the circuit
                 pass
+
+            elif isinstance(patternCE, types.AndPatternCE):
+                # need to add support for andCE
+                # pass
+                node = self._makeNetwork(node, patternCE.patterns, prevPatterns, variables, testsQueue)
+                # inner conditions already appended
+                avoidAppend = True  
+
                 
             #elif isinstance(patternCE, types.OrPatternCE):
                 # need to add support for orCE
                 # pass
         
-            #elif isinstance(patternCE, types.AndPatternCE):
-                # need to add support for andCE
-                # pass  
-            
-            prevPatterns.append(patternCE)
+            if not avoidAppend:
+                prevPatterns.append(patternCE)
             
         return node
             
@@ -338,6 +350,9 @@ class Network(object):
         return self._shareNode_NegativeJoinNode(lastBetaCircuitNode, alphaMemory, tests )           
         
 
+    def _makeBetaNccCircuit(self, lastBetaCircuitNode, lastNccCircuitNode, nccCircuitLength):
+        
+        return self._shareNode_NccNode(lastBetaCircuitNode, lastNccCircuitNode, nccCircuitLength)
         
 
     def _shareNode_AlphaMemoryNode(self, lastCircuitNode):
@@ -539,4 +554,50 @@ class Network(object):
         
         
         return newChild    
+    
+    def _shareNode_NccNode(self, lastCircuitNode, lastNccCircuitNode, partnerCircuitLength):
+        
+        if lastCircuitNode is None:
+            raise MyClipsBugException("Don't know how to handle this")
+        
+        # try to search for a ncc child of last circuit
+        for child in lastCircuitNode.children:
+            if isinstance(child, NccNode):
+                # it's a ncc, check of it's exactly the same circuit
+                # from the right too
+                if child.partner.leftParent == lastNccCircuitNode:
+                    # ncc in the child + same ncc circuit
+                    # this means i can share it
+                    return child
+                
+        # i can't share the node
+        # so create a new one
+        
+        newChild = NccNode(lastCircuitNode, lastNccCircuitNode, partnerCircuitLength)
+        
+        # link the newChild and the partner to the parents
+        
+        # ncc have to be the last child to be called
+        # because the partner must have token in the buffer
+        
+        lastCircuitNode.appendChild(newChild)
+        lastNccCircuitNode.prependChild(newChild.partner)
+        
+        # new i need to update the node couple
+        # first i update the ncc main node
+        # then the parent (this way when token comes to the partner
+        # the ncc has already partial results)
+        
+        lastCircuitNode.updateChild(newChild)
+        lastNccCircuitNode.updateChild(newChild.partner)
+
+        # print connections
+        
+        myclips.logger.info("New node: %s", newChild)
+        myclips.logger.info("New node: %s", newChild.partner)
+        myclips.logger.info("Partner-linked node: %s to %s", newChild, newChild.partner)
+        myclips.logger.info("Left-linked node: %s to %s", newChild, lastCircuitNode)
+        myclips.logger.info("Left-linked node: %s to %s", newChild.partner, lastNccCircuitNode)
+        
+        return newChild
     

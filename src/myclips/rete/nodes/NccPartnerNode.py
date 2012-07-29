@@ -65,7 +65,7 @@ class NccPartnerNode(Node, BetaInput):
         
         # 2) problem 2: new i need to scan all the ncc main memory
         #    and find a token with the same parent token and wme
-        for mToken in self.nccNode.items():
+        for mToken in self.nccNode.items:
             # optimization: puth wme comparison first because is
             #    faster then token comparison
             if mToken.wme == parentWme and mToken.parent == parentToken:

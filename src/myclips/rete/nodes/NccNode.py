@@ -34,7 +34,7 @@ class NccNode(Node, Memory, BetaInput):
         Node.__init__(self, rightParent=None, leftParent=leftParent)
         Memory.__init__(self)
         
-        self._partner = NccPartnerNode(leftParent=rightParent, partnerCircuitLength, self)
+        self._partner = NccPartnerNode(rightParent, partnerCircuitLength, self)
         
         
     def leftActivation(self, token, wme):
@@ -47,7 +47,7 @@ class NccNode(Node, Memory, BetaInput):
         
         # get the token stored in the partner node
         # (getFlushBuffer automatically flush the buffer)
-        for pToken in self.partner.getFlushBuffer():
+        for pToken in self.partner.getFlushResultsBuffer():
             # and link them to this token as ncc result
             # (and link this token as their nccOnwer:
             #    this is done automaticcaly inside the
@@ -79,7 +79,7 @@ class NccNode(Node, Memory, BetaInput):
         only if no ncc-result is found
         for each activation
         """
-        for token in self.items():
+        for token in self.items:
             if not token.hasNccResults():
                 child.leftActivation(token, None)
         

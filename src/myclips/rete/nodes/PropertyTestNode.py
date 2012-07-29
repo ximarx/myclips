@@ -48,7 +48,7 @@ class PropertyTestNode(Node, HasMemory, HasTests, AlphaInput):
         # items in a linked memory if any
         # or use the parent linked memory + test 
         if self.hasMemory() and self.memory != child:
-            for wme in self.memory.items():
+            for wme in self.memory.items:
                 child.rightActivation(wme)
         else:
             # store all children in a buffer var
