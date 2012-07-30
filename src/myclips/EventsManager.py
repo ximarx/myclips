@@ -47,6 +47,9 @@ class EventsManager(Observable):
         if len(cls.__EVENTS__) == 0:
             cls.__EVENTS__ = [getattr(cls, x) for x in dir(cls) if x[0:2] == "E_" and not callable(getattr(cls, x))]
     
+    def __repr__(self, *args, **kwargs):
+        return "<EventsManager%s>"%(": default=True" if self == EventsManager.default else "")
+    
 EventsManager._registerMainEvents()
 EventsManager.default = EventsManager()
     

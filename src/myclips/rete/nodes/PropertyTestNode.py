@@ -82,3 +82,6 @@ class PropertyTestNode(Node, HasMemory, HasTests, AlphaInput):
                 self.hasMemory()
             )
         
+    def __repr__(self):
+        return self.__str__()
+        

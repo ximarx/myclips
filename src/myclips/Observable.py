@@ -60,9 +60,6 @@ class Observable(object):
                 eventObs.remove(observer)
             except ValueError:
                 pass
-            
-    def reset(self):
-        self._observers = dict([(event, []) for event in self._events])
     
     def fire(self, event, *args, **kargs):
         try:

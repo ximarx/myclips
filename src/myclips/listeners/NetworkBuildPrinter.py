@@ -3,10 +3,10 @@ Created on 30/lug/2012
 
 @author: Francesco Capozzo
 '''
-from myclips.Observer import Observer
 from myclips.EventsManager import EventsManager
+from myclips.listeners.EventsManagerListener import EventsManagerListener
 
-class NetworkBuildPrinter(Observer):
+class NetworkBuildPrinter(EventsManagerListener):
     '''
     Print network build debug info in a resource
     (stderr/stdout/file)
@@ -18,8 +18,7 @@ class NetworkBuildPrinter(Observer):
         Constructor
         '''
         self._resource = resource
-        self._EM = None
-        Observer.__init__(self, {
+        EventsManagerListener.__init__(self, {
                 EventsManager.E_NODE_ADDED: self.onNodeAdded,
                 EventsManager.E_NODE_REMOVED: self.onNodeRemoved,
                 EventsManager.E_NODE_LINKED: self.onNodeLinked,
@@ -28,37 +27,6 @@ class NetworkBuildPrinter(Observer):
         
         self._nodeMap = {}
         self._nodeCounter = 0
-        
-    def install(self, eventsManager=None):
-        if eventsManager is None:
-            eventsManager = EventsManager.default
-        
-        # uninstall this object
-        # from old eventsmanager (if any)
-        self.uninstall()
-        
-        self._EM = eventsManager
-        self._installImpl()
-        
-        
-    def _installImpl(self):
-        EM = self._EM
-        assert isinstance(EM, EventsManager)
-        
-        EM.registerObserver(EventsManager.E_NODE_ADDED, self)
-        EM.registerObserver(EventsManager.E_NODE_LINKED, self)
-        EM.registerObserver(EventsManager.E_NODE_UNLINKED, self)
-        EM.registerObserver(EventsManager.E_NODE_REMOVED, self)
-        
-        
-    def uninstall(self):
-        if self._EM is None:
-            return
-        
-        self._EM.unregisterObserver(EventsManager.E_NODE_ADDED, self)
-        self._EM.unregisterObserver(EventsManager.E_NODE_LINKED, self)
-        self._EM.unregisterObserver(EventsManager.E_NODE_UNLINKED, self)
-        self._EM.unregisterObserver(EventsManager.E_NODE_REMOVED, self)
         
         
     ######################

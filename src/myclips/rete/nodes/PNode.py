@@ -54,7 +54,20 @@ class PNode(Node, BetaInput, Memory):
         return self.ruleName.rsplit("~", 2)[0]
     
     def __hash__(self):
-        return self.ruleName
+        return hash(self.ruleName)
+    
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__ and
+                self.ruleName == other.ruleName and
+                self.isMain == other.isMain and
+                self.mainRuleName == other.mainRuleName and
+                self.getSalience() == other.getSalience() and
+                self.isAutoFocus() == other.isAutoFocus() and
+                self.leftParent == other.leftParent and
+                self.rhs == other.rhs)
+        
+    def __neq__(self, other):
+        return not self.__eq__(other)
     
     def getSalience(self):
         return int(self.getProperty("salience", 0))
@@ -64,4 +77,10 @@ class PNode(Node, BetaInput, Memory):
     
     def getProperty(self, propName, defaultValue):
         return self._properties.get(propName, defaultValue)
+    
+    def __str__(self, *args, **kwargs):
+        return "<PNode: %s>"%self.ruleName
+    
+    def __repr__(self, *args, **kwargs):
+        return self.__str__()
     

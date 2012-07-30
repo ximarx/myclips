@@ -39,6 +39,8 @@ class Network(object):
         '''
         self._eventsManager = eventsManager if eventsManager is not None else EventsManager.default
         self._root = RootNode(self)
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, self._root)
+        
         self._agenda = Agenda()
         self._rules = {}
         self._facts = {}
@@ -69,6 +71,11 @@ class Network(object):
                           orClauseCount=index - 1 if index > 0 else None,
                           rhs=defrule.rhs, 
                           properties=analysis.normalizeDeclarations(defrule.defruleDeclaration))
+            
+            lastNode.prependChild(pNode)
+            
+            self.eventsManager.fire(EventsManager.E_NODE_ADDED, pNode)
+            self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastNode, pNode, -1)
             
             if firstPNode is None:
                 firstPNode = pNode
