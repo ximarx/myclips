@@ -18,6 +18,7 @@ from myclips.rete.BetaInput import BetaInput
 from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
 from myclips.rete.nodes.NccNode import NccNode
 from myclips.rete.nodes.NccPartnerNode import NccPartnerNode
+from myclips.listeners.NetworkBuildPrinter import NetworkBuildPrinter
 #from myclips.TemplatesManager import TemplateDefinition, SlotDefinition
 
 # disable all logging from modules
@@ -52,8 +53,16 @@ class Test(unittest.TestCase):
 
     def setUp(self):
         self.network = Network()
+        #import sys
+        #NetworkBuildPrinter(sys.stderr).install(self.network.eventsManager)
+        #self.printer.install(self.network.eventsManager)
         self.MM = ModulesManager()
         self.MM.addMainScope()
+        
+    def tearDown(self):
+        unittest.TestCase.tearDown(self)
+        #self.printer.uninstall()
+        self.network.eventsManager.reset()
 
 
     def test_AlphaCircuitCompilationOrdered(self):

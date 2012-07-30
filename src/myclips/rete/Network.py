@@ -17,7 +17,6 @@ from myclips.rete.WME import WME
 from myclips.rete.nodes.BetaMemory import BetaMemory
 from myclips.rete.tests.VariableBindingTest import VariableBindingTest
 from myclips.rete.nodes.JoinNode import JoinNode
-from myclips.rete.tests.NegativeBetaTest import NegativeBetaTest
 from myclips.rete.tests.OrderedFactLengthTest import OrderedFactLengthTest
 from myclips.rete.tests.locations import VariableLocation, AtomLocation
 from myclips.rete.analysis import analyzePattern, normalizeAtom
@@ -26,6 +25,7 @@ from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
 from myclips.rete.nodes.NccNode import NccNode
 from myclips.rete import analysis
 from myclips.rete.nodes.PNode import PNode
+from myclips.EventsManager import EventsManager
 
 class Network(object):
     '''
@@ -33,10 +33,11 @@ class Network(object):
     '''
 
 
-    def __init__(self):
+    def __init__(self, eventsManager = None):
         '''
         Constructor
         '''
+        self._eventsManager = eventsManager if eventsManager is not None else EventsManager.default
         self._root = RootNode(self)
         self._agenda = Agenda()
         self._rules = {}
@@ -96,6 +97,10 @@ class Network(object):
     @property
     def rules(self):
         return self._rules
+    
+    @property
+    def eventsManager(self):
+        return self._eventsManager
 
 
     def _makeNetwork(self, node, patterns, prevPatterns=None, variables=None, testsQueue=None):
@@ -406,14 +411,18 @@ class Network(object):
         # if the last node has already a memory linked,
         # just use it        
         if lastCircuitNode.hasMemory():
+            self.eventsManager.fire(EventsManager.E_NODE_SHARED, lastCircuitNode)
             return lastCircuitNode.memory
         
         # otherwise create a new one and return it
         memory = AlphaMemory(lastCircuitNode)
         lastCircuitNode.memory = memory
         
-        myclips.logger.info("New node: %s", memory)
-        myclips.logger.info("Linked node: %s to %s", memory, lastCircuitNode)
+        #myclips.logger.info("New node: %s", memory)
+        #myclips.logger.info("Linked node: %s to %s", memory, lastCircuitNode)
+        
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, memory)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastCircuitNode, memory, 0)
         
         # update the node
         lastCircuitNode.updateChild(memory)
@@ -429,6 +438,7 @@ class Network(object):
                     and child.tests == tests:
                     # found a node with same contraints
                     # i can share it
+                    self.eventsManager.fire(EventsManager.E_NODE_SHARED, child)
                     return child
         
         # if a checked all children and found nothing
@@ -437,8 +447,11 @@ class Network(object):
         # maybe i could move this code inside the constructor
         lastCircuitNode.addChild(newChild)
         
-        myclips.logger.info("New node: %s", newChild)
-        myclips.logger.info("Linked node: %s to %s", newChild, lastCircuitNode)
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, newChild)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastCircuitNode, newChild, 0)
+        
+        #myclips.logger.info("New node: %s", newChild)
+        #myclips.logger.info("Linked node: %s to %s", newChild, lastCircuitNode)
         
         return newChild
     
@@ -452,6 +465,7 @@ class Network(object):
         # try to share the beta if possible    
         for child in lastCircuitNode.children:
             if isinstance(child, BetaMemory):
+                self.eventsManager.fire(EventsManager.E_NODE_SHARED, child)
                 return child
             
          
@@ -463,8 +477,11 @@ class Network(object):
         # status to the network status
         lastCircuitNode.updateChild(newChild)   
             
-        myclips.logger.info("New node: %s", newChild)
-        myclips.logger.info("Linked node: %s to %s", newChild, lastCircuitNode)
+        #myclips.logger.info("New node: %s", newChild)
+        #myclips.logger.info("Linked node: %s to %s", newChild, lastCircuitNode)
+
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, newChild)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastCircuitNode, newChild, -1)
         
         return newChild
     
@@ -485,6 +502,7 @@ class Network(object):
                             # tests are the same too
                     
                     # i can share the node
+                    self.eventsManager.fire(EventsManager.E_NODE_SHARED, child)
                     return child
         
         else:
@@ -501,6 +519,7 @@ class Network(object):
                             # tests are the same too
                     
                     # i can share the node
+                    self.eventsManager.fire(EventsManager.E_NODE_SHARED, child)
                     return child
             
         # i can't share an old node
@@ -518,10 +537,13 @@ class Network(object):
             # it has no children to propage the activation
         
         
-        myclips.logger.info("New node: %s", newChild)
-        myclips.logger.info("Right-linked node: %s to %s", newChild, alphaMemory)
-        myclips.logger.info("Left-linked node: %s to %s", newChild, lastCircuitNode)
-        
+        #myclips.logger.info("New node: %s", newChild)
+        #myclips.logger.info("Right-linked node: %s to %s", newChild, alphaMemory)
+        #myclips.logger.info("Left-linked node: %s to %s", newChild, lastCircuitNode)
+
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, newChild)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastCircuitNode, newChild, -1)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, alphaMemory, newChild, 1)
         
         return newChild
     
@@ -543,6 +565,7 @@ class Network(object):
                             # tests are the same too
                     
                     # i can share the node
+                    self.eventsManager.fire(EventsManager.E_NODE_SHARED, child)
                     return child
         
         else:
@@ -559,6 +582,7 @@ class Network(object):
                             # tests are the same too
                     
                     # i can share the node
+                    self.eventsManager.fire(EventsManager.E_NODE_SHARED, child)
                     return child
             
         # i can't share an old node
@@ -580,12 +604,14 @@ class Network(object):
             # try to update from the right
             alphaMemory.updateChild(newChild)
             
-        
-        
-        myclips.logger.info("New node: %s", newChild)
-        myclips.logger.info("Right-linked node: %s to %s", newChild, alphaMemory)
-        myclips.logger.info("Left-linked node: %s to %s", newChild, lastCircuitNode)
-        
+        #myclips.logger.info("New node: %s", newChild)
+        #myclips.logger.info("Right-linked node: %s to %s", newChild, alphaMemory)
+        #myclips.logger.info("Left-linked node: %s to %s", newChild, lastCircuitNode)
+
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, newChild)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastCircuitNode, newChild, -1)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, alphaMemory, newChild, 1)
+
         
         return newChild    
     
@@ -602,6 +628,7 @@ class Network(object):
                 if child.partner.leftParent == lastNccCircuitNode:
                     # ncc in the child + same ncc circuit
                     # this means i can share it
+                    self.eventsManager.fire(EventsManager.E_NODE_SHARED, child)
                     return child
                 
         # i can't share the node
@@ -627,11 +654,18 @@ class Network(object):
 
         # print connections
         
-        myclips.logger.info("New node: %s", newChild)
-        myclips.logger.info("New node: %s", newChild.partner)
-        myclips.logger.info("Partner-linked node: %s to %s", newChild, newChild.partner)
-        myclips.logger.info("Left-linked node: %s to %s", newChild, lastCircuitNode)
-        myclips.logger.info("Left-linked node: %s to %s", newChild.partner, lastNccCircuitNode)
+#        myclips.logger.info("New node: %s", newChild)
+#        myclips.logger.info("New node: %s", newChild.partner)
+#        myclips.logger.info("Partner-linked node: %s to %s", newChild, newChild.partner)
+#        myclips.logger.info("Left-linked node: %s to %s", newChild, lastCircuitNode)
+#        myclips.logger.info("Left-linked node: %s to %s", newChild.partner, lastNccCircuitNode)
+        
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, newChild)
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, newChild.partner)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastCircuitNode, newChild, -1)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastNccCircuitNode, newChild.partner, -1)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, newChild.partner, newChild, 0)
+        
         
         return newChild
     

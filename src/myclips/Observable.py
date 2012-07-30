@@ -60,11 +60,14 @@ class Observable(object):
                 eventObs.remove(observer)
             except ValueError:
                 pass
+            
+    def reset(self):
+        self._observers = dict([(event, []) for event in self._events])
     
     def fire(self, event, *args, **kargs):
         try:
             observers = self._observers[event]
-        except Exception, e:
+        except:
                 myclips.logger.error("Invalid event %s \n\tfor %s",
                                             repr(event),
                                             repr(self))
