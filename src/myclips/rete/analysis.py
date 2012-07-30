@@ -251,7 +251,9 @@ def analyzePattern(thePattern, patternIndex, variables):
 def normalizeLHS(lhs):
     """
     Change patterns orders (and nested patterns order)
-    to normalize lhs in a Or (And ( normal form 
+    to normalize lhs in a Or (And ( normal form
+    with all nested Or regrouped in a single
+    top level Or
     """
     if isinstance(lhs, list):
         # wrap the pattern list with an AndCE
@@ -381,6 +383,27 @@ def _compactPatterns(Combiner):
                     # just continue 
         
     return changed
+
+
+def normalizeDeclarations(declarations):
+    """
+    Convert a list of RuleProperty object in a dict
+    of RuleProperty.name = RuleProperty.value
+    and return it
+    if at least one RuleProperty is available,
+    otherwise return None
+    
+    @param declarations: list of rule properties parsed
+    @type declasarions: list of RuleProperty
+    @return: dict of (RuleProperty.name, RuleProperty.value) or None
+    @rtype: dict|None
+    """
+
+    return dict([(dec.propertyName, dec.propertyValue) for dec in declarations if isinstance(dec, types.RuleProperty)]) \
+            if len(declarations) > 0 \
+                else None
+    
+
 if __name__ == '__main__':
     
     lhs = [types.AndPatternCE([

@@ -24,6 +24,8 @@ from myclips.rete.analysis import analyzePattern, normalizeAtom
 from myclips.rete.tests.TemplateNameTest import TemplateNameTest
 from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
 from myclips.rete.nodes.NccNode import NccNode
+from myclips.rete import analysis
+from myclips.rete.nodes.PNode import PNode
 
 class Network(object):
     '''
@@ -48,9 +50,31 @@ class Network(object):
         pass
     
     def addRule(self, defrule):
-        lastNode = self._makeNetwork(None, defrule.lhs, None, None)
-        return lastNode
-        #pnode = PNode(lastNode)
+        #normalize defule lhs
+        defrule.lhs = analysis.normalizeLHS(defrule.lhs)
+        # after normalization:
+        #    defrule.lhs is a OrPatternCE with at least a nested AndPatternCe
+        lastNodes = [self._makeNetwork(None, AndInOr.patterns, None, None) for AndInOr in defrule.lhs.patterns]
+        
+        # foreach lastNode in LastNodes
+        # I need to create a PNode (and it must always linked to the first PNode created)
+        # and then return the first One
+        
+        firstPNode = None
+        for (index, lastNode) in enumerate(lastNodes):
+            pNode = PNode(ruleName=defrule.ruleName, 
+                          leftParent=lastNode, 
+                          network=self, 
+                          orClauseCount=index - 1 if index > 0 else None,
+                          rhs=defrule.rhs, 
+                          properties=analysis.normalizeDeclarations(types.DefRuleConstruct.defruleDeclaration))
+            
+            if firstPNode is None:
+                firstPNode = pNode
+            else:
+                firstPNode.linkOrClause(pNode)
+        
+        return firstPNode
     
     def removeRule(self, pnode):
         pass
@@ -129,12 +153,22 @@ class Network(object):
                 # the circuit
                 pass
 
-            elif isinstance(patternCE, types.AndPatternCE):
+            # or and and ce must not be supported here
+            # after lhs normalization
+            # or-ce could be only at top level
+            #     of the lhs and are managed from the 
+            #     addRule method (each or clause cause a new network circuit
+            #     and a new sub-pnode linked to a main one
+            # and-ce could be only after a not-ce or the main or-ce
+            #    (managed by addRule method)
+            #     and are managed as a ncc circuit
+
+            #elif isinstance(patternCE, types.AndPatternCE):
                 # need to add support for andCE
                 # pass
-                node = self._makeNetwork(node, patternCE.patterns, prevPatterns, variables, testsQueue)
+                #node = self._makeNetwork(node, patternCE.patterns, prevPatterns, variables, testsQueue)
                 # inner conditions already appended
-                avoidAppend = True  
+                #avoidAppend = True  
 
                 
             #elif isinstance(patternCE, types.OrPatternCE):
