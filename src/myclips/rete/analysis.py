@@ -289,6 +289,8 @@ def _browseOr(Or):
             changed = _swapAndOr(inOrPattern, Or.patterns, index) or changed
         if isinstance(inOrPattern, types.OrPatternCE):
             changed = _browseOr(inOrPattern) or changed
+        if isinstance(inOrPattern, types.NotPatternCE):
+            changed = _swapNotOr(inOrPattern, Or.patterns, index) or changed
             
     return changed
             
@@ -301,12 +303,53 @@ def _swapAndOr(And, AndParent, AndIndex):
                 #newOrPatterns = And.patterns[0:index] + [orPattern] + And.patterns[index+1:None]
                 newOrPatterns.append(types.AndPatternCE(And.patterns[0:index] + [orPattern] + And.patterns[index+1:None]))
             newOr = types.OrPatternCE(newOrPatterns)
-            AndParent[AndIndex] = newOr
+            if isinstance(AndParent, types.NotPatternCE):
+                AndParent.pattern = newOr
+            elif AndIndex is not None:
+                AndParent[AndIndex] = newOr
+            else:
+                raise MyClipsBugException("Parent of And is not Not and not index available too")
             changed = True
         elif isinstance(inAndPattern, types.AndPatternCE):
             changed = _swapAndOr(inAndPattern, And.patterns, index) or changed
+        elif isinstance(inAndPattern, types.NotPatternCE):
+            changed = _swapNotOr(inAndPattern, And.patterns, index) or changed
+            
+        #if changed:
+        #    return changed
         
     return changed
+
+def _swapNotOr(Not, NotParent, NotIndex):
+    # not arg is a single subpattern
+    # it could be another and/or/not or an
+    # ordered/template
+    # (not (or must be converted to (or (not (not
+    # (not (and (or must be converted to (or (not (and
+    changed = False
+    if isinstance(Not.pattern, types.OrPatternCE):
+        # need to start a new browseOr here
+        # before make reversions
+        while _browseOr(Not.pattern):
+            changed = True
+            
+        # then reverse (not (or with (or (not
+        reversedOrArguments = []
+        for inOrPattern in Not.pattern.patterns:
+            reversedOrArguments.append(types.NotPatternCE(inOrPattern))
+        # then replace the main Not arg with the new Or ([Not, Not,..])
+        NotParent[NotIndex] = types.OrPatternCE(reversedOrArguments)
+        changed = True
+        
+    elif isinstance(Not.pattern, types.AndPatternCE):
+        # if found an (not (and (???
+        # status, i need to try to reverse 
+        # all (and (or in the  
+        changed = _swapAndOr(Not.pattern, Not, None) or changed
+        
+        
+    return changed
+
     
 def _compactPatterns(Combiner):
     """
@@ -329,7 +372,13 @@ def _compactPatterns(Combiner):
                     Combiner.patterns = tmpList
                     restart = True
                     changed = True
-                    break # force to restart the reduceOrOr with the new list 
+                    break # force to restart the reduceOrOr with the new list
+                
+            elif isinstance(inCombinerPattern, types.NotPatternCE):
+                if isinstance(inCombinerPattern.pattern, (types.AndPatternCE, types.OrPatternCE)):
+                    changed = _compactPatterns(inCombinerPattern.pattern) or changed
+                    # it's useless to restart from the begin
+                    # just continue 
         
     return changed
 if __name__ == '__main__':
