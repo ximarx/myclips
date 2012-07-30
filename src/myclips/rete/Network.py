@@ -62,12 +62,12 @@ class Network(object):
         
         firstPNode = None
         for (index, lastNode) in enumerate(lastNodes):
-            pNode = PNode(ruleName=defrule.ruleName, 
+            pNode = PNode(ruleName=defrule.defruleName, 
                           leftParent=lastNode, 
                           network=self, 
                           orClauseCount=index - 1 if index > 0 else None,
                           rhs=defrule.rhs, 
-                          properties=analysis.normalizeDeclarations(types.DefRuleConstruct.defruleDeclaration))
+                          properties=analysis.normalizeDeclarations(defrule.defruleDeclaration))
             
             if firstPNode is None:
                 firstPNode = pNode

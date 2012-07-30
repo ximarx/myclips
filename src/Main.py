@@ -43,6 +43,41 @@ if __name__ == '__main__':
 =>
 )
 
+(defmodule BC
+    (export ?ALL))
+
+(deftemplate BC::rule
+    (multislot if)
+    (multislot then))
+
+(deftemplate BC::attribute
+   (slot name)
+   (slot value))
+
+(deftemplate BC::goal
+   (slot attribute))
+
+(defmodule USEBC
+    (import BC ?ALL))
+
+(deffacts USEBC::wine-rules
+   (rule (if main-course is red-meat)
+         (then best-color is red))
+
+   (rule (if main-course is fish)
+         (then best-color is white))
+
+   (rule (if main-course is poultry and
+             meal-is-turkey is yes)
+         (then best-color is red))
+
+   (rule (if main-course is poultry and
+             meal-is-turkey is no)
+         (then best-color is white)))
+
+(deffacts USEBC::initial-goal
+   (goal (attribute best-color)))
+
 """
 
 

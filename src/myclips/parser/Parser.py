@@ -435,6 +435,12 @@ class Parser(object):
                                             - RPAR)\
                 .setParseAction(makeInstance(types.AndPatternCE, 1))
 
+        self.subparsers['OrCEParser'] = (LPAR 
+                                            + pp.Keyword("or") 
+                                            - pp.Group(pp.OneOrMore(self._sb("ConditionalElementParser"))) 
+                                            - RPAR)\
+                .setParseAction(makeInstance(types.OrPatternCE, 1))
+
         self.subparsers['TestCEParser'] = (LPAR 
                                             + pp.Keyword("test") 
                                             - self._sb("FunctionCallParser") 
@@ -444,12 +450,12 @@ class Parser(object):
         self.subparsers['ConditionalElementParser'] << (self._sb("NotCEParser") # not before pattern, or not will be parsed as template name
                                                             | self._sb("AndCEParser") # and before pattern, or and will be parsed as template name
                                                             | self._sb("TestCEParser") # test before pattern, or test will be parsed as template name
+                                                            | self._sb("OrCEParser") # or before pattern-ce, or OR will be parsed as template name
+                                                            #| self._sb("LogicalCEParser") 
+                                                            #| self._sb("ExistsCEParser")
+                                                            #| self._sb("ForallCEParser")
                                                             | self._sb("AssignedPatternCEParser") 
                                                             | self._sb("PatternCEParser") 
-                                                            #^ self._sb("OrCEParser")
-                                                            #^ self._sb("LogicalCEParser") 
-                                                            #^ self._sb("ExistsCEParser")
-                                                            #^ self._sb("ForallCEParser")
                                                         )\
                 .setParseAction(forwardParsed(key=0))
                 

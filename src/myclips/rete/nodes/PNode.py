@@ -22,7 +22,7 @@ class PNode(Node, BetaInput, Memory):
         self._network = network
         self._rhs = rhs
         self._linkedPNode = []
-        self._properties = {"salience": 0, "auto-focus": False} if isinstance(properties, None) else properties
+        self._properties = {"salience": 0, "auto-focus": False} if properties is None or not isinstance(properties, dict) else properties
 
         Node.__init__(self, leftParent=leftParent)
         Memory.__init__(self)
