@@ -5,7 +5,7 @@ Created on 19/lug/2012
 '''
 import unittest
 from myclips.ModulesManager import ModulesManager,\
-    ModulesManagerRedefinitionError
+    ModulesManagerRedefinitionError, UnknownModuleError
 from myclips.Scope import Scope
 import logging
 
@@ -50,7 +50,7 @@ class ModulesManagerTest(unittest.TestCase):
         self.assertRaisesRegexp(ModulesManagerRedefinitionError, "Cannot redefine defmodule MAIN while it is in use", Scope, "MAIN", self.MM)
 
     def test_RaiseErrorOnChangeCurrentScopeToInvalid(self):
-        self.assertRaisesRegexp(ValueError, "Unable to find defmodule MAIN", self.MM.changeCurrentScope, "MAIN")
+        self.assertRaisesRegexp(UnknownModuleError, "Unable to find defmodule MAIN", self.MM.changeCurrentScope, "MAIN")
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

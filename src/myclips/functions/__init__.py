@@ -41,6 +41,10 @@ class SystemFunctionBroker(object):
         
     @classmethod
     def register(cls, funcInstance):
+        """
+        Register a new Function instance
+        as system function
+        """
         if not isinstance(funcInstance, Function):
             myclips.logger.error("Invalid function definition: %s", repr(funcInstance))
             return

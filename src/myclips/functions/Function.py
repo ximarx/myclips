@@ -3,6 +3,7 @@ Created on 31/lug/2012
 
 @author: Francesco Capozzo
 '''
+from myclips.MyClipsException import MyClipsException
 
         
 class Function(object):
@@ -18,8 +19,25 @@ class Function(object):
 
     @classmethod
     def execute(cls, functionEnv, *args, **kargs):
-        #instance = cls(functionEnv)
-        return cls.DEFINITION.handler(functionEnv, *args, **kargs)
+        """
+        Execute a function handler with correct parameters
+        
+        @raise FunctionImplError: forward exception from function handler implementation
+        @raise FunctionInternalError: wrap a non FunctionImplError exception in a FunctionInternalError
+                to hide function internal processing. Original exception is available in 
+                FunctionInternalError.args[1]. Original exception repr() is used as
+                wrapper exception's message
+        @return: forward handler return
+        @rtype: mixed (based on FunctionDefinition.returnTypes)
+        """
+        try:
+            return cls.DEFINITION.handler(functionEnv, *args, **kargs)
+        except FunctionImplError:
+            raise
+        except Exception, e:
+            # wrap python standards exception
+            # in functions exception
+            raise FunctionInternalError(repr(e), e)
         
     def definition(self):
         """
@@ -27,6 +45,23 @@ class Function(object):
         """
         return self.__class__.DEFINITION
     
-    @staticmethod
-    def resolve(funcEnv, arg):
-        pass
+    @classmethod
+    def resolve(cls, funcEnv, arg):
+        return arg
+
+
+class FunctionImplError(MyClipsException):
+    pass
+
+class InvalidArgValueError(FunctionImplError):
+    pass
+
+class InvalidArgTypeError(FunctionImplError):
+    pass
+
+class InvalidArgsNumberError(FunctionImplError):
+    pass
+
+class FunctionInternalError(FunctionImplError):
+    pass
+

@@ -6,6 +6,7 @@ Created on 30/lug/2012
 from myclips.rete.Node import Node
 from myclips.rete.BetaInput import BetaInput
 from myclips.rete.Memory import Memory
+import myclips
 
 class PNode(Node, BetaInput, Memory):
     '''
@@ -27,6 +28,9 @@ class PNode(Node, BetaInput, Memory):
         Node.__init__(self, leftParent=leftParent)
         Memory.__init__(self)
 
+
+    def leftActivation(self, token, wme):
+        myclips.logger.debug("FIXME: PNode left activation NIY. token=%s, wme=%s", token, wme)
         
     def delete(self):
         if self.isMain:

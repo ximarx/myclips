@@ -6,7 +6,7 @@ Created on 24/lug/2012
 from myclips.rete.Agenda import Agenda
 import myclips.parser.Types as types
 import myclips
-from myclips.MyClipsException import MyClipsBugException
+from myclips.MyClipsException import MyClipsBugException, MyClipsException
 from myclips.rete.nodes.PropertyTestNode import PropertyTestNode
 from myclips.rete.tests.ScopeTest import ScopeTest
 from myclips.rete.tests.ConstantValueAtIndexTest import ConstantValueAtIndexTest
@@ -26,6 +26,7 @@ from myclips.rete.nodes.NccNode import NccNode
 from myclips.rete import analysis
 from myclips.rete.nodes.PNode import PNode
 from myclips.EventsManager import EventsManager
+from myclips.ModulesManager import ModulesManager
 
 class Network(object):
     '''
@@ -33,11 +34,12 @@ class Network(object):
     '''
 
 
-    def __init__(self, eventsManager = None):
+    def __init__(self, eventsManager = None, modulesManager = None):
         '''
         Constructor
         '''
         self._eventsManager = eventsManager if eventsManager is not None else EventsManager.default
+        self._modulesManager = modulesManager if modulesManager is not None else ModulesManager()
         self._root = RootNode(self)
         self.eventsManager.fire(EventsManager.E_NODE_ADDED, self._root)
         
@@ -47,6 +49,12 @@ class Network(object):
         
         
     def assertFact(self, fact):
+
+        # check if a facts with the same features is already available
+        # in the working memory
+        
+        
+        
         wme = WME(0, fact)
         self._root.rightActivation(wme)
         return wme
@@ -101,7 +109,36 @@ class Network(object):
         
     @property
     def facts(self):
-        return self._facts
+        """
+        Return the list of all fact defined in the working memory
+        for ALL defined scopes
+        """
+        return self._facts.keys()
+
+    @property
+    def factsForScope(self, scopeName=None):
+        """
+        Return a list of wme for all facts
+        that can be seen in the scope for scopeName
+        @param scopeName: the moduleName for a defined module. If None
+            the currentScope name will be used
+        @type scopeName: string
+        @return: a list of wme
+        @rtype: list
+        """
+        if scopeName is not None:
+            # try to change the scope
+            # this will force an UnknownModuleError if the modules is not defined
+            theScope = self.modulesManager.getScope(scopeName)
+        else:
+            theScope = self.modulesManager.currentScope
+        
+        # ok, the module exists. Prepare return
+        return [wme for wme in self._facts.keys()
+                            # fact can be saw if it was defined in the scope (for ordered)
+                            if wme.fact.moduleName == scopeName
+                                # of if it's a template fact and is definition is imported in the current scope 
+                                or (wme.fact.templateName is not None and theScope.templates.has(wme.fact.templateName)) ]
 
     @property
     def rules(self):
@@ -111,6 +148,9 @@ class Network(object):
     def eventsManager(self):
         return self._eventsManager
 
+    @property
+    def modulesManager(self):
+        return self._modulesManager
 
     def _makeNetwork(self, node, patterns, prevPatterns=None, variables=None, testsQueue=None):
         

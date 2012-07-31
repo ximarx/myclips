@@ -11,13 +11,17 @@ from myclips.functions.Function import Function
 
 class Assert(Function):
     '''
-    classdocs
+    Assert new fact in the working memory
     '''
     def __init__(self, *args, **kwargs):
         Function.__init__(self, *args, **kwargs)
         
         
-    def doAssert(self, funcEnv, *args, **kargs):
+    def do(self, funcEnv, *args, **kargs):
+        """
+        handler of the Assert function:
+            assert new fact in the network working memory
+        """
         
         returnValue = types.Symbol("FALSE")
     
@@ -32,7 +36,7 @@ class Assert(Function):
             
             
     
-Assert.DEFINITION = FunctionDefinition("?SYSTEM?", "assert", object(), (WME, types.Symbol), Assert().doAssert ,
+Assert.DEFINITION = FunctionDefinition("?SYSTEM?", "assert", object(), (WME, types.Symbol), Assert().do ,
             [
                 Constraint_MinArgsLength(1),
             ],forward=False)

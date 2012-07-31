@@ -3,6 +3,7 @@ Created on 17/lug/2012
 
 @author: Francesco Capozzo
 '''
+from myclips.MyClipsException import MyClipsException
 
 class ModulesManager(object):
     '''
@@ -34,12 +35,11 @@ class ModulesManager(object):
         self._currentScope = scope
         
     def changeCurrentScope(self, moduleName):
-        # this way i get exception if I try to change the scope to
-        # and undef module
-        try:
-            self._currentScope = self._modules[moduleName]
-        except KeyError:
-            raise ValueError("Unable to find defmodule {0}".format(moduleName))
+        """
+        Try to switch the current scope to another one
+        @raise UnknownModuleError: if the moduleName is not a valid defined module name
+        """
+        self._currentScope = self.getScope(moduleName)
         
     def getCurrentScope(self):
         return self._currentScope
@@ -49,7 +49,16 @@ class ModulesManager(object):
         return self._currentScope
         
     def getScope(self, moduleName):
-        return self._modules[moduleName]
+        """
+        Get the scope object for a defined module
+        @return: the scope object for the module with moduleName
+        @rtype: Scope
+        @raise UnknownModuleError: if the moduleName is not a valid defined module name
+        """
+        try:
+            return self._modules[moduleName]
+        except KeyError:
+            raise UnknownModuleError("Unable to find defmodule {0}".format(moduleName))
         
     def getModulesNames(self):
         return self._modules.keys()
@@ -57,7 +66,10 @@ class ModulesManager(object):
     def reset(self):
         self._modules = {}
 
-class ModulesManagerRedefinitionError(ValueError):
+class ModulesManagerRedefinitionError(MyClipsException):
+    pass
+
+class UnknownModuleError(MyClipsException):
     pass
 
 # Standard instance

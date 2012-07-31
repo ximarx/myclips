@@ -1,4 +1,10 @@
 [{
 	"module":	"myclips.functions.Assert",
 	"class":	"Assert"
+},{
+	"module":	"myclips.functions.Retract",
+	"class":	"Retract"
+},{
+	"module":	"myclips.functions.Printout",
+	"class":	"Printout"
 }]
