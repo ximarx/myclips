@@ -47,7 +47,9 @@ class Network(object):
         
         
     def assertFact(self, fact):
-        self._root.rightActivation(WME(0, fact))
+        wme = WME(0, fact)
+        self._root.rightActivation(wme)
+        return wme
         
     def retractFact(self, fact):
         pass

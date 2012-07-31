@@ -207,6 +207,10 @@ class Constraint_ArgType(FunctionConstraint):
 FUNCTIONS_DEFINITIONS = {}
     
 def Functions_ImportSystemDefinitions():
+    
+    from myclips.functions.__init__ import SystemFunctionBroker
+    
+    return SystemFunctionBroker.definitions()
 
     if len(FUNCTIONS_DEFINITIONS) > 0:
         return FUNCTIONS_DEFINITIONS

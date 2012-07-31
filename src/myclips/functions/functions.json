@@ -1,0 +1,124 @@
+[{
+	"module":	"myclips.functions.Assert",
+	"class":	"Assert"
+},{
+	"module":	"myclips.functions.Retract",
+	"class":	"Retract"
+},{
+	"module":	"myclips.functions.Bind",
+	"class":	"Bind"
+},{
+	"module":	"myclips.functions.Printout",
+	"class":	"Printout"
+},{
+	"module":	"myclips.functions.Read",
+	"class":	"Read"
+},{
+	"module":	"myclips.functions.Refresh",
+	"class":	"Refresh"
+},{
+	"module":	"myclips.functions.SetStrategy",
+	"class":	"SetStrategy"
+},{
+	"module":	"myclips.functions.TraceRule",
+	"class":	"TraceRule"
+},{
+	"module":	"myclips.functions.TraceWme",
+	"class":	"TraceWme"
+},{
+	"module":	"myclips.functions.TriggerEvent",
+	"class":	"TriggerEvent"
+},{
+	"module":	"myclips.functions.Abs",
+	"class":	"Abs"
+},{
+	"module":	"myclips.functions.Addition",
+	"class":	"Addition"
+},{
+	"module":	"myclips.functions.Division",
+	"class":	"Division"
+},{
+	"module":	"myclips.functions.Float",
+	"class":	"Float"
+},{
+	"module":	"myclips.functions.Integer",
+	"class":	"Integer"
+},{
+	"module":	"myclips.functions.IntegerDivision",
+	"class":	"IntegerDivision"
+},{
+	"module":	"myclips.functions.Max",
+	"class":	"Max"
+},{
+	"module":	"myclips.functions.Min",
+	"class":	"Min"
+},{
+	"module":	"myclips.functions.Modulus",
+	"class":	"Modulus"
+},{
+	"module":	"myclips.functions.Multiplication",
+	"class":	"Multiplication"
+},{
+	"module":	"myclips.functions.StringConcat",
+	"class":	"StringConcat"
+},{
+	"module":	"myclips.functions.StringIndex",
+	"class":	"StringIndex"
+},{
+	"module":	"myclips.functions.StringLength",
+	"class":	"StringLength"
+},{
+	"module":	"myclips.functions.SubString",
+	"class":	"SubString"
+},{
+	"module":	"myclips.functions.Subtraction",
+	"class":	"Subtraction"
+},{
+	"module":	"myclips.functions.GreaterEqualThan",
+	"class":	"GreaterEqualThan"
+},{
+	"module":	"myclips.functions.GreaterThan",
+	"class":	"GreaterThan"
+},{
+	"module":	"myclips.functions.IsEven",
+	"class":	"IsEven"
+},{
+	"module":	"myclips.functions.IsFloat",
+	"class":	"IsFloat"
+},{
+	"module":	"myclips.functions.IsInteger",
+	"class":	"IsInteger"
+},{
+	"module":	"myclips.functions.IsLexeme",
+	"class":	"IsLexeme"
+},{
+	"module":	"myclips.functions.IsNumber",
+	"class":	"IsNumber"
+},{
+	"module":	"myclips.functions.IsOdd",
+	"class":	"IsOdd"
+},{
+	"module":	"myclips.functions.IsString",
+	"class":	"IsString"
+},{
+	"module":	"myclips.functions.IsSymbol",
+	"class":	"IsSymbol"
+},{
+	"module":	"myclips.functions.LessEqualThan",
+	"class":	"LessEqualThan"
+},{
+	"module":	"myclips.functions.LessThan",
+	"class":	"LessThan"
+},{
+	"module":	"myclips.functions.NumberNotEq",
+	"class":	"NumberNotEq"
+},{
+	"module":	"myclips.functions.NumberEq",
+	"class":	"NumberEq"
+},{
+	"module":	"myclips.functions.StringEq",
+	"class":	"StringEq"
+},{
+	"module":	"myclips.functions.StringNotEq",
+	"class":	"StringNotEq"
+}]
