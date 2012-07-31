@@ -7,6 +7,7 @@ from myclips.rete.tests.AlphaTest import AlphaTest
 from myclips.rete.WME import WME
 import myclips
 from myclips.rete.tests import getWmeFragmentValue
+from myclips.Fact import FactLengthNotComputableException
 
 class ConstantValueAtIndexTest(AlphaTest):
     '''
@@ -61,11 +62,13 @@ class ConstantValueAtIndexTest(AlphaTest):
             else:
                 
                 return self.valueType == wmeValue.__class__ and self.value.evaluate() == wmeValue.evaluate()
-                
+            
+        except FactLengthNotComputableException:
+            return False
         except KeyError:
             return False
         except Exception, e:
-            myclips.logger.warn("Unexpected exception catched in ConstantValueAtIndexTest: %s", repr(e))
+            myclips.logger.warn("Unexpected exception caught in ConstantValueAtIndexTest: %s", repr(e))
             return False
     
     def __str__(self, *args, **kwargs):

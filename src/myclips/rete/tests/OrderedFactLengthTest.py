@@ -6,6 +6,7 @@ Created on 24/lug/2012
 from myclips.rete.tests.AlphaTest import AlphaTest
 from myclips.rete.WME import WME
 import myclips
+from myclips.Fact import FactLengthNotComputableException
 
 class OrderedFactLengthTest(AlphaTest):
     '''
@@ -26,11 +27,13 @@ class OrderedFactLengthTest(AlphaTest):
     def isValid(self, wme):
         assert isinstance(wme, WME)
         try:
-            return len(wme.fact.values()) == self.length
+            return len(wme.fact) == self.length
+        except FactLengthNotComputableException:
+            raise False
         except KeyError:
             return False
         except Exception, e:
-            myclips.logger.warn("Unexpected exception catched in ConstantValueAtIndexTest: %s", repr(e))
+            myclips.logger.warn("Unexpected exception caught in OrderedFactLengthTest: %s", repr(e))
             return False
     
     def __str__(self, *args, **kwargs):

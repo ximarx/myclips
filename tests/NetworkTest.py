@@ -19,20 +19,23 @@ from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
 from myclips.rete.nodes.NccNode import NccNode
 from myclips.rete.nodes.NccPartnerNode import NccPartnerNode
 from myclips.EventsManager import EventsManager
+from myclips.Fact import Fact
 #from myclips.TemplatesManager import TemplateDefinition, SlotDefinition
 
 # disable all logging from modules
 logging.disable(logging.INFO)
 
-class fact(object):
-    def __init__(self, v, template=None):
-        self._fact = v
-        self.moduleName = "MAIN"
-        self.templateName = template
-    def __getitem__(self, attr, *argv, **argks):
-        return self._fact[attr]
-    def values(self):
-        return self._fact
+fact = Fact
+
+#class fact(object):
+#    def __init__(self, v, template=None):
+#        self._fact = v
+#        self.moduleName = "MAIN"
+#        self.templateName = template
+#    def __getitem__(self, attr, *argv, **argks):
+#        return self._fact[attr]
+#    def values(self):
+#        return self._fact
     
 
 class activationCatcher(AlphaInput, BetaInput):
@@ -52,14 +55,14 @@ class Test(unittest.TestCase):
 
 
     def setUp(self):
-        self.network = Network(EventsManager())
+        self.MM = ModulesManager()
+        self.MM.addMainScope()
+        self.network = Network(eventsManager=EventsManager(),modulesManager=self.MM)
         
 #        import sys
 #        from myclips.listeners.NetworkBuildPrinter import NetworkBuildPrinter
 #        NetworkBuildPrinter(sys.stderr).install(self.network.eventsManager)
         
-        self.MM = ModulesManager()
-        self.MM.addMainScope()
         
     def tearDown(self):
         unittest.TestCase.tearDown(self)

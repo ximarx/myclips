@@ -244,6 +244,7 @@ class Parser(object):
         self.subparsers["ExpressionParser"] = pp.Forward()
         
         self.subparsers["FunctionNameParser"] = (pp.oneOf(self.getModulesManager().currentScope.functions.systemFunctions )\
+                                                    .setName("SystemFunctioName")\
                                                     .setParseAction(makeInstance(types.Symbol, 0))
                                                  | self.getSParser("VariableSymbolParser"))\
                 .setParseAction(forwardParsed(key=0))

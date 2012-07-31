@@ -841,6 +841,9 @@ class NullValue(BaseParsedType):
     
     def __init__(self):
         BaseParsedType.__init__(self, None)
+        
+    def __repr__(self):
+        return "<nil>"
 
 SPECIAL_VALUES = {
     "?NONE" 

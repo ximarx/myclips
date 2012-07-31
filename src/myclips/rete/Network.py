@@ -26,7 +26,9 @@ from myclips.rete.nodes.NccNode import NccNode
 from myclips.rete import analysis
 from myclips.rete.nodes.PNode import PNode
 from myclips.EventsManager import EventsManager
-from myclips.ModulesManager import ModulesManager
+from myclips.ModulesManager import ModulesManager, UnknownModuleError
+from myclips.Fact import Fact
+from myclips.TemplatesManager import TemplateDefinition
 
 class Network(object):
     '''
@@ -61,6 +63,9 @@ class Network(object):
         @return: a tuple with (WME for the fact, bool(the WME is new))
         @rtype: tuple 
         """
+        
+        if not isinstance(fact, Fact):
+            raise InvalidFactFormatError("fact is expected to be a %s instance, %s passed"%(str(Fact), str(fact.__class__)))
 
         # check if a facts with the same features is already available
         # in the working memory
@@ -69,6 +74,31 @@ class Network(object):
         # fact is propagate to the network only if
         # it's a new fact
         if not self._factsWmeMap.has_key(fact):
+            
+            # check if fact is valid
+            
+            # first check moduleName
+            if not self.modulesManager.isDefined(fact.moduleName):
+                raise UnknownModuleError("Fact module is unknown: %s"%fact.moduleName)
+            
+            # if fact is a template one
+            if fact.isTemplateFact():
+                # other validations are required for:
+                #    templateName is valid?
+                #    templateName is available in this scope?
+                #    slots are valid for the template definition?
+                
+                # if the template name is invalid, an exception is raised 
+                tmplDef = self.modulesManager.currentScope.templates.getDefinition(fact.templateName)
+                
+                assert isinstance(tmplDef, TemplateDefinition)
+                
+                isValid = tmplDef.isValidFact(fact)
+                
+                if isValid is not True:
+                    raise InvalidFactFormatError(str(isValid))
+                 
+            
             # create the new wme, ...
             wme = WME(self._currentWmeId, fact)
             # ... link it in the facts table ...
@@ -763,5 +793,8 @@ class Network(object):
     
     
 class FactNotFoundError(MyClipsException):
+    pass
+
+class InvalidFactFormatError(MyClipsException):
     pass
     

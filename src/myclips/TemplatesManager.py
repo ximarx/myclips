@@ -5,6 +5,7 @@ Created on 17/lug/2012
 '''
 from myclips.Observable import Observable
 from myclips.RestrictedManager import RestrictedManager, RestrictedDefinition
+from myclips.Fact import FactInvalidSlotName
 
 
 class TemplatesManager(RestrictedManager, Observable):
@@ -42,6 +43,88 @@ class TemplateDefinition(RestrictedDefinition):
     def getSlot(self, slotName):
         return self._slots[slotName]
     
+    def isValidFact(self, fact):
+        from myclips.Fact import Fact
+        
+        assert isinstance(fact, Fact)
+        
+        # fast check first
+        if not fact.isTemplateFact() \
+            or fact.templateName != self.name \
+            or fact.moduleName != self.moduleName:
+            
+            return False
+    
+        # go deeper in slot configurations
+        for slotName, slotDef in self.slots.items():
+            
+            try:
+            
+                # if slot is a single-field and value is a multi-field is an error for sure
+                if slotDef.getSlotType() == SlotDefinition.TYPE_SINGLE \
+                    and isinstance(fact[slotName], list):
+                    
+                    return "DefTemplate {0} slot definition {1} requires a single value. Multifield value found: {2}".format(self.name, 
+                                                                                                                             slotName, 
+                                                                                                                             fact[slotName])
+                
+                # if slot is a multi-field and value is single, i can cast it to a multi-field
+                # to avoid errors
+                elif slotDef.getSlotType() == SlotDefinition.TYPE_MULTI \
+                    and not isinstance(fact[slotName], list):
+                    
+                    fact[slotName] = [fact[slotName]]
+                    
+                
+                # now check slot attributes
+                for sAttr in slotDef.getSlotAttributes():
+            
+                    if isinstance(sAttr, Attribute_TypeConstraint):
+                        # check vs types
+                        
+                        valuesToCheck = []
+                        if slotDef.getSlotType() == SlotDefinition.TYPE_SINGLE:
+                            valuesToCheck.append(fact[slotName])
+                        else:
+                            valuesToCheck = fact[slotName]
+                            
+                        for singleValue in valuesToCheck:
+                        
+                            if not isinstance(singleValue, sAttr.getAllowedTypes()):
+                                
+                                return "A {2} value found doesn't match the allowed types {3} for slot {0} of template {4}::{1}".format(
+                                            slotName,
+                                            self.name,
+                                            singleValue.__class__.__name__,
+                                            tuple([t.__name__ for t in sAttr.getAllowedTypes()]),
+                                            self.moduleName
+                                        )
+                                        
+            except FactInvalidSlotName:
+                # the slotName is not set in the fact
+                # check if a default attr is available for the slot
+                # if the default is ?NONE raise error (not nil value admitted)
+                # else use the default value or None
+                
+                if slotDef.hasSlotAttribute(Attribute_DefaultValue.attributeType):
+                    defValue = slotDef.getSlotAttribute(Attribute_DefaultValue.attributeType)
+                    
+                    if defValue is None:
+                        return "Slot %s requires a value because of its (default ?NONE) attribute"%slotName
+                    else:
+                        fact[slotName] = defValue
+ 
+                else:
+                    import myclips.parser.Types as types
+                    # is not default attribute is used, default ?DERIVE is default (and it means None)
+                    fact[slotName] = types.SPECIAL_VALUES['?DERIVE']
+            
+        # check if some slot in the fact has no definition
+        for slotInFact in fact.slots():
+            if not self._slots.has_key(slotInFact):
+                return "Invalid slot %s not defined in corresponding deftemplate %s"%(slotInFact, self.name)
+            
+        return True
         
 class SlotDefinition(object):
     TYPE_SINGLE = "single-slot"
