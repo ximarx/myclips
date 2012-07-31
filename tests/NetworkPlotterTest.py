@@ -15,6 +15,7 @@ import logging
 
 logging.disable(logging.CRITICAL)
 
+@skipIf(os.environ.get('_PLOTTER_', "False") == "False", "")
 class NetworkPlotterTest(unittest.TestCase):
 
 
@@ -27,7 +28,6 @@ class NetworkPlotterTest(unittest.TestCase):
     def tearDown(self):
         self.network.eventsManager.unregisterObserver()
 
-    @skipIf(os.environ.get('_PLOTTER_', "False") == "False", "")
     def test_NetworkPlotting_AlphaAndDummyJoinOnly(self):
         
         self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
@@ -42,7 +42,6 @@ class NetworkPlotterTest(unittest.TestCase):
         self.network.eventsManager.fire(EventsManager.E_NETWORK_READY, self.network)
         self.network.eventsManager.fire(EventsManager.E_NETWORK_SHUTDOWN, self.network)
 
-    @skipIf(os.environ.get('_PLOTTER_', "False") == "False", "")
     def test_NetworkPlotting_TemplateAlphaAndDummyJoinOnly(self):
         
         types.DefTemplateConstruct("aTemplate", self.MM, None, [
@@ -63,7 +62,6 @@ class NetworkPlotterTest(unittest.TestCase):
         self.network.eventsManager.fire(EventsManager.E_NETWORK_READY, self.network)
         self.network.eventsManager.fire(EventsManager.E_NETWORK_SHUTDOWN, self.network)
 
-    @skipIf(os.environ.get('_PLOTTER_', "False") == "False", "")
     def test_NetworkPlotting_WithVarBindings(self):
         
         self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
@@ -82,6 +80,29 @@ class NetworkPlotterTest(unittest.TestCase):
         # manually fire the network ready event
         self.network.eventsManager.fire(EventsManager.E_NETWORK_READY, self.network)
         self.network.eventsManager.fire(EventsManager.E_NETWORK_SHUTDOWN, self.network)
+
+
+    def test_NetworkPlotting_DefRuleWithOrClause(self):
+        
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrPatternCE([
+                    types.OrderedPatternCE([
+                            types.Symbol("A"),
+                            types.SingleFieldVariable(types.Symbol("varA")),
+                            types.Symbol("C"),
+                        ], self.MM),
+                    types.OrderedPatternCE([
+                            types.SingleFieldVariable(types.Symbol("varA")),
+                            types.Symbol("A"),
+                            types.Symbol("C"),
+                        ], self.MM)
+                ])
+            ]))
+        
+        # manually fire the network ready event
+        self.network.eventsManager.fire(EventsManager.E_NETWORK_READY, self.network)
+        self.network.eventsManager.fire(EventsManager.E_NETWORK_SHUTDOWN, self.network)
+
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

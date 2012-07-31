@@ -8,6 +8,7 @@ from myclips.TemplatesManager import TemplatesManager
 from myclips.GlobalsManager import GlobalsManager
 from myclips.FunctionsManager import FunctionsManager
 from myclips.RestrictedManager import RestrictedDefinition, RestrictedManager
+from myclips.ModulesManager import UnknownModuleError
 
 class Scope(Observer):
     '''
@@ -66,7 +67,7 @@ class Scope(Observer):
                     }
                     
                     
-                except KeyError:
+                except UnknownModuleError:
                     raise ScopeDefinitionNotFound("Unable to find defmodule {0}".format(imDef.iModule))
                 else:
                     if imDef.iType == Scope.PROMISE_NAME_NONE:

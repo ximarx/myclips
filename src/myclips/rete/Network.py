@@ -46,18 +46,49 @@ class Network(object):
         self._agenda = Agenda()
         self._rules = {}
         self._facts = {}
-        
+        self._factsWmeMap = {}
+        self._currentWmeId = 0
         
     def assertFact(self, fact):
+        """
+        Create a new WME and propagate it to the network
+        only if the fact is not already in the working memory
+        Return a tuple with the wme (created or the old one) which rappresent
+        the fact and a boolean value to show if the wme is new or an old one
+        
+        @param fact: the fact asserted
+        @type fact: Fact
+        @return: a tuple with (WME for the fact, bool(the WME is new))
+        @rtype: tuple 
+        """
 
         # check if a facts with the same features is already available
         # in the working memory
-        
-        
-        
-        wme = WME(0, fact)
-        self._root.rightActivation(wme)
-        return wme
+        # if it exists, return the tuple (old_wme, False)
+        # otherwise return (new_wme, True) 
+        # fact is propagate to the network only if
+        # it's a new fact
+        if not self._factsWmeMap.has_key(fact):
+            # create the new wme, ...
+            wme = WME(self._currentWmeId, fact)
+            # ... link it in the facts table ...
+            self._facts[self._currentWmeId] = wme
+            # ... and link the fact to the wme
+            self._factsWmeMap[fact] = wme
+            
+            # increment the fact-id counter
+            self._currentWmeId += 1 
+            
+            # propagate the new assertion in the network
+            self._root.rightActivation(wme)
+            
+            # everything done, return the new wme
+            # and the isNew marker
+            return (wme, True)
+        else:
+            # the same fact is already in the network
+            # just return the old fact and the isNotNew mark
+            return (self._factsWmeMap[fact], False)
         
     def retractFact(self, fact):
         pass
@@ -97,6 +128,18 @@ class Network(object):
     def removeRule(self, pnode):
         pass
     
+    def getWmeFromId(self, factId):
+        try:
+            return self._facts[factId]
+        except KeyError:
+            raise FactNotFoundError("Unable to find fact f-%d"%factId)
+    
+    def getWmeFromFact(self, fact):
+        try:
+            return self._factsWmeMap[fact]
+        except KeyError:
+            raise FactNotFoundError("Unable to find a fact that match %s"%str(fact))
+    
     def reset(self):
         pass
     
@@ -113,7 +156,7 @@ class Network(object):
         Return the list of all fact defined in the working memory
         for ALL defined scopes
         """
-        return self._facts.keys()
+        return self._facts.values()
 
     @property
     def factsForScope(self, scopeName=None):
@@ -134,7 +177,7 @@ class Network(object):
             theScope = self.modulesManager.currentScope
         
         # ok, the module exists. Prepare return
-        return [wme for wme in self._facts.keys()
+        return [wme for wme in self._facts.values()
                             # fact can be saw if it was defined in the scope (for ordered)
                             if wme.fact.moduleName == scopeName
                                 # of if it's a template fact and is definition is imported in the current scope 
@@ -717,4 +760,8 @@ class Network(object):
         
         
         return newChild
+    
+    
+class FactNotFoundError(MyClipsException):
+    pass
     
