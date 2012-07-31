@@ -68,3 +68,7 @@ def importPath(fullpath):
     del sys.path[0]
     return module
 
+
+from myclips.rete.Network import Network
+from myclips.parser.Parser import Parser
+import myclips.parser.Types as types

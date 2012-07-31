@@ -703,9 +703,15 @@ class Parser(object):
     # shortcut
     _sb = getSParser
     
-    def parse(self, text):
+    def parse(self, text, filterReturn=False):
         try:
-            return self.getSParser('CLIPSProgramParser').parseString(text, True).asList()
+            return [x for x 
+                        in self.getSParser('CLIPSProgramParser').parseString(text, True).asList() 
+                            if not isinstance(x, (str, unicode)) # always filter simple strings
+                                # filter functions/templates/modules constructs (they are loaded in the MM)
+                                and (( filterReturn and isinstance(x, (types.DefFactsConstruct, types.DefRuleConstruct)))
+                                     or not filterReturn )] 
+                        
         except pp.ParseBaseException, e:
             if self._lastParseError != None and e.msg != self._lastParseError:
                 raise pp.ParseFatalException(e.pstr,

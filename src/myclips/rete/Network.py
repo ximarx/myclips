@@ -5,7 +5,6 @@ Created on 24/lug/2012
 '''
 from myclips.rete.Agenda import Agenda
 import myclips.parser.Types as types
-import myclips
 from myclips.MyClipsException import MyClipsBugException, MyClipsException
 from myclips.rete.nodes.PropertyTestNode import PropertyTestNode
 from myclips.rete.tests.ScopeTest import ScopeTest
@@ -30,6 +29,7 @@ from myclips.ModulesManager import ModulesManager, UnknownModuleError
 from myclips.Fact import Fact
 from myclips.TemplatesManager import TemplateDefinition
 
+
 class Network(object):
     '''
     Rete network main object
@@ -50,6 +50,19 @@ class Network(object):
         self._facts = {}
         self._factsWmeMap = {}
         self._currentWmeId = 0
+        self._linkedParser = None
+        
+    def getParser(self, **kargs):
+        """
+        Get an instance of myclips.Parser
+        (default myclips.parser.Parser.Parser),
+        linked to the modulesManager references in this Network instance 
+        """
+        if self._linkedParser is None:
+            import myclips
+            self._linkedParser = myclips.Parser(modulesManager=self.modulesManager, **kargs)
+            
+        return self._linkedParser
         
     def assertFact(self, fact):
         """
@@ -124,6 +137,12 @@ class Network(object):
         pass
     
     def addRule(self, defrule):
+        
+        if self._rules.has_key("::".join([defrule.scope.moduleName, defrule.defruleName])):
+            # before add the new rule, need to remove the old one
+            self.removeRule(defrule.defruleName, defrule.scope.moduleName)
+            
+        
         #normalize defule lhs
         defrule.lhs = analysis.normalizeLHS(defrule.lhs)
         # after normalization:
@@ -153,10 +172,25 @@ class Network(object):
             else:
                 firstPNode.linkOrClause(pNode)
         
+        # store the main PNode
+        # inside the rules map
+        
+        self._rules[firstPNode.completeMainRuleName()] = firstPNode
+        
         return firstPNode
     
-    def removeRule(self, pnode):
-        pass
+    def removeRule(self, ruleName, moduleName=None):
+        if moduleName is None:
+            # the the moduleName from the current scope
+            moduleName = self.modulesManager.currentScope.moduleName
+            
+        completeRuleName = "::".join([moduleName, ruleName])
+            
+        try:
+            self._rules[completeRuleName].delete()
+            del self._rules[completeRuleName]
+        except KeyError:
+            raise RuleNotFoundError("Unable to find defrule %s"%completeRuleName)
     
     def getWmeFromId(self, factId):
         try:
@@ -308,7 +342,7 @@ class Network(object):
         return node
             
     def _makeAlphaCircuit(self, patternCE, testQueue):
-            
+            import myclips
             # first i need to check the type of the patternCE
             # to create the correct list of tests
             
@@ -798,3 +832,5 @@ class FactNotFoundError(MyClipsException):
 class InvalidFactFormatError(MyClipsException):
     pass
     
+class RuleNotFoundError(MyClipsException):
+    pass

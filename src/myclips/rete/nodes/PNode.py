@@ -14,7 +14,7 @@ class PNode(Node, BetaInput, Memory):
     '''
 
 
-    def __init__(self, ruleName, leftParent, network, orClauseCount=None, rhs=None, properties=None):
+    def __init__(self, ruleName, leftParent, network, orClauseCount=None, rhs=None, properties=None, moduleName=None):
         '''
         Constructor
         '''
@@ -24,6 +24,7 @@ class PNode(Node, BetaInput, Memory):
         self._rhs = rhs
         self._linkedPNode = []
         self._properties = {"salience": 0, "auto-focus": False} if properties is None or not isinstance(properties, dict) else properties
+        self._moduleName = moduleName if moduleName is not None else network.modulesManager.currentScope.moduleName
 
         Node.__init__(self, leftParent=leftParent)
         Memory.__init__(self)
@@ -57,14 +58,24 @@ class PNode(Node, BetaInput, Memory):
     def mainRuleName(self):
         return self.ruleName.rsplit("~", 2)[0]
     
+    @property
+    def moduleName(self):
+        return self._moduleName
+    
+    def completeMainRuleName(self):
+        return self.moduleName+"::"+self.mainRuleName
+    
+    def completeRuleName(self):
+        return self.moduleName+"::"+self.ruleName
+    
     def __hash__(self):
-        return hash(self.ruleName)
+        return hash(self.completeRuleName())
     
     def __eq__(self, other):
         return (self.__class__ == other.__class__ and
                 self.ruleName == other.ruleName and
                 self.isMain == other.isMain and
-                self.mainRuleName == other.mainRuleName and
+                self.completeRuleName() == other.completeRuleName() and
                 self.getSalience() == other.getSalience() and
                 self.isAutoFocus() == other.isAutoFocus() and
                 self.leftParent == other.leftParent and
