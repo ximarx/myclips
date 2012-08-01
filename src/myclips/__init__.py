@@ -1,10 +1,16 @@
-import logging
+
+from myclips.rete.Network import Network
+from myclips.parser.Parser import Parser
+import myclips.parser.Types as types
+
+
+import logging as _logging
 
 FORMAT = '[%(levelname).3s %(module)s::%(funcName)s:%(lineno)d] %(message)s'
-logging.basicConfig(format=FORMAT)
+_logging.basicConfig(format=FORMAT)
 
-logger = logging.getLogger('myclips')
-logger.setLevel(logging.DEBUG)
+logger = _logging.getLogger('myclips')
+logger.setLevel(_logging.DEBUG)
 
 #
 #logger.debug("Logger enabled")
@@ -68,7 +74,3 @@ def importPath(fullpath):
     del sys.path[0]
     return module
 
-
-from myclips.rete.Network import Network
-from myclips.parser.Parser import Parser
-import myclips.parser.Types as types

@@ -133,10 +133,40 @@ class Network(object):
             # just return the old fact and the isNotNew mark
             return (self._factsWmeMap[fact], False)
         
-    def retractFact(self, fact):
-        pass
+    def retractFact(self, wme):
+        """
+        Retract a WME from the working memory
+        and from the network
+        @param wme: the wme to be removed
+        @type wme: myclips.rete.WME
+        @return: None
+        """
+        assert isinstance(wme, WME)
+        
+        if not self._facts[wme.factId] == wme:
+            raise InvalidWmeOwner("The wme owner is not this network: %s"%str(wme))
+        
+        # remove the wme from the wme->id map
+        del self._facts[wme.factId]
+        # and from the fact -> wme map
+        del self._factsWmeMap[wme.fact]
+        
+        # then start wme revocation from the network
+        wme.delete()
+        
     
     def addRule(self, defrule):
+        '''
+        Compile a DefRuleConstruct in a network circuit
+        sharing nodes if possible
+        @param defrule: a DefRule construct which describe the rule
+        @type defrule: types.DefRuleConstruct
+        @return: the main PNode produced by the rule. If
+            the rule containts more than one OR clause,
+            other slave-PNodes are linked to the main one
+        @rtype: myclips.rete.nodes.PNode
+        '''
+        
         
         if self._rules.has_key("::".join([defrule.scope.moduleName, defrule.defruleName])):
             # before add the new rule, need to remove the old one
@@ -833,4 +863,7 @@ class InvalidFactFormatError(MyClipsException):
     pass
     
 class RuleNotFoundError(MyClipsException):
+    pass
+
+class InvalidWmeOwner(MyClipsException):
     pass
