@@ -10,4 +10,7 @@
 },{
 	"module":	"myclips.functions.Refresh",
 	"class":	"Refresh"
+},{
+	"module":	"myclips.functions.Bind",
+	"class":	"Bind"
 }]

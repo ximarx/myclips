@@ -657,6 +657,7 @@ class GlobalAssignment(ParsedType):
         ParsedType.__init__(self, variable)
         self.variable = variable
         self.value = value
+        self.runningValue = value
         
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1} = {2}>".format(self.__class__.__name__,
