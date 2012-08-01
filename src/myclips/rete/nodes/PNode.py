@@ -22,7 +22,7 @@ class PNode(Node, BetaInput, Memory):
         self._isMain = (orClauseCount is None)
         self._network = network
         self._rhs = rhs
-        self._linkedPNode = []
+        self._linkedPNodes = []
         self._properties = {"salience": 0, "auto-focus": False} if properties is None or not isinstance(properties, dict) else properties
         self._moduleName = moduleName if moduleName is not None else network.modulesManager.currentScope.moduleName
 
@@ -35,16 +35,19 @@ class PNode(Node, BetaInput, Memory):
         
     def delete(self):
         if self.isMain:
-            for linkedNode in self._linkedPNode:
+            for linkedNode in self._linkedPNodes:
                 linkedNode.delete()
                 
-            self._linkedPNode = []
+            self._linkedPNodes = []
             
         Memory.delete(self)
         Node.delete(self)
 
     def linkOrClause(self, pnode):
-        self._linkedPNode.append(pnode)
+        self._linkedPNodes.append(pnode)
+        
+    def getLinkedPNodes(self):
+        return self._linkedPNodes
 
     @property
     def isMain(self):

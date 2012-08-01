@@ -45,7 +45,7 @@ class Network(object):
         self._root = RootNode(self)
         self.eventsManager.fire(EventsManager.E_NODE_ADDED, self._root)
         
-        self._agenda = Agenda()
+        self._agenda = Agenda(self)
         self._rules = {}
         self._facts = {}
         self._factsWmeMap = {}
@@ -233,6 +233,16 @@ class Network(object):
             return self._factsWmeMap[fact]
         except KeyError:
             raise FactNotFoundError("Unable to find a fact that match %s"%str(fact))
+    
+    def getPNode(self, completeRuleName):
+        try:
+            return self._rules[completeRuleName]
+        except KeyError:
+            # if the first lookup failed, try appending the current modulename scope
+            # to the name
+            return self._rules[self.modulesManager.currentScope.moduleName+"::"+completeRuleName]
+        finally:
+            raise RuleNotFoundError("Unable to find defrule %s"%completeRuleName)
     
     def reset(self):
         pass
