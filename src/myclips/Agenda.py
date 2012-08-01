@@ -27,7 +27,7 @@ class Agenda(object):
         # Keep sets of fired activation
         # using a per-complete-rule-name based index
         self._fired_activations = {}
-        self._strategy = strategies.default.newInstance()
+        self._strategy = strategies.factory.newInstance()
         self._ignored_activations = {}
         
     def insert(self, pnode, token):
@@ -81,7 +81,7 @@ class Agenda(object):
         # delegate the insert operation to the strategy
         #    (it know how to insert the activation in
         #        its own container)
-        self._strategy.insert(pnode, token, same_salience_queue)
+        self._strategy.insert(same_salience_queue, pnode, token)
     
     def getActivation(self):
         '''
@@ -229,6 +229,10 @@ class Agenda(object):
         
 
     def refreshAll(self):
+        '''
+        Reset the fired activations history
+        for the all rules (and reevaluate ignored activations)
+        '''
         
         self._fired_activations = {}
         
@@ -256,13 +260,17 @@ class Agenda(object):
         return len(self._activations) == 0
     
     def changeStrategy(self, strategy):
+        """
+        Change the current strategy with a new one
+        resorting the activations with the strategy 
+        """
         self._network.eventsManager.fire(EventsManager.E_STRATEGY_CHANGED, strategy)
         if self._strategy != strategy:
             oldStrategy = self._strategy
             self._strategy = strategy
             if not self.isEmptyAllModules():
-                # devo rioirdinare le attivazioni
-                # in base alla nuova strategia
+                # there is at least one activation
+                # so i need to resort all containers
                 for per_modules_queue in self._activations.values():
                     for (salience, per_saliance_list) in per_modules_queue.items():
                         returned = self._strategy.resort(per_saliance_list, oldStrategy)
@@ -277,7 +285,7 @@ class Agenda(object):
         try:
             saliences = sorted(self._activations[moduleName].keys(), reverse=True)
             activations = []
-            for salience in saliences:
+            for salience in self._strategy.iterable(saliences):
                 for (pnode, token) in self._activations[salience]:
                     activations.append((salience, pnode, token))
             return activations

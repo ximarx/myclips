@@ -69,7 +69,7 @@ class Token(MemoryItem):
     def linearize(self, includeNone=True):
         current = self
         wmes = collections.deque()
-        while not current.isRoot:
+        while not current.isRoot():
             if includeNone or current.wme != None:
                 wmes.appendLeft(current.wme)
             current = current.parent

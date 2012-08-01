@@ -3,7 +3,7 @@ Created on 24/lug/2012
 
 @author: Francesco Capozzo
 '''
-from myclips.rete.Agenda import Agenda
+from myclips.Agenda import Agenda
 import myclips.parser.Types as types
 from myclips.MyClipsException import MyClipsBugException, MyClipsException
 from myclips.rete.nodes.PropertyTestNode import PropertyTestNode
