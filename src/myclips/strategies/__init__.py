@@ -1,26 +1,28 @@
 
 
-STRATEGIES = {
-    'depth': 'myclips.strategies.Depth.Depth',
-    'breadth': 'myclips.strategies.Breadth.Breadth',
-    'lex': 'myclips.strategies.Lex.Lex',
-    'mea': 'myclips.strategies.Mea.Mea',
-    'complexity': 'myclips.strategies.Complexity.Complexity',
-    'semplicity': 'myclips.strategies.Semplicity.Semplicity',
-    'random': 'myclips.strategies.Random.Random'
-}
-
 class factory(object):
-    DEFAULT_STRATEGY_CLASSNAME = "depth"
+    DEFAULT_STRATEGY_NAME = "depth"
+    
+    STRATEGIES = {
+        'depth': 'myclips.strategies.Depth.Depth',
+        'breadth': 'myclips.strategies.Breadth.Breadth',
+        'lex': 'myclips.strategies.Lex.Lex',
+        'mea': 'myclips.strategies.Mea.Mea',
+        'complexity': 'myclips.strategies.Complexity.Complexity',
+        'semplicity': 'myclips.strategies.Semplicity.Semplicity',
+        'random': 'myclips.strategies.Random.Random'
+    }
+    
     @classmethod
     def newInstance(cls, strategyName=None):
-        strategyName = strategyName if strategyName is not None and STRATEGIES.has_key(strategyName) else cls.DEFAULT_STRATEGY_CLASSNAME
-        strategyName = STRATEGIES[strategyName]
+        strategyName = strategyName if strategyName is not None and cls.isValid(strategyName) else cls.DEFAULT_STRATEGY_NAME
+        strategyName = cls.STRATEGIES[strategyName]
         import myclips
         return myclips.newInstance_fromCanonicalClassname(strategyName)
 
-def isValid(strategyName):
-    return STRATEGIES.has_key(strategyName)
+    @classmethod
+    def isValid(cls, strategyName):
+        return cls.STRATEGIES.has_key(strategyName)
 
 class Strategy(object):
     
