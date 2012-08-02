@@ -2,6 +2,9 @@ from myclips.parser.Parser import Parser
 import sys
 from myclips.ModulesManager import ModulesManager
 from myclips.parser.Types import ParsedType
+import myclips
+from myclips.functions.Function import FunctionInternalError
+import traceback
 
 def constructs_prettyprint(constr_string, INDENT=0):
     output = sys.stdout
@@ -21,6 +24,19 @@ def constructs_prettyprint(constr_string, INDENT=0):
 
 if __name__ == '__main__':
     
+    if True:
+        try:
+            n = myclips.main()
+            pnode, token = n.agenda.getActivation()
+            pnode.execute(token)
+            pnode, token = n.agenda.getActivation()
+            pnode.execute(token)
+        except FunctionInternalError, e:
+            print e.args[2]
+            raise 
+    
+        exit()
+    
     s = r"""
     
 (defmodule A
@@ -34,13 +50,6 @@ if __name__ == '__main__':
     (slot A)
     (slot B)
     (multislot C)
-)
-
-(defrule A::regola
-    (template (A 1) (B 2) (C $?c1s3))
-    ?c2 <- (template (A ?))
-    (A 2 c 4)
-=>
 )
 
 (defmodule BC
@@ -80,6 +89,23 @@ if __name__ == '__main__':
    (A B C)
 )
    
+(defrule A::regola
+    (template (A 1) (B 2) (C $?c1s3))
+    ?c2 <- (template (A ?))
+    (A 2 c 4)
+=>
+    (printout t ?c2 crlf)
+)
+
+(defrule A::r 
+    (A B C D) 
+    => 
+    (printout t "blablabl" crlf)
+    (assert (D C B A))
+    (assert (template (A 10)))
+)
+
+
 
 """
 

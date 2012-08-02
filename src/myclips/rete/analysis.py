@@ -234,9 +234,9 @@ def analyzePattern(thePattern, patternIndex, variables):
             else:
                 (inPatternVariables, inPatternReferences) = analyzeSequence(slot.slotValue, variables)
                 for var in inPatternVariables:
-                    var.slot = slot.slotName
+                    var.slotName = slot.slotName
                 for var in inPatternReferences:
-                    var.slot = slot.slotName
+                    var.slotName = slot.slotName
 
     for var in inPatternVariables:
         var.patternIndex = patternIndex

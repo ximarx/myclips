@@ -17,7 +17,7 @@ class Depth(Strategy):
         perSalienceContainer.append((thePNode, theToken))
         
     def pop(self, perSalienceContainer):
-        perSalienceContainer.pop()
+        return perSalienceContainer.pop()
     
     def resort(self, perSalienceContainer, theOldStrategy):
         if isinstance(perSalienceContainer, list):

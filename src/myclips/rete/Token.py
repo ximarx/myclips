@@ -82,7 +82,7 @@ class Token(MemoryItem):
         (without a parent token, all children are
         invalidated)
         """
-        self.deleteChildren()    
+        self.deleteChildren()  
         
         # remove reference to this token
         # from the creator node
@@ -104,7 +104,7 @@ class Token(MemoryItem):
         # remove reference to the child 
         # from the parent
         if not self.isRoot():
-            del self._children[self]
+            self.parent.removeChild(self)
             
         # there are special cases when token deletion
         # need more love:

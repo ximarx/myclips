@@ -81,10 +81,10 @@ class Bind(Function):
         return returnValue
     
     
-Bind.DEFINITION = FunctionDefinition("?SYSTEM?", "bind", object(), (types.Lexeme, types.Symbol, types.String, 
+Bind.DEFINITION = FunctionDefinition("?SYSTEM?", "bind", Bind(), (types.Lexeme, types.Symbol, types.String, 
                                                                        types.Number, types.Integer, types.Float,
                                                                        list, types.NullValue ),
-                                                                    Bind().do,
+                                                                    Bind.do,
             [
                 Constraint_MinArgsLength(1),
                 Constraint_ArgType((types.SingleFieldVariable, types.GlobalVariable), 0),

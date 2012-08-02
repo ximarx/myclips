@@ -28,6 +28,7 @@ from myclips.EventsManager import EventsManager
 from myclips.ModulesManager import ModulesManager, UnknownModuleError
 from myclips.Fact import Fact
 from myclips.TemplatesManager import TemplateDefinition
+import sys
 
 
 class Network(object):
@@ -57,6 +58,7 @@ class Network(object):
         self._currentWmeId = 0
         self._linkedParser = None
         self._deffacts = {}
+        self._resources = {"t": sys.stdout}
         
         try:
             # assert the first fact: initial-fact
@@ -192,20 +194,21 @@ class Network(object):
         defrule.lhs = analysis.normalizeLHS(defrule.lhs)
         # after normalization:
         #    defrule.lhs is a OrPatternCE with at least a nested AndPatternCe
-        lastNodes = [self._makeNetwork(None, AndInOr.patterns, None, None) for AndInOr in defrule.lhs.patterns]
-        
-        # foreach lastNode in LastNodes
-        # I need to create a PNode (and it must always linked to the first PNode created)
-        # and then return the first One
-        
         firstPNode = None
-        for (index, lastNode) in enumerate(lastNodes):
+        for (index, AndInOr) in enumerate(defrule.lhs.patterns):
+            
+            variables = {}
+            
+            lastNode = self._makeNetwork(None, AndInOr.patterns, None, variables)
+            
+            # I need to create a PNode (and it must always linked to the first PNode created)
             pNode = PNode(ruleName=defrule.defruleName, 
                           leftParent=lastNode, 
                           network=self, 
                           orClauseCount=index - 1 if index > 0 else None,
                           rhs=defrule.rhs, 
-                          properties=analysis.normalizeDeclarations(defrule.defruleDeclaration))
+                          properties=analysis.normalizeDeclarations(defrule.defruleDeclaration),
+                          variables=variables)
             
             lastNode.prependChild(pNode)
             
@@ -295,6 +298,14 @@ class Network(object):
         # reset the fact-id counter
         self._currentWmeId = 0
         
+        # close all pending resources
+        for (name, res) in self._resources.items():
+            if name != 't' and hasattr(res, "close"):
+                res.close()
+                
+        # and reset the resources map
+        self._resources = {"t": sys.stdout}
+        
         # push the MAIN::initial-fact
         self.assertFact(Fact({}, templateName="initial-fact", moduleName="MAIN"))
         
@@ -347,6 +358,14 @@ class Network(object):
             self._rules[rule].delete()
             del self._rules[rule]
         
+        # close all pending resources
+        for (name, res) in self._resources.items():
+            if name != 't' and hasattr(res, "close"):
+                res.close()
+                
+        # and reset the resources map
+        self._resources = {"t": sys.stdout}
+        
         # renew the root node
         self._root = RootNode(self)
         
@@ -385,6 +404,10 @@ class Network(object):
     @property
     def agenda(self):
         return self._agenda
+        
+    @property
+    def resources(self):
+        return self._resources
         
     @property
     def facts(self):

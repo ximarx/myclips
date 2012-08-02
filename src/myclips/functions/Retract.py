@@ -43,7 +43,7 @@ class Retract(Function):
     @classmethod
     def resolve(cls, funcEnv, arg):
         """
-        Override Function.resolve to manage the <Symbol:crlf> conversion to NEWLINE
+        Override Function.resolve facts from args
         """
         if isinstance(arg, types.Integer):
             #convert the <Interger:INT> into a <WME:f-INT>
@@ -59,7 +59,7 @@ class Retract(Function):
             return Function.resolve(funcEnv, arg)
             
     
-Retract.DEFINITION = FunctionDefinition("?SYSTEM?", "retract", object(), (WME, types.Symbol), Retract().do ,
+Retract.DEFINITION = FunctionDefinition("?SYSTEM?", "retract", Retract(), (WME, types.Symbol), Retract.do ,
             [
                 Constraint_MinArgsLength(1),
             ],forward=False)

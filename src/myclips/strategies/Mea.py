@@ -31,7 +31,7 @@ else:
             perSalienceContainer.add((thePNode, theToken))
             
         def pop(self, perSalienceContainer):
-            perSalienceContainer.pop(0)
+            return perSalienceContainer.pop(0)
         
         def resort(self, perSalienceContainer, theOldStrategy):
             return blist.sortedlist(iterable=theOldStrategy.iterable(perSalienceContainer),key=lambda x: self._first_epoc(x[1]))

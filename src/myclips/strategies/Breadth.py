@@ -18,7 +18,7 @@ class Breadth(Strategy):
         perSalienceContainer.append((thePNode, theToken))
         
     def pop(self, perSalienceContainer):
-        perSalienceContainer.popleft()
+        return perSalienceContainer.popleft()
     
     def resort(self, perSalienceContainer, theOldStrategy):
         return collections.deque(sorted(theOldStrategy.iterable(perSalienceContainer),key=lambda x: self._get_max_epoch(x[1])))

@@ -425,8 +425,8 @@ class NotPatternCE(PatternCE):
 
 class AndPatternCE(PatternCE):
     def __init__(self, patterns):
-        if len(patterns) > 0 and isinstance(patterns[0], AssignedPatternCE):
-            raise TypeInstanceCreationError("Syntax Error:  Check appropriate syntax for the first field of a pattern.")
+        if len(patterns) == 0 :#and isinstance(patterns[0], AssignedPatternCE):
+            raise TypeInstanceCreationError("Syntax Error: Check appropriate syntax for the and conditional element")
         PatternCE.__init__(self, patterns)
         self.patterns = patterns
         

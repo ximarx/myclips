@@ -13,7 +13,7 @@ class FunctionEnv(object):
     def __init__(self, variables, network, modulesManager, RESOURCES):
         self._variables = variables
         self._network = network
-        self._modulesManager = modulesManager,
+        self._modulesManager = modulesManager
         self._RESOURCES = RESOURCES
         
     @property

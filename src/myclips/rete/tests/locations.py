@@ -25,6 +25,34 @@ class AtomLocation(object):
         self._fullFact = fullFact
         self._fullSlot = fullSlot
 
+    def toValue(self, theWme):
+        
+        if self.fullFact:
+            # i need to return a Fact-Address (WME), not the Fact itself
+            return theWme
+        
+        # otherwise i need to go deeper in the fact, so cast wmeValue to the
+        # fact in the wme
+        
+        wmeValue = theWme.fact
+        
+        if self.slotName is not None:
+            wmeValue = wmeValue[self.slotName]
+            
+        if self.fullSlot:
+            return wmeValue
+            
+        if self.isMultiField:
+            wmeValue = wmeValue[self.beginIndex:(self.endIndex if self.endIndex != 0 else None)] 
+        else:
+            if self.fromBegin:
+                wmeValue = wmeValue[self.beginIndex]
+            elif self.fromEnd:
+                wmeValue = wmeValue[self.endIndex - 1]
+    
+        return wmeValue        
+        
+
     @property
     def patternIndex(self):
         return self._patternIndex
@@ -97,7 +125,6 @@ class AtomLocation(object):
     def fullSlot(self, value):
         self._fullSlot = value
 
-        
     def __str__(self, *args, **kwargs):
         return ", ".join([x+"="+str(getattr(self, x)) for x in dir(self.__class__) if not callable(getattr(self, x))
                                                                                         and hasattr(self, "_"+x)

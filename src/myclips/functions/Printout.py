@@ -20,6 +20,10 @@ class Printout(Function):
         """
         Retract function handler implementation
         """
+        
+        # convert <TYPE:value> to python value
+        resourceId = Printout.resolve(funcEnv, resourceId)
+        
         try:
             resource = funcEnv.RESOURCES[resourceId]
         except KeyError:
@@ -32,7 +36,7 @@ class Printout(Function):
                 # revolve variables and function calls
                 fragment = Printout.resolve(funcEnv, fragment)
                 
-                resource.write(fragment)
+                resource.write(str(fragment))
                 
             return returnValue
     
@@ -40,6 +44,7 @@ class Printout(Function):
     def resolve(cls, funcEnv, arg):
         """
         Override Function.resolve to manage the <Symbol:crlf> conversion to NEWLINE
+        and to remove quotes in types.String values
         """
         if isinstance(arg, types.Symbol) and arg.evaluate() == "crlf":
             return "\n"
@@ -48,7 +53,7 @@ class Printout(Function):
     
 # Function definition
 
-Printout.DEFINITION = FunctionDefinition("?SYSTEM?", "printout", object(), None.__class__, Printout().do ,
+Printout.DEFINITION = FunctionDefinition("?SYSTEM?", "printout", Printout(), types.NullValue, Printout.do ,
             [
                 Constraint_MinArgsLength(2),
                 Constraint_ArgType(types.Symbol, 0),

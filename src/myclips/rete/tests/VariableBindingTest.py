@@ -56,12 +56,12 @@ class VariableBindingTest(BetaTest):
                 token = getTokenAnchestor(token, (-1 * reference.relPatternIndex) - 1)
     
                 # get the exact wme value of the token where variable for used first
-                valueInTokenWme = getWmeFragmentValue(token.wme, reference.reference)
+                valueInTokenWme = reference.reference.toValue(token.wme)
             else:
-                valueInTokenWme = getWmeFragmentValue(wme, reference.reference)
+                valueInTokenWme = reference.reference.toValue(wme)
             
             # get the value in current wme there variable must have the same value
-            valueInWme = getWmeFragmentValue(wme, self.reference)
+            valueInWme = reference.toValue(wme)
         
             # when i've found them all
             # i can compare them

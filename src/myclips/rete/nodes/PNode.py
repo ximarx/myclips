@@ -6,8 +6,11 @@ Created on 30/lug/2012
 from myclips.rete.Node import Node
 from myclips.rete.BetaInput import BetaInput
 from myclips.rete.Memory import Memory
-import myclips
+import myclips.parser.Types as types
 from myclips.rete.Token import Token
+from myclips.rete.tests.locations import VariableLocation
+from myclips.functions import FunctionEnv
+from myclips.FunctionsManager import FunctionDefinition
 
 class PNode(Node, BetaInput, Memory):
     '''
@@ -15,7 +18,7 @@ class PNode(Node, BetaInput, Memory):
     '''
 
 
-    def __init__(self, ruleName, leftParent, network, orClauseCount=None, rhs=None, properties=None, moduleName=None):
+    def __init__(self, ruleName, leftParent, network, orClauseCount=None, rhs=None, properties=None, moduleName=None, variables=None):
         '''
         Constructor
         '''
@@ -26,6 +29,7 @@ class PNode(Node, BetaInput, Memory):
         self._linkedPNodes = []
         self._properties = {"salience": 0, "auto-focus": False} if properties is None or not isinstance(properties, dict) else properties
         self._moduleName = moduleName if moduleName is not None else network.modulesManager.currentScope.moduleName
+        self._variables = variables if isinstance(variables, dict) else {}
 
         Node.__init__(self, leftParent=leftParent)
         Memory.__init__(self)
@@ -111,4 +115,41 @@ class PNode(Node, BetaInput, Memory):
     
     def __repr__(self, *args, **kwargs):
         return self.__str__()
+    
+    # FIXME move following methods into a AgendaActivation Class
+    
+    def execute(self, theToken):
+        
+        # resolve variables from the token
+        resolved = {}
+
+        linearToken = theToken.linearize()
+        
+        for theVar, theLocation in self._variables.items():
+            assert isinstance(theLocation, VariableLocation)
+            resolved[theVar] = theLocation.toValue(linearToken[theLocation.patternIndex])
+        
+        # prepare the FunctionEnv object    
+        theEnv = FunctionEnv(resolved, self._network, self._network.modulesManager, self._network.resources)
+        
+        # execute all rhs passing FunctionEnv
+        # theEnv could be modified from the function call.
+        # This THE way to share memory between functions
+        
+        for action in self._rhs:
+            assert isinstance(action, types.FunctionCall)
+            
+            # get the function definition linked to the FunctionCall
+            funcDefinition = action.funcDefinition
+            
+            assert isinstance(funcDefinition, FunctionDefinition)
+            # expand the args 
+            funcDefinition.linkedType.__class__.execute(theEnv, *(action.funcArgs))
+        
+        # ...
+        
+        # profit?!
+        
+    
+    
     

@@ -4,6 +4,8 @@ Created on 31/lug/2012
 @author: Francesco Capozzo
 '''
 from myclips.MyClipsException import MyClipsException
+import myclips.parser.Types as types
+import traceback
 
         
 class Function(object):
@@ -18,7 +20,7 @@ class Function(object):
         object.__init__(self, *args, **kwargs)
 
     @classmethod
-    def execute(cls, functionEnv, *args, **kargs):
+    def execute(cls, theEnv, *args, **kargs):
         """
         Execute a function handler with correct parameters
         
@@ -31,13 +33,15 @@ class Function(object):
         @rtype: mixed (based on FunctionDefinition.returnTypes)
         """
         try:
-            return cls.DEFINITION.handler(functionEnv, *args, **kargs)
+            return cls.DEFINITION.handler(cls.DEFINITION.linkedType, theEnv, *args, **kargs)
         except FunctionImplError:
             raise
+        except MyClipsException, e:
+            raise FunctionInternalError(str(cls)+": "+e.message, e, traceback.format_exc())
         except Exception, e:
             # wrap python standards exception
             # in functions exception
-            raise FunctionInternalError(repr(e), e)
+            raise FunctionInternalError(str(e), e, traceback.format_exc())
         
     def definition(self):
         """
@@ -46,8 +50,21 @@ class Function(object):
         return self.__class__.DEFINITION
     
     @classmethod
-    def resolve(cls, funcEnv, arg):
-        return arg
+    def resolve(cls, theEnv, arg):
+        # String is a special value, have to trim out quotes
+        if isinstance(arg, types.String):
+            return arg.content[1:-1]
+        elif isinstance(arg, types.BaseParsedType):
+            return arg.evaluate()
+        elif isinstance(arg, types.FunctionCall):
+            # indirect recursion on execute with
+            return arg.funcDefinition.linkedType.__class__.execute(theEnv, *(arg.funcArgs))
+        elif isinstance(arg, (types.SingleFieldVariable, types.MultiFieldVariable )):
+            # resolve the variable value vs theEnv.variables dict
+            return theEnv.variables[arg.evaluate()]
+        elif isinstance(arg, types.GlobalVariable):
+            # resolve the variable value vs theEnv.globals
+            return theEnv.modulesManager.currentScope.globalsvars.getDefinition(arg.evaluate()).linkedType.runningValue
 
 
 class FunctionImplError(MyClipsException):

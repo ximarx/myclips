@@ -15,27 +15,36 @@ def getTokenAnchestor(token, tokenRelativeIndex):
     return token
     
 def getWmeFragmentValue(wme, location):
+    """
+    This function is a proxy for location.toValue(wme)
+    THIS FUNCTION IS DEPRECATED
+    
+    @deprecated: use location.toValue(wme) to get a fragment
+        of the wme from a location
+    """
     assert isinstance(wme, WME), wme.__class__.__name__
     assert isinstance(location, AtomLocation), location.__class__.__name__
     
-    wmeValue = wme.fact
+    return location.toValue(wme)
     
-    if location.fullFact:
-        return wmeValue
-    
-    if location.slotName is not None:
-        wmeValue = wmeValue[location.slotName]
-        
-    if location.fullSlot:
-        return wmeValue
-        
-    if location.isMultiField:
-        wmeValue = wmeValue[location.beginIndex:(location.endIndex if location.endIndex != 0 else None)] 
-    else:
-        if location.fromBegin:
-            wmeValue = wmeValue[location.beginIndex]
-        elif location.fromEnd:
-            wmeValue = wmeValue[location.endIndex - 1]
-
-    return wmeValue
+#    wmeValue = wme.fact
+#    
+#    if location.fullFact:
+#        return wmeValue
+#    
+#    if location.slotName is not None:
+#        wmeValue = wmeValue[location.slotName]
+#        
+#    if location.fullSlot:
+#        return wmeValue
+#        
+#    if location.isMultiField:
+#        wmeValue = wmeValue[location.beginIndex:(location.endIndex if location.endIndex != 0 else None)] 
+#    else:
+#        if location.fromBegin:
+#            wmeValue = wmeValue[location.beginIndex]
+#        elif location.fromEnd:
+#            wmeValue = wmeValue[location.endIndex - 1]
+#
+#    return wmeValue
     
