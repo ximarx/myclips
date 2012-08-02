@@ -7,7 +7,8 @@ from myclips.rete.tests.AlphaTest import AlphaTest
 from myclips.rete.WME import WME
 import myclips
 from myclips.rete.tests import getWmeFragmentValue
-from myclips.Fact import FactLengthNotComputableException
+from myclips.Fact import FactLengthNotComputableException, FactInvalidSlotName,\
+    FactInvalidIndex
 
 class ConstantValueAtIndexTest(AlphaTest):
     '''
@@ -63,7 +64,7 @@ class ConstantValueAtIndexTest(AlphaTest):
                 
                 return self.valueType == wmeValue.__class__ and self.value.evaluate() == wmeValue.evaluate()
             
-        except FactLengthNotComputableException:
+        except (FactLengthNotComputableException, FactInvalidSlotName, FactInvalidIndex):
             return False
         except KeyError:
             return False

@@ -48,6 +48,9 @@ class BaseParsedType(ParsedType):
         return self.__class__ == other.__class__ \
                 and self.evaluate() == other.evaluate()
 
+    def __str__(self):
+        return str(self.evaluate())
+
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1},converted={2}:{3}>".format(self.__class__.__name__,
                                                         self.content, 
@@ -175,9 +178,14 @@ class DefFactsConstruct(ParsedType, HasScope):
 
 class OrderedRhsPattern(ParsedType):
     #converter = lambda self, t: [x.evaluate() if isinstance(x, ParsedType) else x for x in t]
+    
+    def __init__(self, values):
+        ParsedType.__init__(self, values)
+        self.values = values
+    
     def __repr__(self, *args, **kwargs):
         return "<{0},values={1}>".format(self.__class__.__name__,
-                                        str(self.content).replace("[", "{").replace("}", "]")) #better formatting with pretty print
+                                        str(self.values).replace("[", "{").replace("}", "]")) #better formatting with pretty print
 
 class TemplateRhsPattern(ParsedType, HasScope):
     def __init__(self, templateName, modulesManager, templateSlots=None):

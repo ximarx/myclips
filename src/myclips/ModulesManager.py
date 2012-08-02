@@ -26,6 +26,9 @@ class ModulesManager(object):
         Scope("MAIN", self, exports=[
                 ScopeExport(Scope.PROMISE_NAME_ALL, Scope.PROMISE_NAME_ALL)
             ]) 
+        # add the (initial-fact) template to the MAIN scope
+        from myclips.TemplatesManager import TemplateDefinition
+        self.currentScope.templates.addDefinition(TemplateDefinition("MAIN", "initial-fact", None))
         
 
     def addScope(self, scope):

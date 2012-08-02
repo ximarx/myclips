@@ -19,9 +19,16 @@ class Fact(object):
         '''
         self._templateName = templateName
         self._moduleName = moduleName
+        # normalize values to [] (if ordered fact) or to {} (if template)
+        values = values if values is not None else [] if templateName is None else {}
         self._values = values
         
-        
+    def __str__(self):
+        if self._templateName is not None:
+            return "(%s %s)"%(self._templateName, " ".join(["(%s %s)"%(str(s),str(v)) for (s,v) in self._values.items()]))
+        else:
+            return "(%s)"%(" ".join([str(x) for x in self._values]))
+    
     def __hash__(self):
         prefix = [self.moduleName, self.templateName]
         if self.isTemplateFact():

@@ -41,7 +41,12 @@ class Network(object):
         Constructor
         '''
         self._eventsManager = eventsManager if eventsManager is not None else EventsManager.default
-        self._modulesManager = modulesManager if modulesManager is not None else ModulesManager()
+        # if a custom modules manager is not submitted, a new default one (with MAIN scope) is used
+        if modulesManager is None:
+            modulesManager = ModulesManager()
+            modulesManager.addMainScope()
+            
+        self._modulesManager = modulesManager
         self._root = RootNode(self)
         self.eventsManager.fire(EventsManager.E_NODE_ADDED, self._root)
         
@@ -51,6 +56,16 @@ class Network(object):
         self._factsWmeMap = {}
         self._currentWmeId = 0
         self._linkedParser = None
+        self._deffacts = {}
+        
+        try:
+            # assert the first fact: initial-fact
+            self.assertFact(Fact({}, "initial-fact", "MAIN"))
+        except:
+            import myclips
+            myclips.logger.warning("initial-fact redefinition")
+            raise
+        
         
     def getParser(self, **kargs):
         """
@@ -222,6 +237,27 @@ class Network(object):
         except KeyError:
             raise RuleNotFoundError("Unable to find defrule %s"%completeRuleName)
     
+    def addDeffacts(self, deffacts):
+        assert isinstance(deffacts, types.DefFactsConstruct)
+        self._deffacts[deffacts.scope.moduleName+"::"+deffacts.deffactsName] = deffacts
+        
+    def removeDeffacts(self, deffactsName, deffactsModule=None):
+        if deffactsModule is not None:
+            tryName = deffactsModule + "::" + deffactsName
+        else:
+            tryName = deffactsName
+            
+        # try to remove the deffacts
+        try:
+            del self._deffacts[tryName]
+        except KeyError:
+            # key error: if module is None, try again using the current scope
+            try:
+                tryName = self.modulesManager.currentScope.moduleName + "::" + deffactsName
+                del self._deffacts[tryName]
+            except KeyError:
+                raise DefFactsNotFoundError("Unable to find deffacts %s"%deffactsName)
+    
     def getWmeFromId(self, factId):
         try:
             return self._facts[factId]
@@ -245,10 +281,106 @@ class Network(object):
             raise RuleNotFoundError("Unable to find defrule %s"%completeRuleName)
     
     def reset(self):
-        pass
-    
+        """
+        Reset the network status
+        """
+        
+        # trigger event before reset
+        self.eventsManager.fire(EventsManager.E_NETWORK_RESET_PRE, self)
+         
+        # retract all wme in the network
+        for wme in self.facts:
+            self.retractFact(wme)
+        
+        # reset the fact-id counter
+        self._currentWmeId = 0
+        
+        # push the MAIN::initial-fact
+        self.assertFact(Fact({}, templateName="initial-fact", moduleName="MAIN"))
+        
+        # push all fact in deffacts again
+        for deffact in self._deffacts.values():
+            assert isinstance(deffact, types.DefFactsConstruct)
+            # switch the scope the one defined in the deffact
+            self.modulesManager.changeCurrentScope(deffact.scope.moduleName)
+            # in this way asserted ordered fact gain the scope
+            # from the current one and templates definition
+            # could be checked vs module scope
+            for pattern in deffact.rhs:
+                if isinstance(pattern, types.TemplateRhsPattern):
+                    assert isinstance(pattern, types.TemplateRhsPattern)
+                    
+                    # prepare values:
+                    values = dict([(rhsSlot.slotName, rhsSlot.slotValue) for rhsSlot in pattern.templateSlots])
+                    
+                    # use the module name of the scope in the template,
+                    # not the current one
+                    self.assertFact(Fact(values, pattern.templateName, pattern.scope.moduleName))
+                    
+                elif isinstance(pattern, types.OrderedRhsPattern):
+                    assert isinstance(pattern, types.OrderedRhsPattern)
+                    
+                    # prepare values
+                    values = pattern.values
+                    
+                    # use the moduleName from the deffact scope (or the current one)
+                    self.assertFact(Fact(values, moduleName=deffact.scope.moduleName))
+                    
+        # set current scope back to MAIN
+        self.modulesManager.changeCurrentScope("MAIN")
+        
+        # trigger event after reset
+        self.eventsManager.fire(EventsManager.E_NETWORK_RESET_POST, self)
+
+        # all ready
+            
     def clear(self):
-        pass
+        # trigger event before clear
+        self.eventsManager.fire(EventsManager.E_NETWORK_CLEAR_PRE, self)
+        
+        # retract all facts
+        for wme in self.facts:
+            self.retractFact(wme)
+
+        # destroy the network
+        for rule in self._rules.values():
+            self._rules[rule].delete()
+            del self._rules[rule]
+        
+        # renew the root node
+        self._root = RootNode(self)
+        
+        # renew agenda and maps
+        self._agenda = Agenda(self)
+        self._rules = {}
+        self._facts = {}
+        self._factsWmeMap = {}
+        self._currentWmeId = 0
+        self._linkedParser = None
+        self._deffacts = {}
+            
+        # destoy MM
+        self._modulesManager = ModulesManager()
+        self._modulesManager.addMainScope()
+        
+        try:
+            # assert the first fact: initial-fact
+            self.assertFact(Fact({}, "initial-fact", "MAIN"))
+        except:
+            import myclips
+            myclips.logger.warning("initial-fact redefinition")
+
+        # notify completed clear operation
+        self.eventsManager.fire(EventsManager.E_NETWORK_CLEAR_POST, self)
+        
+        # detach all listeners after the CLEAR_POST events
+        self.eventsManager.unregisterObserver()
+        
+        # for behavioural consistency, notify root creation
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, self._root)
+
+        # ok, all done
+
     
     @property
     def agenda(self):
@@ -873,6 +1005,9 @@ class InvalidFactFormatError(MyClipsException):
     pass
     
 class RuleNotFoundError(MyClipsException):
+    pass
+
+class DefFactsNotFoundError(MyClipsException):
     pass
 
 class InvalidWmeOwner(MyClipsException):

@@ -32,6 +32,10 @@ class EventsManager(Observable):
 
     E_DEBUG_OPTIONS_CHANGED = 'debug-options-changed'
     
+    E_NETWORK_RESET_PRE = 'network-reset-pre'
+    E_NETWORK_RESET_POST = 'network-reset-post'
+    E_NETWORK_CLEAR_PRE = 'network-reset-pre'
+    E_NETWORK_CLEAR_POST = 'network-reset-post'
     E_NETWORK_READY = 'network-ready'
     E_NETWORK_SHUTDOWN = 'network-shutdown'
 

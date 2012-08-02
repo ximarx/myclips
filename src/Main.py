@@ -76,7 +76,10 @@ if __name__ == '__main__':
          (then best-color is white)))
 
 (deffacts USEBC::initial-goal
-   (goal (attribute best-color)))
+   (goal (attribute best-color))
+   (A B C)
+)
+   
 
 """
 
