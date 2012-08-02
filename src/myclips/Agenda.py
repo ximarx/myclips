@@ -285,8 +285,8 @@ class Agenda(object):
         try:
             saliences = sorted(self._activations[moduleName].keys(), reverse=True)
             activations = []
-            for salience in self._strategy.iterable(saliences):
-                for (pnode, token) in self._activations[salience]:
+            for salience in saliences:
+                for (pnode, token) in self._strategy.iterable(self._activations[moduleName][salience]):
                     activations.append((salience, pnode, token))
             return activations
         except:

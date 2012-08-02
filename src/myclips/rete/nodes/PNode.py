@@ -7,6 +7,7 @@ from myclips.rete.Node import Node
 from myclips.rete.BetaInput import BetaInput
 from myclips.rete.Memory import Memory
 import myclips
+from myclips.rete.Token import Token
 
 class PNode(Node, BetaInput, Memory):
     '''
@@ -31,7 +32,16 @@ class PNode(Node, BetaInput, Memory):
 
 
     def leftActivation(self, token, wme):
-        myclips.logger.debug("FIXME: PNode left activation NIY. token=%s, wme=%s", token, wme)
+        #myclips.logger.debug("FIXME: PNode left activation NIY. token=%s, wme=%s", token, wme)
+        newToken = Token(self, token, wme)
+        self.addItem(newToken)
+        self._network.agenda.insert(self, newToken)
+        
+    def removeItem(self, item):
+        # remove the item from the memory
+        Memory.removeItem(self, item)
+        # and remove the activation
+        self._network.agenda.remove(self, item)
         
     def delete(self):
         if self.isMain:

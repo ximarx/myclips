@@ -14,7 +14,7 @@ class Depth(Strategy):
         return []
     
     def insert(self, perSalienceContainer, thePNode, theToken):
-        perSalienceContainer.append(tuple(thePNode, theToken))
+        perSalienceContainer.append((thePNode, theToken))
         
     def pop(self, perSalienceContainer):
         perSalienceContainer.pop()

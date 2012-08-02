@@ -28,7 +28,7 @@ else:
             return blist.sortedlist(key=lambda x: x[0].getProperty('specificity', 0))
         
         def insert(self, perSalienceContainer, thePNode, theToken):
-            perSalienceContainer.add(tuple(thePNode, theToken))
+            perSalienceContainer.add((thePNode, theToken))
             
         def pop(self, perSalienceContainer):
             perSalienceContainer.pop(0)

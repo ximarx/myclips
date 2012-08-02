@@ -71,7 +71,7 @@ class Token(MemoryItem):
         wmes = collections.deque()
         while not current.isRoot():
             if includeNone or current.wme != None:
-                wmes.appendLeft(current.wme)
+                wmes.appendleft(current.wme)
             current = current.parent
         
         return list(wmes)
@@ -213,7 +213,10 @@ class Token(MemoryItem):
         return (isinstance(other, Token) and self.hashString == other.hashString)
     
     def __neq__(self, other):
-        return not self.__eq__(other) 
+        return not self.__eq__(other)
+    
+    def __str__(self):
+        return ", ".join(["f-"+str(wme.factId) for wme in self.linearize(False)])
     
 #    @wme.setter
 #    def wme(self, newWME):

@@ -16,7 +16,7 @@ class Random(Strategy):
     
     def insert(self, perSalienceContainer, thePNode, theToken):
         rand_index = random.randrange(0, len(perSalienceContainer))
-        perSalienceContainer.insert(rand_index, tuple(thePNode, theToken))
+        perSalienceContainer.insert(rand_index, (thePNode, theToken))
         
     def pop(self, perSalienceContainer):
         perSalienceContainer.pop()

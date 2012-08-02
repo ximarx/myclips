@@ -74,3 +74,20 @@ def importPath(fullpath):
     del sys.path[0]
     return module
 
+
+def main():
+    n = Network()
+    parsed = n.getParser().parse("""(deffacts df (A B C D)) (defrule r (A B C D) => (printout t "Trovato" crlf))""", True)
+    n.addDeffacts(parsed[0])
+    n.addRule(parsed[1])
+    print n.facts
+    print n.reset()
+    print n.facts
+    for (salience, pnode, token) in n.agenda.activations():
+        print "%-6d %s: %s"%(salience, pnode.mainRuleName, token)
+
+    return n
+
+if __name__ == '__main__':
+    main()
+
