@@ -44,7 +44,7 @@ class Refresh(Function):
         return None
     
     
-Refresh.DEFINITION = FunctionDefinition("?SYSTEM?", "refresh", object(), types.NullValue, Refresh().do ,
+Refresh.DEFINITION = FunctionDefinition("?SYSTEM?", "refresh", Refresh(), types.NullValue, Refresh.do ,
             [
                 Constraint_ExactArgsLength(1),
                 Constraint_ArgType(types.Symbol, 0),

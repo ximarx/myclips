@@ -83,7 +83,7 @@ class Bind(Function):
     
 Bind.DEFINITION = FunctionDefinition("?SYSTEM?", "bind", Bind(), (types.Lexeme, types.Symbol, types.String, 
                                                                        types.Number, types.Integer, types.Float,
-                                                                       list, types.NullValue ),
+                                                                       list, types.NullValue, WME ),
                                                                     Bind.do,
             [
                 Constraint_MinArgsLength(1),

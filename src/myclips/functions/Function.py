@@ -68,17 +68,34 @@ class Function(object):
 
 
 class FunctionImplError(MyClipsException):
+    """
+    The base error class for exception raised
+    inside function implementation code
+    """
     pass
 
 class InvalidArgValueError(FunctionImplError):
+    """
+    An invalid value for a function argument
+    """
     pass
 
 class InvalidArgTypeError(FunctionImplError):
+    """
+    An invalid type for a function argment
+    """
     pass
 
 class InvalidArgsNumberError(FunctionImplError):
+    """
+    The number of args for a function is invalid
+    """
     pass
 
 class FunctionInternalError(FunctionImplError):
+    """
+    A generic, implementation based exception
+    (usually to wrap python-based exception)
+    """
     pass
 

@@ -43,6 +43,9 @@ class BaseParsedType(ParsedType):
         
     def evaluate(self):
         return self.content
+    
+    def pyEqual(self, value):
+        return self.content == value
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ \
@@ -83,17 +86,25 @@ class Lexeme(BaseParsedType):
 
 class Integer(Number):
     converter = lambda self, t: int(t)
+    def pyEqual(self, value):
+        return value.__class__ == int and self.evaluate() == value
     pass
 
 class Symbol(Lexeme):
+    def pyEqual(self, value):
+        return isinstance(value, (str, unicode)) and self.evaluate() == value
     pass
 
 class String(Lexeme):
     converter = lambda self, t: '"'+str(t)+'"'
+    def pyEqual(self, value):
+        return isinstance(value, (str, unicode)) and self.evaluate() == value
     pass
 
 class Float(Number):
     converter = float
+    def pyEqual(self, value):
+        return value.__class__ == float and self.evaluate() == value
     pass
 
 class InstanceName(BaseParsedType):
