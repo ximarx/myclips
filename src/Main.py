@@ -103,6 +103,7 @@ if __name__ == '__main__':
     (printout t "blablabl" crlf)
     (assert (D C B A))
     (assert (template (A 10)))
+    (loop-for-count (?var 1 5) (printout t ?var crlf))
 )
 
 

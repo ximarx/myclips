@@ -34,6 +34,12 @@ class Function(object):
         """
         try:
             return cls.DEFINITION.handler(cls.DEFINITION.linkedType, theEnv, *args, **kargs)
+        #except ReturnException, e:
+            # convert a returnException to a return value of the function
+            #return e.returnValue
+        except (ReturnException, BreakException):
+            # break the execution until a catch get it
+            raise
         except FunctionImplError:
             raise
         except MyClipsException, e:
@@ -71,6 +77,23 @@ class FunctionImplError(MyClipsException):
     """
     The base error class for exception raised
     inside function implementation code
+    """
+    pass
+
+class ReturnException(MyClipsException):
+    """
+    Exception used by the Return function
+    to return a value from an inner function/loop
+    stopping function execution flow
+    """
+    def __init__(self, returnValue=None, message="", *args, **kwargs):
+        MyClipsException.__init__(self, message=message, *args, **kwargs)
+        self.returnValue
+
+class BreakException(MyClipsException):
+    """
+    Break a loop execution flow and return
+    control to a parent function
     """
     pass
 

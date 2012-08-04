@@ -820,6 +820,7 @@ class ParserTest(unittest.TestCase):
         self.assertIsInstance(res[0], types.AndPatternCE)
         self.assertEqual(len(res[0].patterns), 2)
 
+    @unittest.skip("This condition is not valid anymore")
     def test_ConditionalElementParser_AndPatternCE_InnerAssignedPatternCEAsFirstNotAllowed(self):
         self.assertRaises(ParseFatalException, self._testImpl, 'ConditionalElementParser', r"""
         (and 

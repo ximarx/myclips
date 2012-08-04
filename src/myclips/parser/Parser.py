@@ -242,6 +242,7 @@ class Parser(object):
         ### CONSTRUCTS PARSERS        
         
         self.subparsers["ExpressionParser"] = pp.Forward()
+        self.subparsers["RhsFunctionCallParser"] = pp.Forward()
         
         self.subparsers["FunctionNameParser"] = (pp.oneOf(self.getModulesManager().currentScope.functions.systemFunctions )\
                                                     .setName("SystemFunctioName")\
@@ -256,8 +257,13 @@ class Parser(object):
                                                                             'funcArgs': 1, 
                                                                             "modulesManager": self._modulesManager
                                                                             }))
-        
+
         self.subparsers["ExpressionParser"] << (self._sb("FunctionCallParser") 
+                                                | self._sb("VariableParser")
+                                                | self._sb("ConstantParser") )\
+                .setParseAction(forwardParsed())
+        
+        self.subparsers["RhsExpressionParser"] = (self._sb("RhsFunctionCallParser") 
                                                 | self._sb("VariableParser")
                                                 | self._sb("ConstantParser") )\
                 .setParseAction(forwardParsed())
@@ -287,10 +293,14 @@ class Parser(object):
 
         self.subparsers["FactDefinitionParser"] = self._sb("RhsPatternParser").copy()
         
-        self.subparsers["RhsFunctionCallParser"] = (LPAR + self._sb("FunctionNameParser") 
+        self.subparsers["ArgumentsGroupParser"] = (LPAR + pp.Group( pp.OneOrMore(self._sb("RhsFieldParser")) ) + RPAR)\
+                .setParseAction(forwardParsed())
+        
+        self.subparsers["RhsFunctionCallParser"] << (LPAR + self._sb("FunctionNameParser") 
                                                         + pp.Group(pp.ZeroOrMore(
-                                                            self._sb("ExpressionParser")
+                                                            self._sb("RhsExpressionParser")
                                                                 | self._sb("FactDefinitionParser")
+                                                                | self._sb("ArgumentsGroupParser")
                                                         ))
                                                     + RPAR)\
                 .setParseAction(makeInstanceDict(types.FunctionCall, {'funcName': 0,

@@ -13,4 +13,13 @@
 },{
 	"module":	"myclips.functions.Bind",
 	"class":	"Bind"
+},{
+	"module":	"myclips.functions.IfThenElse",
+	"class":	"IfThenElse"
+},{
+	"module":	"myclips.functions.WhileDo",
+	"class":	"WhileDo"
+},{
+	"module":	"myclips.functions.LoopForCount",
+	"class":	"LoopForCount"
 }]
