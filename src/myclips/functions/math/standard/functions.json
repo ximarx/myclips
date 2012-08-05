@@ -1,5 +1,9 @@
 [
     {
+        "class": "Absolute", 
+        "module": "myclips.functions.math.standard.Absolute"
+    }, 
+    {
         "class": "Addition", 
         "module": "myclips.functions.math.standard.Addition"
     }, 
