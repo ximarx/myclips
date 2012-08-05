@@ -25,4 +25,7 @@
 },{
 	"module":	"myclips.functions.Return",
 	"class":	"Return"
+},{
+	"module":	"myclips.functions.Break",
+	"class":	"Break"
 }]
