@@ -49,7 +49,7 @@ class LoopForCount(Function):
         else:
             # function definition restriction ensure theRange to  be a list or a <Integer>
             theMax = theRange.evaluate() + 1
-            theMin = 0
+            theMin = 1
             theVarBind = None
         
         

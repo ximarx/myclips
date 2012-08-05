@@ -91,7 +91,8 @@ def main():
         (printout t "Trovato: " ?f crlf)
         (loop-for-count (?cnt1 2 4) do
             (loop-for-count (?cnt2 1 3) do
-                (printout t ?cnt1 " " ?cnt2 crlf)))
+                (loop-for-count 2 do
+                    (printout t ?cnt1 " " ?cnt2 crlf))))
     )
     """
     n = Network()
