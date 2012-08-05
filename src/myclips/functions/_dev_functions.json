@@ -64,4 +64,16 @@
 },{
     "module":   "myclips.functions.predicate.Evenp",
     "class":    "Evenp"
+},{
+    "module":   "myclips.functions.predicate.Eq",
+    "class":    "Eq"
+},{
+    "module":   "myclips.functions.predicate.Neq",
+    "class":    "Neq"
+},{
+    "module":   "myclips.functions.predicate.NumericEq",
+    "class":    "NumericEq"
+},{
+    "module":   "myclips.functions.predicate.NumericNeq",
+    "class":    "NumericNeq"
 }]
