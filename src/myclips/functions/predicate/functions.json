@@ -1,0 +1,82 @@
+[
+    {
+        "class": "And", 
+        "module": "myclips.functions.predicate.And"
+    }, 
+    {
+        "class": "Eq", 
+        "module": "myclips.functions.predicate.Eq"
+    }, 
+    {
+        "class": "Evenp", 
+        "module": "myclips.functions.predicate.Evenp"
+    }, 
+    {
+        "class": "Floatp", 
+        "module": "myclips.functions.predicate.Floatp"
+    }, 
+    {
+        "class": "GreaterEqualThan", 
+        "module": "myclips.functions.predicate.GreaterEqualThan"
+    }, 
+    {
+        "class": "GreaterThan", 
+        "module": "myclips.functions.predicate.GreaterThan"
+    }, 
+    {
+        "class": "Integerp", 
+        "module": "myclips.functions.predicate.Integerp"
+    }, 
+    {
+        "class": "LessEqualThan", 
+        "module": "myclips.functions.predicate.LessEqualThan"
+    }, 
+    {
+        "class": "LessThan", 
+        "module": "myclips.functions.predicate.LessThan"
+    }, 
+    {
+        "class": "Lexemep", 
+        "module": "myclips.functions.predicate.Lexemep"
+    }, 
+    {
+        "class": "Multifieldp", 
+        "module": "myclips.functions.predicate.Multifieldp"
+    }, 
+    {
+        "class": "Neq", 
+        "module": "myclips.functions.predicate.Neq"
+    }, 
+    {
+        "class": "Not", 
+        "module": "myclips.functions.predicate.Not"
+    }, 
+    {
+        "class": "Numberp", 
+        "module": "myclips.functions.predicate.Numberp"
+    }, 
+    {
+        "class": "NumericEq", 
+        "module": "myclips.functions.predicate.NumericEq"
+    }, 
+    {
+        "class": "NumericNeq", 
+        "module": "myclips.functions.predicate.NumericNeq"
+    }, 
+    {
+        "class": "Oddp", 
+        "module": "myclips.functions.predicate.Oddp"
+    }, 
+    {
+        "class": "Or", 
+        "module": "myclips.functions.predicate.Or"
+    }, 
+    {
+        "class": "Stringp", 
+        "module": "myclips.functions.predicate.Stringp"
+    }, 
+    {
+        "class": "Symbolp", 
+        "module": "myclips.functions.predicate.Symbolp"
+    }
+]

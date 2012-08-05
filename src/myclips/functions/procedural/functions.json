@@ -1,0 +1,34 @@
+[
+    {
+        "class": "Break", 
+        "module": "myclips.functions.procedural.Break"
+    }, 
+    {
+        "class": "IfThenElse", 
+        "module": "myclips.functions.procedural.IfThenElse"
+    }, 
+    {
+        "class": "LoopForCount", 
+        "module": "myclips.functions.procedural.LoopForCount"
+    }, 
+    {
+        "class": "Return", 
+        "module": "myclips.functions.procedural.Return"
+    }, 
+    {
+        "class": "Case", 
+        "module": "myclips.functions.procedural.SwitchCaseDefault"
+    }, 
+    {
+        "class": "Default", 
+        "module": "myclips.functions.procedural.SwitchCaseDefault"
+    }, 
+    {
+        "class": "Switch", 
+        "module": "myclips.functions.procedural.SwitchCaseDefault"
+    }, 
+    {
+        "class": "WhileDo", 
+        "module": "myclips.functions.procedural.WhileDo"
+    }
+]

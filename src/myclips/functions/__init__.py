@@ -87,7 +87,18 @@ class SystemFunctionBroker(object):
                     funcModule = funcDict['module']
                     funcClass = funcDict['class']
                 except KeyError, e:
-                    myclips.logger.error("Malformed function definition in manifest file %s:\n\tError: %s\n\tDefinition: %s", manifestPath, repr(e), str(funcDict))
+                    try:
+                        importFile = funcDict['import']
+                        importFile = "/".join([FUNCTIONS_DIR.rstrip("/"), importFile])
+                    except KeyError, e:
+                        myclips.logger.error("Malformed function definition in manifest file %s:\n\tError: %s\n\tDefinition: %s", manifestPath, repr(e), str(funcDict))
+                    else:
+                        try:
+                            funcListInside = json.load(open(importFile, "rU"))
+                        except Exception, e:
+                            myclips.logger.error("Functions manifest file %s cannot be loaded: %s", importFile, repr(e))
+                        else:
+                            funcList.extend(funcListInside)
                 else:
                     try:
                         funcInstance = myclips.newInstance(funcClass, None, funcModule)

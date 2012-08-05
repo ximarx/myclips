@@ -10,6 +10,7 @@ import pyclbr
 import json
 
 def generate():
+    
     THIS_DIR = os.path.dirname(__file__)
     
     validClasses = []
@@ -21,15 +22,11 @@ def generate():
         inModule = pyclbr.readmodule(theModule)
         
         for (theName, theClass) in inModule.items():
-            if theName != "_TypeTesting" \
-                and (theClass.super[0] == "Function" \
+            if theClass.super[0] == "Function" \
                     or ( isinstance(theClass.super[0], pyclbr.Class) \
-                         and  theClass.super[0].name == "Function") \
-                    or theClass.super[0] == "_TypeTesting" \
-                    or ( isinstance(theClass.super[0], pyclbr.Class) \
-                         and  theClass.super[0].name == "_TypeTesting")):
+                         and  theClass.super[0].name == "Function"):
                 
-                validClasses.append({"module": "myclips.functions.predicate."+theModule,
+                validClasses.append({"module": "myclips.functions.procedural."+theModule,
                                      "class": theName})
                 
         
@@ -40,4 +37,4 @@ def generate():
     
     
 if __name__ == '__main__':
-    generate()
+    generate()    
