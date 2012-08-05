@@ -1,0 +1,18 @@
+[
+    {
+        "class": "Addition", 
+        "module": "myclips.functions.math.standard.Addition"
+    }, 
+    {
+        "class": "Division", 
+        "module": "myclips.functions.math.standard.Division"
+    }, 
+    {
+        "class": "Multiplication", 
+        "module": "myclips.functions.math.standard.Multiplication"
+    }, 
+    {
+        "class": "Subtraction", 
+        "module": "myclips.functions.math.standard.Subtraction"
+    }
+]

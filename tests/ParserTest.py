@@ -1077,7 +1077,7 @@ class ParserTest(unittest.TestCase):
 
     def test_FunctionCall_RaiseErrorForInvalidArgsNumber(self):
         self.assertRaises(pyparsing.ParseFatalException, self._testImpl, 'FunctionCallParser', r"""
-            (float 1 2)
+            (floatp 1 2)
         """)
         
     def test_PatternCEParser_CorrectCastToSlotTypeIfNeededByTemplateDefinition(self):
