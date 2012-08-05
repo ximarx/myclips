@@ -12,6 +12,14 @@
         "module": "myclips.functions.math.standard.Division"
     }, 
     {
+        "class": "Float", 
+        "module": "myclips.functions.math.standard.Float"
+    }, 
+    {
+        "class": "Integer", 
+        "module": "myclips.functions.math.standard.Integer"
+    }, 
+    {
         "class": "IntegerDivision", 
         "module": "myclips.functions.math.standard.IntegerDivision"
     }, 
