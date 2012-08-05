@@ -85,4 +85,13 @@
 },{
     "module":   "myclips.functions.predicate.LessEqualThan",
     "class":    "LessEqualThan"
+},{
+    "module":   "myclips.functions.predicate.And",
+    "class":    "And"
+},{
+    "module":   "myclips.functions.predicate.Or",
+    "class":    "Or"
+},{
+    "module":   "myclips.functions.predicate.Not",
+    "class":    "Not"
 }]
