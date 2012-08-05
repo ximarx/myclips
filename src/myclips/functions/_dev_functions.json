@@ -14,27 +14,27 @@
 	"module":	"myclips.functions.Bind",
 	"class":	"Bind"
 },{
-	"module":	"myclips.functions.IfThenElse",
+	"module":	"myclips.functions.procedural.IfThenElse",
 	"class":	"IfThenElse"
 },{
-	"module":	"myclips.functions.WhileDo",
+	"module":	"myclips.functions.procedural.WhileDo",
 	"class":	"WhileDo"
 },{
-	"module":	"myclips.functions.LoopForCount",
+	"module":	"myclips.functions.procedural.LoopForCount",
 	"class":	"LoopForCount"
 },{
-	"module":	"myclips.functions.Return",
+	"module":	"myclips.functions.procedural.Return",
 	"class":	"Return"
 },{
-	"module":	"myclips.functions.Break",
+	"module":	"myclips.functions.procedural.Break",
 	"class":	"Break"
 },{
-	"module":	"myclips.functions.SwitchCaseDefault",
+	"module":	"myclips.functions.procedural.SwitchCaseDefault",
 	"class":	"Switch"
 },{
-	"module":	"myclips.functions.SwitchCaseDefault",
+	"module":	"myclips.functions.procedural.SwitchCaseDefault",
 	"class":	"Case"
 },{
-	"module":	"myclips.functions.SwitchCaseDefault",
+	"module":	"myclips.functions.procedural.SwitchCaseDefault",
 	"class":	"Default"
 }]
