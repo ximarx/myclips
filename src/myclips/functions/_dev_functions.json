@@ -55,4 +55,7 @@
 },{
     "module":   "myclips.functions.predicate.Symbolp",
     "class":    "Symbolp"
+},{
+    "module":   "myclips.functions.predicate.Multifieldp",
+    "class":    "Multifieldp"
 }]
