@@ -181,7 +181,10 @@ class Constraint_ArgType(FunctionConstraint):
         
     def isValid(self, args):
         import myclips.parser.Types as types
-        if self.argIndex == None:
+        if self.argIndex == None or isinstance(self.argIndex, tuple):
+            argSlice = args
+            if isinstance(self.argIndex, tuple):
+                argSlice = args[self.argIndex[0]:self.argIndex[1]]
             invalidArgs = [True if isinstance(x, self.argType)
                                 else True if isinstance(x, types.Variable)
                                     else True if isinstance(x, types.FunctionCall)
@@ -189,7 +192,7 @@ class Constraint_ArgType(FunctionConstraint):
                                         else True if isinstance(x, types.FunctionCall)
                                                         and any([issubclass(retType, self.argType) for retType in x.funcDefinition.returnTypes])
                                             else False
-                           for x in args]
+                           for x in argSlice]
             return (not any([not x for x in invalidArgs]))
         else:
             x = args[self.argIndex]

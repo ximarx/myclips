@@ -28,4 +28,13 @@
 },{
 	"module":	"myclips.functions.Break",
 	"class":	"Break"
+},{
+	"module":	"myclips.functions.SwitchCaseDefault",
+	"class":	"Switch"
+},{
+	"module":	"myclips.functions.SwitchCaseDefault",
+	"class":	"Case"
+},{
+	"module":	"myclips.functions.SwitchCaseDefault",
+	"class":	"Default"
 }]
