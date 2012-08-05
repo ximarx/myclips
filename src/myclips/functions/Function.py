@@ -88,7 +88,7 @@ class ReturnException(MyClipsException):
     """
     def __init__(self, returnValue=None, message="", *args, **kwargs):
         MyClipsException.__init__(self, message=message, *args, **kwargs)
-        self.returnValue
+        self.returnValue = returnValue
 
 class BreakException(MyClipsException):
     """

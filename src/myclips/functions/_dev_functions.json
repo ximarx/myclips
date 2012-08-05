@@ -22,4 +22,7 @@
 },{
 	"module":	"myclips.functions.LoopForCount",
 	"class":	"LoopForCount"
+},{
+	"module":	"myclips.functions.Return",
+	"class":	"Return"
 }]
