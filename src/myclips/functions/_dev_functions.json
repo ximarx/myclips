@@ -74,6 +74,15 @@
     "module":   "myclips.functions.predicate.NumericEq",
     "class":    "NumericEq"
 },{
-    "module":   "myclips.functions.predicate.NumericNeq",
-    "class":    "NumericNeq"
+    "module":   "myclips.functions.predicate.GreaterThan",
+    "class":    "GreaterThan"
+},{
+    "module":   "myclips.functions.predicate.GreaterEqualThan",
+    "class":    "GreaterEqualThan"
+},{
+    "module":   "myclips.functions.predicate.LessThan",
+    "class":    "LessThan"
+},{
+    "module":   "myclips.functions.predicate.LessEqualThan",
+    "class":    "LessEqualThan"
 }]

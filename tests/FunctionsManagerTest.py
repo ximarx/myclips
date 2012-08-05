@@ -67,13 +67,13 @@ class Test(unittest.TestCase):
 
     def test_CannotRedefineSystemFunctionWithANewDefFunction(self):
         
-        self.assertRaisesRegexp(MultipleDefinitionError, "Cannot redefine deffunction \w+::\w+ while it is in use", self.scope.functions.addDefinition,
+        self.assertRaisesRegexp(MultipleDefinitionError, "Cannot redefine deffunction \w+::.+? while it is in use", self.scope.functions.addDefinition,
                 FunctionDefinition(self.scope.moduleName, self.scope.functions.systemFunctions[0], object(), Integer)
             )
 
     def test_CannotRedefineSystemFunctionWithANewSystemFunction(self):
         
-        self.assertRaisesRegexp(MultipleDefinitionError, "Cannot redefine deffunction \?SYSTEM\?::\w+ while it is in use", self.scope.functions.registerSystemFunction,
+        self.assertRaisesRegexp(MultipleDefinitionError, "Cannot redefine deffunction \?SYSTEM\?::.+? while it is in use", self.scope.functions.registerSystemFunction,
                 FunctionDefinition("?SYSTEM?", self.scope.functions.systemFunctions[0], object(), Integer)
             )
 
