@@ -37,4 +37,22 @@
 },{
 	"module":	"myclips.functions.procedural.SwitchCaseDefault",
 	"class":	"Default"
+},{
+    "module":   "myclips.functions.predicate.Numberp",
+    "class":    "Numberp"
+},{
+    "module":   "myclips.functions.predicate.Floatp",
+    "class":    "Floatp"
+},{
+    "module":   "myclips.functions.predicate.Integerp",
+    "class":    "Integerp"
+},{
+    "module":   "myclips.functions.predicate.Lexemep",
+    "class":    "Lexemep"
+},{
+    "module":   "myclips.functions.predicate.Stringp",
+    "class":    "Stringp"
+},{
+    "module":   "myclips.functions.predicate.Symbolp",
+    "class":    "Symbolp"
 }]
