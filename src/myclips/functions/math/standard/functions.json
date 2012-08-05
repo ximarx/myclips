@@ -8,6 +8,18 @@
         "module": "myclips.functions.math.standard.Division"
     }, 
     {
+        "class": "IntegerDivision", 
+        "module": "myclips.functions.math.standard.IntegerDivision"
+    }, 
+    {
+        "class": "Max", 
+        "module": "myclips.functions.math.standard.Max"
+    }, 
+    {
+        "class": "Min", 
+        "module": "myclips.functions.math.standard.Min"
+    }, 
+    {
         "class": "Multiplication", 
         "module": "myclips.functions.math.standard.Multiplication"
     }, 

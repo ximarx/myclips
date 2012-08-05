@@ -51,7 +51,7 @@ class Division(Function):
         
             
     
-Division.DEFINITION = FunctionDefinition("?SYSTEM?", "*", Division(), types.Float, 
+Division.DEFINITION = FunctionDefinition("?SYSTEM?", "/", Division(), types.Float, 
                                                                 Division.do,
             [
                 Constraint_MinArgsLength(2),
