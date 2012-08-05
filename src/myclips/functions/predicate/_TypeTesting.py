@@ -25,13 +25,12 @@ class _TypeTesting(Function):
         if isinstance(theValue, (types.FunctionCall, types.Variable)):
             theValue = self.resolve(theEnv, theValue)
             
+        # execute comparison between types
         if isinstance(theValue, self._cmpType): 
             returnValue = types.Symbol("TRUE")
         else:
             returnValue = types.Symbol("FALSE")
             
-        # CLIPS documentation:
-        # the if-then-else return value is always the value of the last execute action
         return returnValue
 
 

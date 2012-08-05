@@ -58,4 +58,10 @@
 },{
     "module":   "myclips.functions.predicate.Multifieldp",
     "class":    "Multifieldp"
+},{
+    "module":   "myclips.functions.predicate.Oddp",
+    "class":    "Oddp"
+},{
+    "module":   "myclips.functions.predicate.Evenp",
+    "class":    "Evenp"
 }]
