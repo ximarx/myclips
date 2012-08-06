@@ -31,16 +31,19 @@ class Close(Function):
         if theName is None:
             toClose = theEnv.RESOURCES.keys()
         elif not isinstance(theName, types.Symbol):
-                raise InvalidArgTypeError("Function open expected argument #1 to be of type symbol")
+            raise InvalidArgTypeError("Function open expected argument #1 to be of type symbol")
         else:
             toClose = [theName.evaluate()]
             
-        try:
-            for resourceName in toClose:
-                theEnv.RESOURCES[resourceName].close()
-                del theEnv.RESOURCES[resourceName]
-            return types.Symbol("TRUE")
-        except KeyError:
+        if len(toClose) > 0:
+            try:
+                for resourceName in toClose:
+                    theEnv.RESOURCES[resourceName].close()
+                    del theEnv.RESOURCES[resourceName]
+                return types.Symbol("TRUE")
+            except KeyError:
+                return types.Symbol("FALSE")
+        else:
             return types.Symbol("FALSE")
             
     

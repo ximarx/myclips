@@ -5,9 +5,6 @@
 	"module":	"myclips.functions.Retract",
 	"class":	"Retract"
 },{
-	"module":	"myclips.functions.Printout",
-	"class":	"Printout"
-},{
 	"module":	"myclips.functions.Refresh",
 	"class":	"Refresh"
 },{

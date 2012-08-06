@@ -1,0 +1,3 @@
+ "uno"
+precedente "Questo e' un testo spalmato su due linee
+Vediamo se lo gestisco per bene" successivo
