@@ -14,5 +14,9 @@
     {
         "class": "Read", 
         "module": "myclips.functions.io.Read"
+    }, 
+    {
+        "class": "Readline", 
+        "module": "myclips.functions.io.Readline"
     }
 ]
