@@ -1,0 +1,10 @@
+[
+    {
+        "class": "Close", 
+        "module": "myclips.functions.io.Close"
+    }, 
+    {
+        "class": "Open", 
+        "module": "myclips.functions.io.Open"
+    }
+]

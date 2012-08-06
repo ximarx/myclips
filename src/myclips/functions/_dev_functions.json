@@ -16,4 +16,6 @@
 	"import":	"./predicate/functions.json"
 },{
 	"import":	"./math/standard/functions.json"
+},{
+	"import":	"./io/functions.json"
 }]

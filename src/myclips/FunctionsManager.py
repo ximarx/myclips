@@ -168,9 +168,10 @@ class Constraint_ExactArgsLength(FunctionConstraint):
         return (len(args) == self.value)
     
 class Constraint_ArgType(FunctionConstraint):
-    def __init__(self, argType, argIndex=None):
+    def __init__(self, argType, argIndex=None, failIfMissing=True):
         self.argType = argType
         self.argIndex = argIndex
+        self.argRequired = failIfMissing
 
     def getReason(self):
         return "expected argument {0} to be of type {1}".format("#"+str(self.argIndex) if self.argIndex is not None else "#ALL",
@@ -181,28 +182,34 @@ class Constraint_ArgType(FunctionConstraint):
         
     def isValid(self, args):
         import myclips.parser.Types as types
-        if self.argIndex == None or isinstance(self.argIndex, tuple):
-            argSlice = args
-            if isinstance(self.argIndex, tuple):
-                argSlice = args[self.argIndex[0]:self.argIndex[1]]
-            invalidArgs = [True if isinstance(x, self.argType)
-                                else True if isinstance(x, types.Variable)
-                                    else True if isinstance(x, types.FunctionCall)
-                                                    and self.argType in x.funcDefinition.returnTypes
+        try:
+            if self.argIndex == None or isinstance(self.argIndex, tuple):
+                argSlice = args
+                if isinstance(self.argIndex, tuple):
+                    argSlice = args[self.argIndex[0]:self.argIndex[1]]
+                invalidArgs = [True if isinstance(x, self.argType)
+                                    else True if isinstance(x, types.Variable)
                                         else True if isinstance(x, types.FunctionCall)
-                                                        and any([issubclass(retType, self.argType) for retType in x.funcDefinition.returnTypes])
-                                            else False
-                           for x in argSlice]
-            return (not any([not x for x in invalidArgs]))
-        else:
-            x = args[self.argIndex]
-            return (True if isinstance(x, self.argType)
-                                else True if isinstance(x, types.Variable)
-                                    else True if isinstance(x, types.FunctionCall)
-                                                    and self.argType in x.funcDefinition.returnTypes
+                                                        and self.argType in x.funcDefinition.returnTypes
+                                            else True if isinstance(x, types.FunctionCall)
+                                                            and any([issubclass(retType, self.argType) for retType in x.funcDefinition.returnTypes])
+                                                else False
+                               for x in argSlice]
+                return (not any([not x for x in invalidArgs]))
+            else:
+                x = args[self.argIndex]
+                return (True if isinstance(x, self.argType)
+                                    else True if isinstance(x, types.Variable)
                                         else True if isinstance(x, types.FunctionCall)
-                                                        and any([issubclass(retType, self.argType) for retType in x.funcDefinition.returnTypes])
-                                            else False)
+                                                        and self.argType in x.funcDefinition.returnTypes
+                                            else True if isinstance(x, types.FunctionCall)
+                                                            and any([issubclass(retType, self.argType) for retType in x.funcDefinition.returnTypes])
+                                                else False)
+        except KeyError:
+            if self.argRequired:
+                return False
+            else:
+                return True
 
     
     
