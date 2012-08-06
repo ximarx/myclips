@@ -1,0 +1,10 @@
+[
+    {
+        "class": "StringConcat", 
+        "module": "myclips.functions.string.StringConcat"
+    }, 
+    {
+        "class": "SymbolConcat", 
+        "module": "myclips.functions.string.SymbolConcat"
+    }
+]

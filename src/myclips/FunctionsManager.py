@@ -174,7 +174,7 @@ class Constraint_ArgType(FunctionConstraint):
         self.argRequired = failIfMissing
 
     def getReason(self):
-        return "expected argument {0} to be of type {1}".format("#"+str(self.argIndex) if self.argIndex is not None else "#ALL",
+        return "expected argument {0} to be of type {1}".format("#"+str(self.argIndex + 1) if self.argIndex is not None else "#ALL",
                                                                 " or ".join([t.__name__ for t in self.argType])
                                                                     if isinstance(self.argType, tuple) 
                                                                     else self.argType.__name__
@@ -212,103 +212,8 @@ class Constraint_ArgType(FunctionConstraint):
                 return True
 
     
-    
-
-FUNCTIONS_DEFINITIONS = {}
-    
 def Functions_ImportSystemDefinitions():
     
     from myclips.functions.__init__ import SystemFunctionBroker
     
     return SystemFunctionBroker.definitions()
-
-    if len(FUNCTIONS_DEFINITIONS) > 0:
-        return FUNCTIONS_DEFINITIONS
-
-    # setup basic functions like aritmetic / comparison
-    # FOR PARSING ONLY
-    
-    from myclips.parser.Types import Number, BaseParsedType, Lexeme, Integer, Float
-    
-    import sys
-    
-    
-    
-    FUNCTIONS_DEFINITIONS["+"] = FunctionDefinition("?SYSTEM?", "+", object(), (Integer, Float), lambda *args: sum([t.evaluate() if isinstance(t, BaseParsedType) else t for t in args]),
-            [
-                Constraint_MinArgsLength(2),
-                Constraint_ArgType(Number)
-            ],forward=False)
-    
-    def r_mul(sequence):
-        return (sequence[0] if len(sequence) == 1 
-                else sequence[0] * r_mul(sequence[1:]))
-    
-    FUNCTIONS_DEFINITIONS["*"] = FunctionDefinition("?SYSTEM?", "*", object(), (Integer, Float), lambda *args: r_mul([t.evaluate() if isinstance(t, BaseParsedType) else t for t in args]),
-            [
-                Constraint_MinArgsLength(2),
-                Constraint_ArgType(Number)
-            ],forward=False)
-    
-    FUNCTIONS_DEFINITIONS["eq"] = FunctionDefinition("?SYSTEM?", "eq", object(), True.__class__, lambda *args: not any([
-                                                                (t.evaluate() if isinstance(t, BaseParsedType) else t) 
-                                                                    != 
-                                                                (args[0].evaluate() if isinstance(args[0], BaseParsedType) else args[0]) 
-                                                                for (i,t) in enumerate(args) if i > 0]),
-            [
-                Constraint_MinArgsLength(2),
-                Constraint_ArgType(Lexeme)
-            ],forward=False)
-    
-    FUNCTIONS_DEFINITIONS["neq"] = FunctionDefinition("?SYSTEM?", "neq", object(), True.__class__, lambda *args: not any([
-                                                                (t.evaluate() if isinstance(t, BaseParsedType) else t) 
-                                                                    == 
-                                                                (args[0].evaluate() if isinstance(args[0], BaseParsedType) else args[0]) 
-                                                                for (i,t) in enumerate(args) if i > 0]),
-            [
-                Constraint_MinArgsLength(2),
-                Constraint_ArgType(Lexeme)
-            ],forward=False)
-    
-    FUNCTIONS_DEFINITIONS["="] = FunctionDefinition("?SYSTEM?", "=", object(), True.__class__, lambda *args: not any([
-                                                                (t.evaluate() if isinstance(t, BaseParsedType) else t) 
-                                                                    != 
-                                                                (args[0].evaluate() if isinstance(args[0], BaseParsedType) else args[0]) 
-                                                                for (i,t) in enumerate(args) if i > 0]),
-            [
-                Constraint_MinArgsLength(2),
-                Constraint_ArgType(Number)
-            ],forward=False)
-    
-    FUNCTIONS_DEFINITIONS["<>"] = FunctionDefinition("?SYSTEM?", "<>", object(), True.__class__, lambda *args: not any([
-                                                                (t.evaluate() if isinstance(t, BaseParsedType) else t) 
-                                                                    == 
-                                                                (args[0].evaluate() if isinstance(args[0], BaseParsedType) else args[0]) 
-                                                                for (i,t) in enumerate(args) if i > 0]),
-            [
-                Constraint_MinArgsLength(2),
-                Constraint_ArgType(Number)
-            ],forward=False)
-    
-    FUNCTIONS_DEFINITIONS["printout"] = FunctionDefinition("?SYSTEM?", "printout", object(), None.__class__, lambda *args: sys.stdout.writelines(args[1:]),
-            [
-                Constraint_MinArgsLength(2),
-            ],forward=False)
-
-    FUNCTIONS_DEFINITIONS["float"] = FunctionDefinition("?SYSTEM?", "float", object(), Float, lambda arg: Float(arg.evaluate()),
-            [
-                Constraint_ArgType(Number),
-                Constraint_ExactArgsLength(1)
-            ],forward=False)
-    
-    FUNCTIONS_DEFINITIONS["assert"] = FunctionDefinition("?SYSTEM?", "assert", object(), None.__class__, lambda *args: args,
-            [
-                Constraint_MinArgsLength(1),
-            ],forward=False)
-    
-    FUNCTIONS_DEFINITIONS["retract"] = FunctionDefinition("?SYSTEM?", "retract", object(), None.__class__, lambda *args: args,
-            [
-                Constraint_MinArgsLength(1),
-            ],forward=False)
-    
-    return FUNCTIONS_DEFINITIONS
