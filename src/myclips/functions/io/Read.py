@@ -114,7 +114,9 @@ class Read(Function):
             return types.Symbol("*** READ ERROR ***")
         
     
-Read.DEFINITION = FunctionDefinition("?SYSTEM?", "read", Read(), types.Symbol, Read.do,
+Read.DEFINITION = FunctionDefinition("?SYSTEM?", "read", Read(), (types.Symbol, types.String, types.Lexeme,
+                                                                  types.Integer, types.Float, types.Number), 
+                                                        Read.do,
             [
                 Constraint_MaxArgsLength(1),
                 Constraint_ArgType(types.Symbol, 0, failIfMissing=False)
