@@ -4,6 +4,10 @@
         "module": "myclips.functions.io.Close"
     }, 
     {
+        "class": "Format", 
+        "module": "myclips.functions.io.Format"
+    }, 
+    {
         "class": "Open", 
         "module": "myclips.functions.io.Open"
     }, 
