@@ -7,6 +7,7 @@ from myclips.Scope import Scope, ScopeImport, ScopeExport
 from myclips.MyClipsException import MyClipsException
 from myclips.FunctionsManager import FunctionDefinition,\
     Constraint_ExactArgsLength, Constraint_MinArgsLength
+from myclips.rete.WME import WME
 
 class ParsedType(object):
     '''
@@ -829,9 +830,9 @@ class DefFunctionConstruct(ParsedType, HasScope):
         # args length
         
         minParams = len([x for x in self.params if isinstance(x, SingleFieldVariable)])
-        hasMax = not ( minParams != len(self.params) and isinstance(self.params[-1], MultiFieldVariable ) )
+        hasMax = not isinstance(self.params[-1], MultiFieldVariable )
         
-        if not hasMax:
+        if hasMax:
             constraints.append( Constraint_ExactArgsLength(minParams) )
         else :
             constraints.append( Constraint_MinArgsLength(minParams) )
@@ -839,8 +840,9 @@ class DefFunctionConstruct(ParsedType, HasScope):
         fDef = FunctionDefinition(self.scope.moduleName, functionName,
                                     linkedType=self, 
                                     returnTypes=(self.actions[-1].funcDefinition.returnTypes 
-                                                    if len(self.actions) > 0 
-                                                        else Symbol), 
+                                                    if len(self.actions) > 0 and isinstance(self.actions[-1], FunctionCall)
+                                                        else self.actions[-1] if isinstance(self.actions[-1], BaseParsedType)
+                                                            else (Lexeme, Number, list, WME)), 
                                     handler=None, 
                                     constraints=constraints, 
                                     forward=True)
