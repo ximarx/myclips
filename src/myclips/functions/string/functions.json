@@ -1,5 +1,9 @@
 [
     {
+        "class": "Build", 
+        "module": "myclips.functions.string.Build"
+    }, 
+    {
         "class": "Eval", 
         "module": "myclips.functions.string.Eval"
     }, 
