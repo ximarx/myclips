@@ -111,9 +111,9 @@ class Function(object):
         if isinstance(arg, (types.FunctionCall, types.Variable)):
             theResolved = cls.resolve(theEnv, arg)
         elif isinstance(arg, list):
-            theResolved = [cls.semplify(theEnv, x, checkType, errorFormat) for x in arg]
+            theResolved = [cls.semplify(theEnv, x) for x in arg]
             
-        if checkType is not None and not isinstance(theResolved, list):
+        if checkType is not None:
             if not isinstance(theResolved, checkType):
                 try:
                     raise InvalidArgTypeError("Function %s expected argument #%s to be of type %s"%(cls.DEFINITION.name, errorFormat[0], errorFormat[1]) )

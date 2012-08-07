@@ -4,6 +4,10 @@
         "module": "myclips.functions.multifield.Create"
     }, 
     {
+        "class": "Member", 
+        "module": "myclips.functions.multifield.Member"
+    }, 
+    {
         "class": "Nth", 
         "module": "myclips.functions.multifield.Nth"
     }
