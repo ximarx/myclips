@@ -1,5 +1,9 @@
 [
     {
+        "class": "Eval", 
+        "module": "myclips.functions.string.Eval"
+    }, 
+    {
         "class": "StringConcat", 
         "module": "myclips.functions.string.StringConcat"
     }, 
