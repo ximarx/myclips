@@ -35,7 +35,7 @@ class StringConcat(Function):
             else:
                 concat += str(arg)
                 
-        return types.Symbol(concat)
+        return types.String(concat)
         
         
     

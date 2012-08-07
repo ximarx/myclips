@@ -4,6 +4,10 @@
         "module": "myclips.functions.string.StringConcat"
     }, 
     {
+        "class": "SubString", 
+        "module": "myclips.functions.string.SubString"
+    }, 
+    {
         "class": "SymbolConcat", 
         "module": "myclips.functions.string.SymbolConcat"
     }
