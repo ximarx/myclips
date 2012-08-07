@@ -35,7 +35,7 @@ class StringIndex(Function):
         # normalize theNeedle
         if isinstance(theNeedle, (types.Variable, types.FunctionCall)):
             theNeedle = self.resolve(theEnv, theNeedle)
-        if not isinstance(theNeedle, types.String):
+        if isinstance(theNeedle, types.String):
             theNeedle = theNeedle.evaluate()[1:-1]
         elif isinstance(theNeedle, types.Symbol):
             theNeedle = theNeedle.evaluate()

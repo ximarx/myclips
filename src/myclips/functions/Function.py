@@ -57,6 +57,13 @@ class Function(object):
     
     @classmethod
     def resolve(cls, theEnv, arg):
+        """
+        Resolve the python value of a BaseParsedType
+        or a a BaseParsedType for FunctionCall and Variables
+        
+        This function could be used in conjuction with the semplify
+        to alway return a python value from an arg
+        """
         # String is a special value, have to trim out quotes
         if isinstance(arg, types.String):
             return arg.content[1:-1]
@@ -71,6 +78,44 @@ class Function(object):
         elif isinstance(arg, types.GlobalVariable):
             # resolve the variable value vs theEnv.globals
             return theEnv.modulesManager.currentScope.globalsvars.getDefinition(arg.evaluate()).linkedType.runningValue
+        
+    @classmethod
+    def semplify(cls, theEnv, arg, checkType=None, errorFormat=None):
+        '''
+        Execute a semplification of the arg if the arg
+        is a function or a variable and return the BaseParsedType
+        result of the semplification
+        
+        Optionally, it could execute some type check and return
+        an error in the format of
+            "Function %cls.DEFINITION.name expected argument #%str(errorFormat[0]) to be of type %str(errorFormat[1])"
+        if errorFormat is a tuple with at least 2 string elements, otherwise the error format is
+            "Expected EXPECTED_TYPE, found FOUND_TYPE"
+            
+        @param theEnv: the system environment for the function execution
+        @type theEnv: FunctionEnv
+        @param arg: the arg to semplify
+        @type arg: BaseParsedType|FunctionCall|Variable
+        @param checkType: a type or a tuple of types to check the
+            semplified arg type against to
+        @type checkType: ParsedType|tuple|None
+        @param errorFormat: a tuple with error parameters or None
+        @type errorFormat: tuple
+        @return: the semplified value if type constraints are ok (if any)
+        @rtype: BaseParsedType
+        @raise InvalidArgTypeError: if semplified value is not of the expected type(s)
+        '''
+        if isinstance(arg, (types.FunctionCall, types.Variable)):
+            theResolved = cls.resolve(theEnv, arg)
+            
+        if checkType is not None:
+            if not isinstance(theResolved, checkType):
+                try:
+                    raise InvalidArgTypeError("Function %s expected argument #%s to be of type %s"%(cls.DEFINITION.name, errorFormat[0], errorFormat[1]) )
+                except:
+                    raise InvalidArgTypeError("Expected %s, found %s"%(str(checkType), theResolved.__class__.__name__))
+                
+        return theResolved
 
 
 class FunctionImplError(MyClipsException):

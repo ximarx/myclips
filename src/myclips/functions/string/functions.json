@@ -12,6 +12,10 @@
         "module": "myclips.functions.string.Lowcase"
     }, 
     {
+        "class": "StringCompare", 
+        "module": "myclips.functions.string.StringCompare"
+    }, 
+    {
         "class": "StringConcat", 
         "module": "myclips.functions.string.StringConcat"
     }, 

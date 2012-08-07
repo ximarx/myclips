@@ -38,7 +38,7 @@ class Lowcase(Function):
         
         
     
-Lowcase.DEFINITION = FunctionDefinition("?SYSTEM?", "build", Lowcase(), (types.String, types.Symbol, types.Lexeme), Lowcase.do,
+Lowcase.DEFINITION = FunctionDefinition("?SYSTEM?", "lowcase", Lowcase(), (types.String, types.Symbol, types.Lexeme), Lowcase.do,
             [
                 Constraint_ExactArgsLength(1),
                 Constraint_ArgType((types.String, types.Symbol), 0),

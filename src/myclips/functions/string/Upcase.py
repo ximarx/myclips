@@ -39,7 +39,7 @@ class Upcase(Function):
         
         
     
-Upcase.DEFINITION = FunctionDefinition("?SYSTEM?", "build", Upcase(), (types.String, types.Symbol, types.Lexeme), Upcase.do,
+Upcase.DEFINITION = FunctionDefinition("?SYSTEM?", "upcase", Upcase(), (types.String, types.Symbol, types.Lexeme), Upcase.do,
             [
                 Constraint_ExactArgsLength(1),
                 Constraint_ArgType((types.String, types.Symbol, types.Lexeme), 0),
