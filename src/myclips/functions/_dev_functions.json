@@ -20,4 +20,6 @@
 	"import":	"./io/functions.json"
 },{
 	"import":	"./string/functions.json"
+},{
+	"import":	"./multifield/functions.json"
 }]
