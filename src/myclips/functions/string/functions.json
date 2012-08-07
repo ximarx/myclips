@@ -24,6 +24,10 @@
         "module": "myclips.functions.string.StringIndex"
     }, 
     {
+        "class": "StringLength", 
+        "module": "myclips.functions.string.StringLength"
+    }, 
+    {
         "class": "SubString", 
         "module": "myclips.functions.string.SubString"
     }, 
