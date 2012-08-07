@@ -26,7 +26,7 @@ class Build(Function):
     
     The scope changes only if the build command is executed from the shell directly
        
-    @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.3.html#Heading234
+    @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.3.html#Heading236
     '''
     def __init__(self, *args, **kwargs):
         Function.__init__(self, *args, **kwargs)
@@ -35,7 +35,7 @@ class Build(Function):
     def do(self, theEnv, theString, *args, **kargs):
         """
         handler of the function
-        @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.3.html#Heading234
+        @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.3.html#Heading236
         """
         
         # normalize theString

@@ -8,6 +8,10 @@
         "module": "myclips.functions.string.Eval"
     }, 
     {
+        "class": "Lowcase", 
+        "module": "myclips.functions.string.Lowcase"
+    }, 
+    {
         "class": "StringConcat", 
         "module": "myclips.functions.string.StringConcat"
     }, 
@@ -22,5 +26,9 @@
     {
         "class": "SymbolConcat", 
         "module": "myclips.functions.string.SymbolConcat"
+    }, 
+    {
+        "class": "Upcase", 
+        "module": "myclips.functions.string.Upcase"
     }
 ]
