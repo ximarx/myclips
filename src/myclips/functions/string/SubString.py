@@ -54,12 +54,12 @@ class SubString(Function):
             theEnd = self.resolve(theEnv, theEnd)
         if not isinstance(theEnd, types.Integer):
             raise InvalidArgTypeError("Function sub-string expected argument #2 to be of type integer")
-        theEnd = theEnv.evaluate()
+        theEnd = theEnd.evaluate()
         
         # normalize theString
         if isinstance(theString, (types.Variable, types.FunctionCall)):
             theString = self.resolve(theEnv, theString)
-        if not isinstance(theString, types.Integer):
+        if not isinstance(theString, types.String):
             raise InvalidArgTypeError("Function sub-string expected argument #3 to be of type string")
         theString = theString.evaluate()[1:-1] # remove the quotes
 
