@@ -2,5 +2,9 @@
     {
         "class": "Create", 
         "module": "myclips.functions.multifield.Create"
+    }, 
+    {
+        "class": "Nth", 
+        "module": "myclips.functions.multifield.Nth"
     }
 ]
