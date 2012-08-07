@@ -78,6 +78,9 @@ class Function(object):
         elif isinstance(arg, types.GlobalVariable):
             # resolve the variable value vs theEnv.globals
             return theEnv.modulesManager.currentScope.globalsvars.getDefinition(arg.evaluate()).linkedType.runningValue
+        elif isinstance(arg, list):
+            # recursiong to resolve for inner objects
+            return [cls.resolve(theEnv, x) for x in arg]
         
     @classmethod
     def semplify(cls, theEnv, arg, checkType=None, errorFormat=None):
@@ -107,8 +110,10 @@ class Function(object):
         '''
         if isinstance(arg, (types.FunctionCall, types.Variable)):
             theResolved = cls.resolve(theEnv, arg)
+        elif isinstance(arg, list):
+            theResolved = [cls.semplify(theEnv, x, checkType, errorFormat) for x in arg]
             
-        if checkType is not None:
+        if checkType is not None and not isinstance(theResolved, list):
             if not isinstance(theResolved, checkType):
                 try:
                     raise InvalidArgTypeError("Function %s expected argument #%s to be of type %s"%(cls.DEFINITION.name, errorFormat[0], errorFormat[1]) )

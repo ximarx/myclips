@@ -1,1 +1,6 @@
-[]
+[
+    {
+        "class": "Create", 
+        "module": "myclips.functions.multifield.Create"
+    }
+]
