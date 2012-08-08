@@ -12,6 +12,10 @@
         "module": "myclips.functions.multifield.Explode"
     }, 
     {
+        "class": "First", 
+        "module": "myclips.functions.multifield.First"
+    }, 
+    {
         "class": "Implode", 
         "module": "myclips.functions.multifield.Implode"
     }, 
@@ -30,6 +34,10 @@
     {
         "class": "Replace", 
         "module": "myclips.functions.multifield.Replace"
+    }, 
+    {
+        "class": "Rest", 
+        "module": "myclips.functions.multifield.Rest"
     }, 
     {
         "class": "Subseq", 
