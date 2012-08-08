@@ -24,6 +24,10 @@
         "module": "myclips.functions.multifield.Nth"
     }, 
     {
+        "class": "Replace", 
+        "module": "myclips.functions.multifield.Replace"
+    }, 
+    {
         "class": "Subseq", 
         "module": "myclips.functions.multifield.Subseq"
     }, 
