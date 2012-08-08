@@ -1,0 +1,10 @@
+[
+    {
+        "class": "Assert", 
+        "module": "myclips.functions.fact.Assert"
+    }, 
+    {
+        "class": "Retract", 
+        "module": "myclips.functions.fact.Retract"
+    }
+]
