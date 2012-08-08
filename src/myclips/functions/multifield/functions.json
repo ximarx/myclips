@@ -16,6 +16,10 @@
         "module": "myclips.functions.multifield.Implode"
     }, 
     {
+        "class": "Insert", 
+        "module": "myclips.functions.multifield.Insert"
+    }, 
+    {
         "class": "Member", 
         "module": "myclips.functions.multifield.Member"
     }, 
