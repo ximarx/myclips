@@ -4,6 +4,10 @@
         "module": "myclips.functions.multifield.Create"
     }, 
     {
+        "class": "Delete", 
+        "module": "myclips.functions.multifield.Delete"
+    }, 
+    {
         "class": "Member", 
         "module": "myclips.functions.multifield.Member"
     }, 

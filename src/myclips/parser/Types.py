@@ -710,7 +710,7 @@ class PortItem(ParsedType):
             except KeyError:
                 raise TypeInstanceCreationError("Syntax Error: Check appropriate syntax for defmodule export specification")
             
-            # now i need to valutate the name of the construct
+            # now i need to evalutate the name of the construct
             if isinstance(content[1], list):
                 # i got a list, so all symbols are construct name
                 # but i can't check if they are valid here

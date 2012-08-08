@@ -7,7 +7,6 @@ from myclips.FunctionsManager import FunctionDefinition, Constraint_ArgType,\
     Constraint_ExactArgsLength
 import myclips.parser.Types as types
 from myclips.functions.Function import Function
-from myclips.rete.WME import WME
 
 
 class Subsetp(Function):
