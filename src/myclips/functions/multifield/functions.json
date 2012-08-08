@@ -8,6 +8,10 @@
         "module": "myclips.functions.multifield.Delete"
     }, 
     {
+        "class": "Explode", 
+        "module": "myclips.functions.multifield.Explode"
+    }, 
+    {
         "class": "Member", 
         "module": "myclips.functions.multifield.Member"
     }, 

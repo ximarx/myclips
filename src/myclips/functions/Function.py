@@ -112,6 +112,8 @@ class Function(object):
             theResolved = cls.resolve(theEnv, arg)
         elif isinstance(arg, list):
             theResolved = [cls.semplify(theEnv, x) for x in arg]
+        else:
+            theResolved = arg
             
         if checkType is not None:
             if not isinstance(theResolved, checkType):

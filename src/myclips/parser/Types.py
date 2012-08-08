@@ -56,10 +56,8 @@ class BaseParsedType(ParsedType):
         return str(self.evaluate())
 
     def __repr__(self, *args, **kwargs):
-        return "<{0}:{1},converted={2}:{3}>".format(self.__class__.__name__,
-                                                        self.content, 
-                                                        self.content.__class__.__name__, 
-                                                        self.content )
+        return "<{0}:{1}>".format(self.__class__.__name__,
+                                  self.content)
     
 class HasScope(object):
     def __init__(self, modulesManager):
