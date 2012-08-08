@@ -101,14 +101,15 @@ def main():
     (defrule r3
         ?f <- (A (a 1) (b 2))
         =>
-        (printout t "IL MULTICOSO" crlf)
-        (printout t (modify ?f (a 3) (b 10)) crlf)
+        (printout t "Modify: " (modify ?f (a 3) (b 10)) crlf)
     )
     (defrule r4
         ?f <- (A (a 3) (b 10))
         =>
         (printout t "MODIFICA OK" crlf)
-        (printout t (duplicate ?f (b 1000)))
+        (printout t "Duplicate: " (duplicate ?f (b 1000)) crlf)
+        (printout t "Assert-string: " (assert-string "(A Z E D)") crlf)
+        (printout t "Fact-Index: " (fact-index ?f) crlf)
     )
     """
     n = Network()

@@ -4,8 +4,16 @@
         "module": "myclips.functions.fact.Assert"
     }, 
     {
+        "class": "AssertString", 
+        "module": "myclips.functions.fact.AssertString"
+    }, 
+    {
         "class": "Duplicate", 
         "module": "myclips.functions.fact.Duplicate"
+    }, 
+    {
+        "class": "FactIndex", 
+        "module": "myclips.functions.fact.FactIndex"
     }, 
     {
         "class": "Modify", 
