@@ -4,6 +4,10 @@
         "module": "myclips.functions.fact.Assert"
     }, 
     {
+        "class": "Duplicate", 
+        "module": "myclips.functions.fact.Duplicate"
+    }, 
+    {
         "class": "Modify", 
         "module": "myclips.functions.fact.Modify"
     }, 

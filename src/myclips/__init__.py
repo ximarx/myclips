@@ -108,7 +108,7 @@ def main():
         ?f <- (A (a 3) (b 10))
         =>
         (printout t "MODIFICA OK" crlf)
-        (printout t (assert (A (a 100) (b 1000))))
+        (printout t (duplicate ?f (b 1000)))
     )
     """
     n = Network()
