@@ -24,6 +24,10 @@
         "module": "myclips.functions.multifield.Nth"
     }, 
     {
+        "class": "Subseq", 
+        "module": "myclips.functions.multifield.Subseq"
+    }, 
+    {
         "class": "Subsetp", 
         "module": "myclips.functions.multifield.Subsetp"
     }
