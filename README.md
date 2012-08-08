@@ -13,3 +13,4 @@ Dependencies:
 	NetworkX and MathplotLib (for Rete network plotting only) 
 
  
+[![githalytics.com alpha](https://cruel-carlota.pagodabox.com/640596ac22234eacde743189c1a5b450 "githalytics.com")](http://githalytics.com/ximarx/myclips)
