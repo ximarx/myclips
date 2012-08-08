@@ -95,6 +95,7 @@ if __name__ == '__main__':
     (A 2 c 4)
 =>
     (printout t ?c2 crlf)
+    (modify ?c2 (A 100))
 )
 
 (defrule A::r 

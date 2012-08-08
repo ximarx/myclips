@@ -32,6 +32,7 @@ class Assert(Function):
             fact = Assert.resolve(funcEnv, fact)
             
             returnValue = funcEnv.network.assertFact(fact)
+            returnValue = returnValue[0] if returnValue[1] else types.Symbol("FALSE")
             
         return returnValue
             

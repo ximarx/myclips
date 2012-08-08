@@ -77,8 +77,12 @@ def importPath(fullpath):
 
 def main():
     t = """
+    (deftemplate A 
+        (slot a)
+        (slot b))
     (deffacts df 
-        (A B C D)) 
+        (A B C D)
+        (A (a 1) (b 2)))
     (defrule r 
         (A B C D) 
         => 
@@ -94,6 +98,18 @@ def main():
                 (loop-for-count 2 do
                     (printout t ?cnt1 " " ?cnt2 crlf))))
     )
+    (defrule r3
+        ?f <- (A (a 1) (b 2))
+        =>
+        (printout t "IL MULTICOSO" crlf)
+        (printout t (modify ?f (a 3) (b 10)) crlf)
+    )
+    (defrule r4
+        ?f <- (A (a 3) (b 10))
+        =>
+        (printout t "MODIFICA OK" crlf)
+        (printout t (assert (A (a 100) (b 1000))))
+    )
     """
     n = Network()
     try:
@@ -104,6 +120,8 @@ def main():
         n.addDeffacts(parsed[0])
         n.addRule(parsed[1])
         n.addRule(parsed[2])
+        n.addRule(parsed[3])
+        n.addRule(parsed[4])
         print n.facts
         print n.reset()
         print n.facts
