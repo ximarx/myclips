@@ -1,0 +1,14 @@
+[
+    {
+        "class": "GetFocus", 
+        "module": "myclips.functions.agenda.GetFocus"
+    }, 
+    {
+        "class": "GetFocusStack", 
+        "module": "myclips.functions.agenda.GetFocusStack"
+    }, 
+    {
+        "class": "PopFocus", 
+        "module": "myclips.functions.agenda.PopFocus"
+    }
+]

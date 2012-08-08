@@ -22,4 +22,6 @@
 	"import":	"./string/functions.json"
 },{
 	"import":	"./multifield/functions.json"
+},{
+	"import":	"./agenda/functions.json"
 }]

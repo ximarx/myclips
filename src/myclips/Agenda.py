@@ -29,6 +29,18 @@ class Agenda(object):
         self._fired_activations = {}
         self._strategy = strategies.factory.newInstance()
         self._ignored_activations = {}
+        self._focusStack = []
+        try:
+            self._focusStack.append(network.modulesManager.currentScope.moduleName)
+        except:
+            pass 
+        
+    @property
+    def focusStack(self):
+        """
+        Get the focus stack
+        """
+        return self._focusStack
         
     def insert(self, pnode, token):
         '''
