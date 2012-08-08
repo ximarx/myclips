@@ -1,0 +1,65 @@
+'''
+Created on 08/aug/2012
+
+@author: Francesco Capozzo
+'''
+from myclips.FunctionsManager import FunctionDefinition, Constraint_ArgType,\
+    Constraint_ExactArgsLength
+import myclips.parser.Types as types
+from myclips.functions.Function import Function, InvalidArgValueError
+
+
+class Subseq(Function):
+    '''
+    This function extracts a specified range from a multifield value 
+    and returns a new multifield value containing just the sub-sequence.
+
+    (subseq$ <multifield-expression> <begin-integer-expression> <end-integer-expression>)
+
+    where the second and third arguments are integers specifying 
+    the begin and end fields of the desired sub- sequence in <multifield-expression>
+       
+    @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.2.html#Heading225
+    '''
+    def __init__(self, *args, **kwargs):
+        Function.__init__(self, *args, **kwargs)
+        
+        
+    def do(self, theEnv, theMultifield, theBegin, theEnd, *args, **kargs):
+        """
+        handler of the function
+        @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.2.html#Heading225
+        """
+
+        
+        theMultifield = Function.semplify(theEnv, theMultifield, list, ("1", "multifield"))
+        theBegin = Function.resolve(theEnv, 
+                                    Function.semplify(theEnv, theBegin, types.Integer, ("2", "integer")))
+        theEnd = Function.resolve(theEnv, 
+                                    Function.semplify(theEnv, theEnd, types.Integer, ("3", "integer")))
+
+        try:
+            if theBegin != theEnd:
+                # remove a slice of the multifield
+                # check for index values first
+                if theBegin - 1 >= len(theMultifield) or theEnd > len(theMultifield):
+                    raise IndexError()
+                return theMultifield[theBegin-1:theEnd]
+            else:
+                # remove a single item from the multifield
+                return [theMultifield[theBegin-1]]
+        except IndexError:
+            # invalid field!
+            raise InvalidArgValueError("Multifield index %s out of range 1..%d in function delete$"%(
+                                            ("range %d..%d"%(theBegin, theEnd) if theBegin != theEnd else str(theBegin)),
+                                            len(theMultifield)
+                                        ))
+        
+    
+Subseq.DEFINITION = FunctionDefinition("?SYSTEM?", "subseq$", Subseq(), list, Subseq.do,
+            [
+                Constraint_ExactArgsLength(3),
+                Constraint_ArgType(list, 0),
+                Constraint_ArgType(types.Integer, 1),
+                Constraint_ArgType(types.Integer, 2)
+            ],forward=False)
