@@ -102,7 +102,16 @@ class Agenda(object):
         '''
         # get the current module activations container
         try:
-            moduleKey = self._network.modulesManager.currentScope.moduleName
+            # get the module key from the focus stack
+            try:
+                moduleKey = self.focusStack[-1]
+                if moduleKey != self._network.modulesManager.currentScope.moduleName:
+                    # the focus changed, update the scope
+                    self._network.modulesManager.changeScope(moduleKey)
+            except IndexError:
+                # the stack is empty. Try with the current module
+                moduleKey = self._network.modulesManager.currentScope.moduleName
+            
             module_activations = self._activations[moduleKey]
         except KeyError:
             # no activations for this module

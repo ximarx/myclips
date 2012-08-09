@@ -134,6 +134,13 @@ class FunctionImplError(MyClipsException):
     """
     pass
 
+class HaltException(MyClipsException):
+    """
+    Used by Halt function to stop
+    all activation execution
+    """
+    pass
+
 class ReturnException(MyClipsException):
     """
     Exception used by the Return function

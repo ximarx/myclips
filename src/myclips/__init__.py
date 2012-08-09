@@ -12,6 +12,10 @@ _logging.basicConfig(format=FORMAT)
 logger = _logging.getLogger('myclips')
 logger.setLevel(_logging.ERROR)
 
+# THIS FLAG WILL BE USEFULL IF
+# A STRICT_MODE WILL BE AVAILABLE 
+STRICT_MODE=False
+
 def newInstance_fromCanonicalClassname(qclass, constrParams=None):
     
     if constrParams == None:
