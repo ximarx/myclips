@@ -51,6 +51,9 @@ class BaseParsedType(ParsedType):
     def __eq__(self, other):
         return self.__class__ == other.__class__ \
                 and self.evaluate() == other.evaluate()
+                
+    def __neq__(self, other):
+        return not self.__eq__(other)
 
     def __str__(self):
         return str(self.evaluate())
@@ -150,7 +153,7 @@ class FunctionCall(ParsedType, HasScope):
         ParsedType.__init__(self, funcName)
         HasScope.__init__(self, modulesManager)
         
-        self.funcName = funcName.evaluate()
+        self.funcName = funcName.evaluate() if isinstance(funcName, BaseParsedType) else funcName
         self.funcArgs = funcArgs if funcArgs != None else []
         self.funcDefinition = None
         try:

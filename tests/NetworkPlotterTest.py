@@ -12,11 +12,12 @@ from myclips.ModulesManager import ModulesManager
 from unittest.case import skipIf
 import os
 import logging
+from MyClipsBaseTest import MyClipsBaseTest
 
-logging.disable(logging.CRITICAL)
+#logging.disable(logging.CRITICAL)
 
 @skipIf(os.environ.get('_PLOTTER_', "False") == "False", "")
-class NetworkPlotterTest(unittest.TestCase):
+class NetworkPlotterTest(MyClipsBaseTest):
 
 
     def setUp(self):

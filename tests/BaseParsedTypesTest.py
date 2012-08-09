@@ -7,7 +7,7 @@ import unittest
 import logging
 import myclips.parser.Types as types
 
-logging.disable(logging.CRITICAL)
+#logging.disable(logging.CRITICAL)
 
 class BaseParsedTypeTest(unittest.TestCase):
 

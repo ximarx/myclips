@@ -37,21 +37,14 @@ class Build(Function):
         handler of the function
         @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.3.html#Heading236
         """
-        
-        # normalize theString
-        if isinstance(theString, (types.Variable, types.FunctionCall)):
-            theString = self.resolve(theEnv, theString)
-        if isinstance(theString, types.String):
-            theString = theString.evaluate()[1:-1]
-        elif isinstance(theString, types.Symbol):
-            theString = theString.evaluate()
-        else:
-            raise InvalidArgTypeError("Function eval expected argument #1 to be of type string or symbol")
+
+        theString = Build.resolve(theEnv, 
+                                     Build.semplify(theEnv, theString, (types.String, types.Symbol), ("1", "string or symbol")))
         
         theScope = theEnv.modulesManager.currentScope.moduleName
         
         try:
-            theFirstParsed = theEnv.network.getParser().getSParser("ConstructParser").parseString(theString).asList()[0]
+            theFirstParsed = theEnv.network.getParser().getSParser("ConstructParser").scanString(theString).next()[0][0]
         except Exception, e:
             myclips.logger.warn("Build string parsing failed: %s", e)
             returnValue = types.Symbol("FALSE")
@@ -62,8 +55,9 @@ class Build(Function):
                     theEnv.network.addRule(theFirstParsed)
                 elif isinstance(theFirstParsed, types.DefFactsConstruct):
                     theEnv.network.addDeffacts(theFirstParsed)
-            except:
+            except Exception, e:
                 # an error? return FALSE
+                print e
                 returnValue = types.Symbol("FALSE")
             else:
                 # construct added, return TRUE

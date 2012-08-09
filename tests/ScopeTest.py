@@ -9,11 +9,12 @@ from myclips.Scope import Scope, ScopeExport, ScopeImport,\
 from myclips.ModulesManager import ModulesManager
 from myclips.GlobalsManager import GlobalVarDefinition
 import logging
+from MyClipsBaseTest import MyClipsBaseTest
 
 # disable all logging from modules
-logging.disable(logging.CRITICAL)
+#logging.disable(logging.CRITICAL)
 
-class ScopeTest(unittest.TestCase):
+class ScopeTest(MyClipsBaseTest):
 
 
     def test_SimpleScopeGeneration(self):

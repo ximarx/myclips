@@ -81,6 +81,8 @@ class Function(object):
         elif isinstance(arg, list):
             # recursiong to resolve for inner objects
             return [cls.resolve(theEnv, x) for x in arg]
+        else:
+            return arg
         
     @classmethod
     def semplify(cls, theEnv, arg, checkType=None, errorFormat=None):
@@ -119,7 +121,7 @@ class Function(object):
             if not isinstance(theResolved, checkType):
                 try:
                     raise InvalidArgTypeError("Function %s expected argument #%s to be of type %s"%(cls.DEFINITION.name, errorFormat[0], errorFormat[1]) )
-                except:
+                except (AttributeError, IndexError, KeyError):
                     raise InvalidArgTypeError("Expected %s, found %s"%(str(checkType), theResolved.__class__.__name__))
                 
         return theResolved

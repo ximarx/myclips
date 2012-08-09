@@ -10,11 +10,12 @@ from myclips.FunctionsManager import FunctionDefinition
 from myclips.parser.Types import Symbol, Integer
 from myclips.RestrictedManager import MultipleDefinitionError
 from myclips.Scope import ScopeImport, Scope
+from MyClipsBaseTest import MyClipsBaseTest
 
 # disable all logging from modules
-logging.disable(logging.CRITICAL)
+#logging.disable(logging.CRITICAL)
 
-class Test(unittest.TestCase):
+class FunctionsManagerTest(MyClipsBaseTest):
 
 
     def setUp(self):

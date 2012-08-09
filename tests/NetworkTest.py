@@ -20,10 +20,11 @@ from myclips.rete.nodes.NccNode import NccNode
 from myclips.rete.nodes.NccPartnerNode import NccPartnerNode
 from myclips.EventsManager import EventsManager
 from myclips.Fact import Fact
+from MyClipsBaseTest import MyClipsBaseTest
 #from myclips.TemplatesManager import TemplateDefinition, SlotDefinition
 
 # disable all logging from modules
-logging.disable(logging.INFO)
+#logging.disable(logging.CRITICAL)
 
 fact = Fact
 
@@ -51,7 +52,7 @@ class activationCatcher(AlphaInput, BetaInput):
     
     
 
-class Test(unittest.TestCase):
+class NetworkTest(MyClipsBaseTest):
 
 
     def setUp(self):

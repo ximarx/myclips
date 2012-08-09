@@ -6,6 +6,7 @@ Created on 06/aug/2012
 from myclips.FunctionsManager import FunctionDefinition, Constraint_ArgType
 import myclips.parser.Types as types
 from myclips.functions.Function import Function
+from myclips.rete.WME import WME
 
 
 class SymbolConcat(Function):
@@ -26,15 +27,11 @@ class SymbolConcat(Function):
         
         concat = ""
         
+        concat = ""
+        
         for arg in args:
-            if isinstance(arg, (types.FunctionCall, types.Variable)):
-                arg = self.resolve(theEnv, arg)
-            if isinstance(arg, types.String):
-                concat += arg.evaluate()[1:-1]  
-            elif isinstance(arg, types.BaseParsedType):
-                concat += str(arg.evaluate())
-            else:
-                concat += str(arg)
+            concat += str(self.__class__.resolve(theEnv, 
+                                 self.__class__.semplify(theEnv, arg, (types.BaseParsedType, WME), ("ALL", "lexeme, number or fact-address"))))
                 
         return types.Symbol(concat)
         
@@ -42,7 +39,7 @@ class SymbolConcat(Function):
     
 SymbolConcat.DEFINITION = FunctionDefinition("?SYSTEM?", "sym-cat", SymbolConcat(), types.Symbol, SymbolConcat.do,
             [
-                Constraint_ArgType((types.Symbol, types.String, types.Float, types.Integer, types.Number, types.Lexeme))
+                Constraint_ArgType((types.Symbol, types.String, types.Float, types.Integer, types.Number, types.Lexeme, WME))
             ],forward=False)
         
         

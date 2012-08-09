@@ -6,8 +6,9 @@ Created on 30/lug/2012
 import unittest
 import myclips.parser.Types as types
 import myclips.rete.analysis as analysis
+from MyClipsBaseTest import MyClipsBaseTest
 
-class Test(unittest.TestCase):
+class NormalizeLHSTest(MyClipsBaseTest):
 
 
     def test_SimpleAndOrReversion(self):

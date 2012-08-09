@@ -11,13 +11,14 @@ from unittest.case import expectedFailure
 import pyparsing
 import logging
 from myclips.Scope import Scope
+from MyClipsBaseTest import MyClipsBaseTest
 #from myclips.parser.Templates import _SampleTemplatesInit
 
 # disable all logging from modules
-logging.disable(logging.CRITICAL)
+#logging.disable(logging.CRITICAL)
 
 
-class ParserTest(unittest.TestCase):
+class ParserTest(MyClipsBaseTest):
 
     def setUp(self):
         #if True or not hasattr(self, "parser"):

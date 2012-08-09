@@ -8,11 +8,12 @@ from myclips.ModulesManager import ModulesManager,\
     ModulesManagerRedefinitionError, UnknownModuleError
 from myclips.Scope import Scope
 import logging
+from MyClipsBaseTest import MyClipsBaseTest
 
 # disable all logging from modules
-logging.disable(logging.CRITICAL)
+#logging.disable(logging.CRITICAL)
 
-class ModulesManagerTest(unittest.TestCase):
+class ModulesManagerTest(MyClipsBaseTest):
 
     def setUp(self):
         unittest.TestCase.setUp(self)

@@ -5,9 +5,11 @@ Created on 28/lug/2012
 '''
 import unittest
 from myclips.rete.tests.locations import VariableLocation, VariableReference
+from MyClipsBaseTest import MyClipsBaseTest
 
 
-class Test(unittest.TestCase):
+
+class VariableReferenceTest(MyClipsBaseTest):
 
 
     def test_ComparisonEqual(self):

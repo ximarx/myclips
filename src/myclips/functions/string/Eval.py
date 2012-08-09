@@ -36,19 +36,16 @@ class Eval(Function):
         @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.3.html#Heading234
         """
         
-        # normalize theString
-        if isinstance(theString, (types.Variable, types.FunctionCall)):
-            theString = self.resolve(theEnv, theString)
-        if isinstance(theString, types.String):
-            theString = theString.evaluate()[1:-1]
-        elif isinstance(theString, types.Symbol):
-            theString = theString.evaluate()
-        else:
-            raise InvalidArgTypeError("Function eval expected argument #1 to be of type string or symbol")
+        theString = Eval.resolve(theEnv, 
+                                     Eval.semplify(theEnv, theString, (types.String, types.Symbol), ("1", "string or symbol")))
         
         
         try:
-            theFirstParsed = theEnv.network.getParser().getSParser("ActionParser").parseString(theString).asList()[0]
+            theParser = ( theEnv.network.getParser().getSParser("RhsFunctionCallParser")
+                            | theEnv.network.getParser().getSParser("VariableParser")
+                            | theEnv.network.getParser().getSParser("ConstantParser")
+                          ).setParseAction(lambda s,l,t: t[0])
+            theFirstParsed = theParser.parseString(theString).asList()[0]
         except Exception, e:
             myclips.logger.warn("Eval string parsing failed: %s", e)
             return types.Symbol("FALSE")
@@ -61,6 +58,8 @@ class Eval(Function):
             elif isinstance(theFirstParsed, (types.SingleFieldVariable, types.MultiFieldVariable)):
                 myclips.logger.warn("Eval command execution returned a variable: %s", theFirstParsed)
                 return types.Symbol("FALSE")
+            elif isinstance(theFirstParsed, types.GlobalVariable):
+                return self.semplify(theEnv, theFirstParsed)
             elif isinstance(theFirstParsed, (types.BaseParsedType, WME, list)):
                 return theFirstParsed
             else:
