@@ -10,7 +10,7 @@ from myclips.functions.Function import InvalidArgTypeError
 from myclips.functions.string.StringLength import StringLength
 
 
-class StringIndexTest(BaseFunctionTest):
+class StringLengthTest(BaseFunctionTest):
 
     def setUp(self):
         BaseFunctionTest.setUp(self)
