@@ -3,8 +3,9 @@ import sys
 from myclips.ModulesManager import ModulesManager
 from myclips.parser.Types import ParsedType
 import myclips
-from myclips.functions.Function import FunctionInternalError
+from myclips.functions.Function import FunctionInternalError, HaltException
 import traceback
+from myclips.Agenda import AgendaNoMoreActivationError
 
 def constructs_prettyprint(constr_string, INDENT=0):
     output = sys.stdout
@@ -27,13 +28,28 @@ if __name__ == '__main__':
     if True:
         try:
             n = myclips.main()
-            pnode, token = n.agenda.getActivation()
-            pnode.execute(token)
-            pnode, token = n.agenda.getActivation()
-            pnode.execute(token)
+            while True:
+                try:
+                    pnode, token = n.agenda.getActivation()
+                    pnode.execute(token)
+                    print '-----', pnode.mainRuleName
+                    for (salience, pnode, token) in n.agenda.activations():
+                        print "%-6d %s: %s"%(salience, pnode.mainRuleName, token)
+                    print '---------'
+                    
+                except AgendaNoMoreActivationError:
+                    try:
+                        # try to pop the focusStack
+                        n.agenda.focusStack.pop()
+                    except IndexError:
+                        # pop from an empty stack
+                        break
+            
         except FunctionInternalError, e:
             print e.args[2]
-            raise 
+            raise
+        except HaltException, e:
+            print "HAAAAAALT!!" 
     
         exit()
     

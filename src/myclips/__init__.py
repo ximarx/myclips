@@ -77,9 +77,11 @@ def main():
     (deftemplate A 
         (slot a)
         (slot b))
+        
     (deffacts df 
         (A B C D)
         (A (a 1) (b 2)))
+        
     (defrule r 
         (A B C D) 
         => 
