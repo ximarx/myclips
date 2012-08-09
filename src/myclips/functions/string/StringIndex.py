@@ -32,26 +32,11 @@ class StringIndex(Function):
         @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.3.html#Heading234
         """
         
-        # normalize theNeedle
-        if isinstance(theNeedle, (types.Variable, types.FunctionCall)):
-            theNeedle = self.resolve(theEnv, theNeedle)
-        if isinstance(theNeedle, types.String):
-            theNeedle = theNeedle.evaluate()[1:-1]
-        elif isinstance(theNeedle, types.Symbol):
-            theNeedle = theNeedle.evaluate()
-        else:
-            raise InvalidArgTypeError("Function str-index expected argument #1 to be of type lexeme")
-
-        # normalize theNeedle
-        if isinstance(theHaystack, (types.Variable, types.FunctionCall)):
-            theHaystack = self.resolve(theEnv, theHaystack)
-        if isinstance(theHaystack, types.String):
-            theHaystack = theHaystack.evaluate()[1:-1]
-        elif isinstance(theHaystack, types.Symbol):
-            theHaystack = theHaystack.evaluate()
-        else:
-            raise InvalidArgTypeError("Function str-index expected argument #2 to be of type lexeme")
+        theNeedle = self.resolve(theEnv, 
+                                 self.semplify(theEnv, theNeedle, types.Lexeme, ("1", "string or symbol")))
         
+        theHaystack = self.resolve(theEnv, 
+                                 self.semplify(theEnv, theHaystack, types.Lexeme, ("2", "string or symbol")))
 
         
         thePosition = pystring.find(theHaystack, theNeedle)
