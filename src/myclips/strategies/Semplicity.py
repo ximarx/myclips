@@ -23,6 +23,7 @@ else:
         '''
         Adds new activations using a FIFO strategy 
         '''
+        NAME = "semplicity"
         
         def newContainer(self):
             return blist.sortedlist(key=lambda x: x[0].getProperty('specificity', 0))

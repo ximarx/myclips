@@ -18,5 +18,9 @@
     {
         "class": "PopFocus", 
         "module": "myclips.functions.agenda.PopFocus"
+    }, 
+    {
+        "class": "SetStrategy", 
+        "module": "myclips.functions.agenda.SetStrategy"
     }
 ]

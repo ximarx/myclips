@@ -10,6 +10,7 @@ class Random(Strategy):
     '''
     Add new activation using a LIFO strategy 
     '''
+    NAME = "random"
     
     def newContainer(self):
         return []

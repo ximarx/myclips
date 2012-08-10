@@ -23,6 +23,7 @@ else:
         '''
         Adds new activations using a FIFO strategy 
         '''
+        NAME = "mea"
         
         def newContainer(self):
             return blist.sortedlist(key=lambda x: self._first_epoc(x[1]))

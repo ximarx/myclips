@@ -26,8 +26,11 @@ class factory(object):
 
 class Strategy(object):
     
-    def __init__(self, *args, **kwargs):
-        object.__init__(self, *args, **kwargs)
+    NAME = ""
+    
+    @classmethod
+    def getName(cls):
+        return cls.NAME
         
     def insert(self, perSalienceContainer, thePNode, theToken):
         raise NotImplementedError()

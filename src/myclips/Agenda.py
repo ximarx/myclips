@@ -280,6 +280,10 @@ class Agenda(object):
         '''
         return len(self._activations) == 0
     
+    @property
+    def strategy(self):
+        return self._strategy.getName()
+    
     def changeStrategy(self, strategy):
         """
         Change the current strategy with a new one
@@ -299,6 +303,10 @@ class Agenda(object):
                             # the new strategy can't do on-place-resort
                             # so, returned a new container to replace the old one
                             per_modules_queue[salience] = returned
+                            
+            return oldStrategy.getName()
+        else:
+            return strategy.getName()
                             
                     
     def activations(self, moduleName=None):

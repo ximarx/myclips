@@ -10,6 +10,7 @@ class Breadth(Strategy):
     '''
     Adds new activations using a FIFO strategy 
     '''
+    NAME = "breadth"
     
     def newContainer(self):
         return collections.deque()

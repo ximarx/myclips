@@ -10,6 +10,8 @@ class Depth(Strategy):
     Add new activation using a LIFO strategy 
     '''
     
+    NAME = "depth"
+    
     def newContainer(self):
         return []
     
