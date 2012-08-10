@@ -12,6 +12,10 @@
         "module": "myclips.functions.agenda.GetFocusStack"
     }, 
     {
+        "class": "GetStrategy", 
+        "module": "myclips.functions.agenda.GetStrategy"
+    }, 
+    {
         "class": "Halt", 
         "module": "myclips.functions.agenda.Halt"
     }, 
