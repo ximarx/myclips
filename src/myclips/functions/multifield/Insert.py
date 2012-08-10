@@ -37,9 +37,9 @@ class Insert(Function):
         """
 
         
-        theMultifield = Function.semplify(theEnv, theMultifield, list, ("1", "multifield"))
-        theIndex = Function.resolve(theEnv, 
-                                    Function.semplify(theEnv, theIndex, types.Integer, ("2", "integer")))
+        theMultifield = self.semplify(theEnv, theMultifield, list, ("1", "multifield"))
+        theIndex = self.resolve(theEnv, 
+                                    self.semplify(theEnv, theIndex, types.Integer, ("2", "integer")))
 
 
         theBegin = theMultifield[0:theIndex-1]
@@ -47,7 +47,7 @@ class Insert(Function):
         
         theInner = []
         for theArg in args:
-            theArg = Function.semplify(theEnv, theArg, (list), ("1", "number, lexeme, fact-address or multifield"))
+            theArg = self.semplify(theEnv, theArg, (list), ("1", "number, lexeme, fact-address or multifield"))
             if  isinstance(theArg, list):
                 theInner += theArg
             else:

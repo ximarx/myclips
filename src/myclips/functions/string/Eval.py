@@ -36,8 +36,8 @@ class Eval(Function):
         @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.3.html#Heading234
         """
         
-        theString = Eval.resolve(theEnv, 
-                                     Eval.semplify(theEnv, theString, (types.String, types.Symbol), ("1", "string or symbol")))
+        theString = self.resolve(theEnv, 
+                                     self.semplify(theEnv, theString, (types.String, types.Symbol), ("1", "string or symbol")))
         
         
         try:

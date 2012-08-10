@@ -27,11 +27,9 @@ class SymbolConcat(Function):
         
         concat = ""
         
-        concat = ""
-        
         for arg in args:
-            concat += str(self.__class__.resolve(theEnv, 
-                                 self.__class__.semplify(theEnv, arg, (types.BaseParsedType, WME), ("ALL", "lexeme, number or fact-address"))))
+            concat += str(self.resolve(theEnv, 
+                                 self.semplify(theEnv, arg, (types.BaseParsedType, WME), ("ALL", "lexeme, number or fact-address"))))
                 
         return types.Symbol(concat)
         

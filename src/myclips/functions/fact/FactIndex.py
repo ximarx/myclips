@@ -28,7 +28,7 @@ class FactIndex(Function):
         @see http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.9.html#Heading306
         """
         
-        theWme = Function.semplify(theEnv, theWme, WME, ("1", "fact-address"))
+        theWme = self.semplify(theEnv, theWme, WME, ("1", "fact-address"))
         
         return types.Integer(theWme.factId)
             

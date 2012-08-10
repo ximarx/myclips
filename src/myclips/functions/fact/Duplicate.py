@@ -46,7 +46,7 @@ class Duplicate(Function):
         """
         
         # 1) resolve the theFact to a WME
-        theFact = Duplicate.resolveFact(theEnv, Duplicate.semplify(theEnv, theFact, (WME, types.Integer), ('1', "fact-address or integer" )))
+        theFact = self.resolveFact(theEnv, self.semplify(theEnv, theFact, (WME, types.Integer), ('1', "fact-address or integer" )))
         
         # 2) check if it's a template fact
         if not theFact.fact.isTemplateFact():
@@ -60,15 +60,15 @@ class Duplicate(Function):
         for theSlot in args:
             # each arg is a types.OrderedRhsQualcosa: index 0 is the slot name, then values
             assert isinstance(theSlot, types.OrderedRhsPattern)
-            theSlotName = Function.resolve(theEnv, 
-                                           Function.semplify(theEnv, theSlot.values[0], types.Symbol))
+            theSlotName = self.resolve(theEnv, 
+                                           self.semplify(theEnv, theSlot.values[0], types.Symbol))
             
             if len(theSlot.values) > 2:
                 # it's a multifield
-                theSlotValues = Function.semplify(theEnv, theSlot.values[1:None])
+                theSlotValues = self.semplify(theEnv, theSlot.values[1:None])
             else:
                 # it's a single field
-                theSlotValues = Function.semplify(theEnv, theSlot.values[1])
+                theSlotValues = self.semplify(theEnv, theSlot.values[1])
                 
             theBackup[theSlotName] = theSlotValues
             
@@ -78,11 +78,7 @@ class Duplicate(Function):
             
         return theWme if isNew else types.Symbol("FALSE")
             
-    @classmethod
-    def resolveFact(cls, theEnv, arg):
-        """
-        Override Function.resolve facts from args
-        """
+    def resolveFact(self, theEnv, arg):
         if isinstance(arg, types.Integer):
             #convert the <Interger:INT> into a <WME:f-INT>
             return theEnv.network.getWmeFromId(arg.evaluate())

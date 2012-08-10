@@ -11,7 +11,7 @@ from myclips.functions.Function import Function
 
 class Refresh(Function):
     '''
-    Assert new fact in the working memory
+    Refresh a rule status in the agenda
     '''
     def __init__(self, *args, **kwargs):
         Function.__init__(self, *args, **kwargs)
@@ -19,11 +19,10 @@ class Refresh(Function):
         
     def do(self, funcEnv, ruleName, *args, **kargs):
         """
-        handler of the Assert function:
-            assert new fact in the network working memory
+        function handler implementation
         """
         
-        ruleName = Function.resolve(funcEnv, ruleName)
+        ruleName = self.resolve(funcEnv, self.semplify(funcEnv, ruleName, types.Symbol, ("1", "symbol")))
         
         # resolve the main PNode
         

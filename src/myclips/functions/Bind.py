@@ -45,10 +45,10 @@ class Bind(Function):
             newValue = None
         elif len(args) == 1:
             # it's a single argument
-            newValue = self.resolve(funcEnv, args[0])
+            newValue = self.semplify(funcEnv, args[0])
         else:
             # more than one, create a multifield for them
-            newValue = [self.resolve(funcEnv, arg) for arg in args]
+            newValue = [self.semplify(funcEnv, arg) for arg in args]
 
         if isinstance(variable, types.GlobalVariable):
             
@@ -87,7 +87,7 @@ Bind.DEFINITION = FunctionDefinition("?SYSTEM?", "bind", Bind(), (types.Lexeme, 
                                                                     Bind.do,
             [
                 Constraint_MinArgsLength(1),
-                Constraint_ArgType((types.SingleFieldVariable, types.GlobalVariable), 0),
+                Constraint_ArgType((types.SingleFieldVariable, types.MultiFieldVariable, types.GlobalVariable), 0),
             ],forward=False)
         
         

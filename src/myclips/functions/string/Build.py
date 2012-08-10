@@ -38,8 +38,8 @@ class Build(Function):
         @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.3.html#Heading236
         """
 
-        theString = Build.resolve(theEnv, 
-                                     Build.semplify(theEnv, theString, (types.String, types.Symbol), ("1", "string or symbol")))
+        theString = self.resolve(theEnv, 
+                                     self.semplify(theEnv, theString, (types.String, types.Symbol), ("1", "string or symbol")))
         
         theScope = theEnv.modulesManager.currentScope.moduleName
         

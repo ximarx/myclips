@@ -27,7 +27,7 @@ class First(Function):
         """
 
         
-        theMultifield = Function.semplify(theEnv, theMultifield, list, ("1", "multifield"))
+        theMultifield = self.semplify(theEnv, theMultifield, list, ("1", "multifield"))
                 
         return theMultifield[0:1]
         

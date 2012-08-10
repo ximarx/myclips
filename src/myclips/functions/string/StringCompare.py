@@ -34,13 +34,13 @@ class StringCompare(Function):
         """
         
         # resolve to a python value (trim quotes from string too)
-        theLeft = StringCompare.resolve(theEnv, 
+        theLeft = self.resolve(theEnv, 
                                         # semplify to a BaseParsedType if variable or function call and check types
-                                        StringCompare.semplify(theEnv, theLeft, (types.String, types.Symbol), ("1", "string or symbol")))
+                                        self.semplify(theEnv, theLeft, (types.String, types.Symbol), ("1", "string or symbol")))
         # resolve to a python value (trim quotes from string too)
-        theRight = StringCompare.resolve(theEnv,
+        theRight = self.resolve(theEnv,
                                          # semplify to a BaseParsedType if variable or function call and check types 
-                                         StringCompare.semplify(theEnv, theRight, (types.String, types.Symbol), ("2", "string or symbol")))
+                                         self.semplify(theEnv, theRight, (types.String, types.Symbol), ("2", "string or symbol")))
 
         return types.Integer(cmp(theLeft, theRight))
         

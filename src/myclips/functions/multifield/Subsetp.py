@@ -33,8 +33,8 @@ class Subsetp(Function):
         @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.2.html#Heading221
         """
 
-        theSubSet = Function.semplify(theEnv, theSubSet, list, ("1", "multifield"))
-        theMultifield = Function.semplify(theEnv, theMultifield, list, ("2", "multifield"))
+        theSubSet = self.semplify(theEnv, theSubSet, list, ("1", "multifield"))
+        theMultifield = self.semplify(theEnv, theMultifield, list, ("2", "multifield"))
 
         return types.Symbol("TRUE") if set(theSubSet) <= set(theMultifield) else types.Symbol("FALSE")
         

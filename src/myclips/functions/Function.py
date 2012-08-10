@@ -20,7 +20,7 @@ class Function(object):
         object.__init__(self, *args, **kwargs)
 
     @classmethod
-    def execute(cls, theEnv, *args, **kargs):
+    def execute(cls, theFunction, theEnv, *args, **kargs):
         """
         Execute a function handler with correct parameters
         
@@ -33,11 +33,14 @@ class Function(object):
         @rtype: mixed (based on FunctionDefinition.returnTypes)
         """
         try:
+            # this calling protocol is valid for system function
+            # user function have to override this protocol
+            # to use theFunction call instead
             return cls.DEFINITION.handler(cls.DEFINITION.linkedType, theEnv, *args, **kargs)
         #except ReturnException, e:
             # convert a returnException to a return value of the function
             #return e.returnValue
-        except (ReturnException, BreakException):
+        except (ReturnException, BreakException, HaltException):
             # break the execution until a catch get it
             raise
         except FunctionImplError:
@@ -55,8 +58,7 @@ class Function(object):
         """
         return self.__class__.DEFINITION
     
-    @classmethod
-    def resolve(cls, theEnv, arg):
+    def resolve(self, theEnv, arg):
         """
         Resolve the python value of a BaseParsedType
         or a a BaseParsedType for FunctionCall and Variables
@@ -71,7 +73,7 @@ class Function(object):
             return arg.evaluate()
         elif isinstance(arg, types.FunctionCall):
             # indirect recursion on execute with
-            return arg.funcDefinition.linkedType.__class__.execute(theEnv, *(arg.funcArgs))
+            return arg.funcDefinition.linkedType.__class__.execute(arg.funcDefinition.linkedType, theEnv, *(arg.funcArgs))
         elif isinstance(arg, (types.SingleFieldVariable, types.MultiFieldVariable )):
             # resolve the variable value vs theEnv.variables dict
             return theEnv.variables[arg.evaluate()]
@@ -80,12 +82,11 @@ class Function(object):
             return theEnv.modulesManager.currentScope.globalsvars.getDefinition(arg.evaluate()).linkedType.runningValue
         elif isinstance(arg, list):
             # recursiong to resolve for inner objects
-            return [cls.resolve(theEnv, x) for x in arg]
+            return [self.resolve(theEnv, x) for x in arg]
         else:
             return arg
         
-    @classmethod
-    def semplify(cls, theEnv, arg, checkType=None, errorFormat=None):
+    def semplify(self, theEnv, arg, checkType=None, errorFormat=None):
         '''
         Execute a semplification of the arg if the arg
         is a function or a variable and return the BaseParsedType
@@ -111,16 +112,16 @@ class Function(object):
         @raise InvalidArgTypeError: if semplified value is not of the expected type(s)
         '''
         if isinstance(arg, (types.FunctionCall, types.Variable)):
-            theResolved = cls.resolve(theEnv, arg)
+            theResolved = self.resolve(theEnv, arg)
         elif isinstance(arg, list):
-            theResolved = [cls.semplify(theEnv, x) for x in arg]
+            theResolved = [self.semplify(theEnv, x) for x in arg]
         else:
             theResolved = arg
             
         if checkType is not None:
             if not isinstance(theResolved, checkType):
                 try:
-                    raise InvalidArgTypeError("Function %s expected argument #%s to be of type %s"%(cls.DEFINITION.name, errorFormat[0], errorFormat[1]) )
+                    raise InvalidArgTypeError("Function %s expected argument #%s to be of type %s"%(self.DEFINITION.name, errorFormat[0], errorFormat[1]) )
                 except (AttributeError, IndexError, KeyError):
                     raise InvalidArgTypeError("Expected %s, found %s"%(str(checkType), theResolved.__class__.__name__))
                 

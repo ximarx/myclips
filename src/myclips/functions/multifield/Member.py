@@ -33,8 +33,8 @@ class Member(Function):
         @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.2.html#Heading220
         """
 
-        theValue = Member.semplify(theEnv, theValue, (types.Lexeme, types.Number, WME), ("1", "number, lexeme or fact"))
-        theMultifield = Member.semplify(theEnv, theMultifield, list, ("2", "multifield"))
+        theValue = self.semplify(theEnv, theValue, (types.Lexeme, types.Number, WME), ("1", "number, lexeme or fact"))
+        theMultifield = self.semplify(theEnv, theMultifield, list, ("2", "multifield"))
         
         try:
             theIndex = theMultifield.index(theValue)

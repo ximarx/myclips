@@ -144,7 +144,7 @@ class PNode(Node, BetaInput, Memory):
             
             assert isinstance(funcDefinition, FunctionDefinition)
             # expand the args 
-            funcDefinition.linkedType.__class__.execute(theEnv, *(action.funcArgs))
+            funcDefinition.linkedType.__class__.execute(funcDefinition.linkedType, theEnv, *(action.funcArgs))
         
         # ...
         

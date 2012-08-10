@@ -31,33 +31,32 @@ class AssertString(Function):
         @see http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.9.html#Heading305
         """
         
-        theString = Function.resolve(theEnv, 
-                                     Function.semplify(theEnv, theString, types.String, ("1", "string")))
+        theString = self.resolve(theEnv, 
+                                     self.semplify(theEnv, theString, types.String, ("1", "string")))
         
         try:
             theRhsPattern = theEnv.network.getParser().getSParser("RhsPatternParser").parseString(theString).asList()[0]
         except IndexError:
             return types.Symbol("FALSE")
         else:
-            theFact = AssertString.createFact(theEnv, theRhsPattern)
+            theFact = self.createFact(theEnv, theRhsPattern)
             theWme, isNew = theEnv.network.assertFact(theFact)
             return theWme if isNew else types.Symbol("FALSE")
             
     
             
             
-    @classmethod
-    def createFact(cls, theEnv, arg):
+    def createFact(self, theEnv, arg):
         if isinstance(arg, types.OrderedRhsPattern):
             # convert it in a new Ordered Fact
-            return Fact([Function.semplify(theEnv, v, types.BaseParsedType) for v in arg.values], templateName=None, moduleName=theEnv.modulesManager.currentScope.moduleName)
+            return Fact([self.semplify(theEnv, v, types.BaseParsedType) for v in arg.values], templateName=None, moduleName=theEnv.modulesManager.currentScope.moduleName)
         elif isinstance(arg, types.TemplateRhsPattern):
             # convert it in a new Template Fact
             # the fact value is a dict with (slotName, slotValue) where slotValue:
                                 # is a baseparsedtype if singlefield
-            return Fact(dict([(v.slotName, Function.semplify(theEnv, v.slotValue, types.BaseParsedType)) if isinstance(v, types.SingleFieldRhsSlot)
+            return Fact(dict([(v.slotName, self.semplify(theEnv, v.slotValue, types.BaseParsedType)) if isinstance(v, types.SingleFieldRhsSlot)
                                 # or a list if multifield (solved, this means is a list of base-parsed-type)
-                                else (v.slotName, Function.semplify(theEnv, v.slotValue, list)) if isinstance(v, types.MultiFieldRhsSlot)
+                                else (v.slotName, self.semplify(theEnv, v.slotValue, list)) if isinstance(v, types.MultiFieldRhsSlot)
                                     else (v.slotName, v.slotValue) #don't know what to do FIXME
                               for v in arg.templateSlots]),
                         templateName=arg.templateName, 

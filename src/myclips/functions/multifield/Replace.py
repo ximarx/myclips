@@ -34,11 +34,11 @@ class Replace(Function):
         """
 
         
-        theMultifield = Function.semplify(theEnv, theMultifield, list, ("1", "multifield"))
-        theBegin = Function.resolve(theEnv, 
-                                    Function.semplify(theEnv, theBegin, types.Integer, ("2", "integer")))
-        theEnd = Function.resolve(theEnv, 
-                                    Function.semplify(theEnv, theEnd, types.Integer, ("3", "integer")))
+        theMultifield = self.semplify(theEnv, theMultifield, list, ("1", "multifield"))
+        theBegin = self.resolve(theEnv, 
+                                    self.semplify(theEnv, theBegin, types.Integer, ("2", "integer")))
+        theEnd = self.resolve(theEnv, 
+                                    self.semplify(theEnv, theEnd, types.Integer, ("3", "integer")))
 
 
         try:
@@ -57,7 +57,7 @@ class Replace(Function):
         else:
             theInner = []
             for theArg in args:
-                theArg = Function.semplify(theEnv, theArg, (list), ("1", "number, lexeme, fact-address or multifield"))
+                theArg = self.semplify(theEnv, theArg, (list), ("1", "number, lexeme, fact-address or multifield"))
                 if  isinstance(theArg, list):
                     theInner += theArg
                 else:

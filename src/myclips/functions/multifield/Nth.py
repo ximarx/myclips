@@ -33,10 +33,10 @@ class Nth(Function):
         @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.2.html#Heading219
         """
 
-        theIndex = Nth.resolve(theEnv, Nth.semplify(theEnv, theIndex, types.Integer, ("1", "integer")))
+        theIndex = self.resolve(theEnv, self.semplify(theEnv, theIndex, types.Integer, ("1", "integer")))
 
         try:
-            return Nth.semplify(theEnv, theMultifield)[theIndex]
+            return self.semplify(theEnv, theMultifield)[theIndex]
         except IndexError:
             return types.Symbol("nil")
     

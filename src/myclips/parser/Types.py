@@ -9,6 +9,7 @@ from myclips.FunctionsManager import FunctionDefinition,\
     Constraint_ExactArgsLength, Constraint_MinArgsLength
 from myclips.rete.WME import WME
 
+
 class ParsedType(object):
     '''
     Base class for all parsed types
@@ -838,15 +839,21 @@ class DefFunctionConstruct(ParsedType, HasScope):
         else :
             constraints.append( Constraint_MinArgsLength(minParams) )
             
+        from myclips.functions.UserFunction import UserFunction
+            
+        functionHandler = UserFunction(self.params, self.actions)
+            
         fDef = FunctionDefinition(self.scope.moduleName, functionName,
-                                    linkedType=self, 
+                                    linkedType=functionHandler, 
                                     returnTypes=(self.actions[-1].funcDefinition.returnTypes 
                                                     if len(self.actions) > 0 and isinstance(self.actions[-1], FunctionCall)
-                                                        else self.actions[-1] if isinstance(self.actions[-1], BaseParsedType)
+                                                        else self.actions[-1].__class__ if isinstance(self.actions[-1], BaseParsedType)
                                                             else (Lexeme, Number, list, WME)), 
-                                    handler=None, 
+                                    handler=functionHandler.do, 
                                     constraints=constraints, 
                                     forward=True)
+        
+        functionHandler.DEFINITION = fDef
                 
         self.scope.functions.addDefinition(fDef)
 

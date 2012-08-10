@@ -22,7 +22,7 @@ class Printout(Function):
         """
         
         # convert <TYPE:value> to python value
-        resourceId = Printout.resolve(funcEnv, resourceId)
+        resourceId = Function.resolve(self, funcEnv, self.semplify(funcEnv, resourceId, types.Symbol, ("1", "symbol")))
         
         try:
             resource = funcEnv.RESOURCES[resourceId]
@@ -34,22 +34,21 @@ class Printout(Function):
             for fragment in args:
                 
                 # revolve variables and function calls
-                fragment = Printout.resolve(funcEnv, fragment)
+                fragment = self.resolve(funcEnv, self.semplify(funcEnv, fragment))
                 
                 resource.write(str(fragment))
                 
             return returnValue
     
-    @classmethod
-    def resolve(cls, funcEnv, arg):
+    def resolve(self, funcEnv, arg):
         """
         Override Function.resolve to manage the <Symbol:crlf> conversion to NEWLINE
         and to remove quotes in types.String values
         """
-        if isinstance(arg, types.Symbol) and arg.evaluate() == "crlf":
+        if isinstance(arg, types.Symbol) and arg.pyEqual("crlf"):
             return "\n"
         else:
-            return super(Printout, cls).resolve(funcEnv, arg)
+            return Function.resolve(self, funcEnv, arg)
     
 # Function definition
 

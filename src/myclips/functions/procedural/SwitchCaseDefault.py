@@ -74,7 +74,8 @@ class Switch(Function):
             # if return is None = it's not the right case
             # (maybe it's better and exception)
             try:
-                returnValue = caseFunc.funcDefinition.linkedType.__class__.execute(theEnv, theResult, *(caseFunc.funcArgs))
+                returnValue = caseFunc.funcDefinition.linkedType.__class__.execute(caseFunc.funcDefinition.linkedType, 
+                                                                                   theEnv, theResult, *(caseFunc.funcArgs))
                 break # break the for at the first positive case clause executed
             except InvalidCaseException:
                 pass
@@ -85,7 +86,8 @@ class Switch(Function):
         # otherwise return None
             
         if returnValue is None and theDefault is not None:
-            return theDefault.funcDefinition.linkedType.__class__.execute(theEnv, theResult, *(theDefault.funcArgs))
+            return theDefault.funcDefinition.linkedType.__class__.execute(theDefault.funcDefinition.linkedType, 
+                                                                          theEnv, theResult, *(theDefault.funcArgs))
         else:
             return returnValue if returnValue is not None else types.Symbol("FALSE")
             

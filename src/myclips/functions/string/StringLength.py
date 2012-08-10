@@ -26,9 +26,9 @@ class StringLength(Function):
         """
         
         # resolve to a python value (trim quotes from string too)
-        theString = StringLength.resolve(theEnv, 
+        theString = self.resolve(theEnv, 
                                         # semplify to a BaseParsedType if variable or function call and check types
-                                        StringLength.semplify(theEnv, theString, (types.String, types.Symbol), ("1", "string or symbol")))
+                                        self.semplify(theEnv, theString, (types.String, types.Symbol), ("1", "string or symbol")))
 
         return types.Integer(len(theString))
         

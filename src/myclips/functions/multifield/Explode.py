@@ -36,8 +36,8 @@ class Explode(Function):
         """
 
         
-        theString = Function.resolve(theEnv, 
-                                    Function.semplify(theEnv, theString, types.String, ("1", "string")))
+        theString = self.resolve(theEnv, 
+                                    self.semplify(theEnv, theString, types.String, ("1", "string")))
         
         if theString.strip() == "":
             return [] # return an empty list

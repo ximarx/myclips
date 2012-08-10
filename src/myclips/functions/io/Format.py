@@ -35,16 +35,11 @@ class Format(Function):
         Function handler implementation
         """
         
-        # convert <FunctionCall> to his value if needed for theFormat
-        resourceId = Format.resolve(funcEnv, resourceId) if isinstance(resourceId, (types.Variable, types.FunctionCall)) else resourceId
-        if not isinstance(resourceId, types.Symbol):
-            raise InvalidArgTypeError("Function format expected argument #1 to be of type symbol")
-        
-        # convert <FunctionCall> to his value if needed for theFormat
-        theFormat = Format.resolve(funcEnv, theFormat) if isinstance(resourceId, (types.Variable, types.FunctionCall)) else theFormat
-        if not isinstance(theFormat, types.String):
-            raise InvalidArgTypeError("Function format expected argument #2 to be of type string")
-        
+        resourceId =  self.semplify(funcEnv, resourceId, (types.Symbol), ("1", "symbol"))
+
+        theFormat = self.resolve(funcEnv, self.semplify(funcEnv, theFormat, (types.String), ("2", "string")))
+
+
         try:
             if not resourceId.pyEqual('nil'):
                 resource = funcEnv.RESOURCES[resourceId.evaluate()]
@@ -59,11 +54,11 @@ class Format(Function):
             for fragment in args:
                 
                 # revolve variables and function calls
-                returnValueRaw.append(Format.resolve(funcEnv, fragment))
+                returnValueRaw.append(self.resolve(funcEnv, self.semplify(funcEnv, fragment)))
                 
                 
             # theFormat is a string
-            returnValueRaw = theFormat.evaluate()[1:-1]%tuple([x.evaluate() if isinstance(x, types.BaseParsedType) else x for x in returnValueRaw])
+            returnValueRaw = theFormat%tuple(returnValueRaw)
 
             if resource is not None:
                 resource.write(returnValueRaw)

@@ -32,11 +32,11 @@ class Subseq(Function):
         """
 
         
-        theMultifield = Function.semplify(theEnv, theMultifield, list, ("1", "multifield"))
-        theBegin = Function.resolve(theEnv, 
-                                    Function.semplify(theEnv, theBegin, types.Integer, ("2", "integer")))
-        theEnd = Function.resolve(theEnv, 
-                                    Function.semplify(theEnv, theEnd, types.Integer, ("3", "integer")))
+        theMultifield = self.semplify(theEnv, theMultifield, list, ("1", "multifield"))
+        theBegin = self.resolve(theEnv, 
+                                    self.semplify(theEnv, theBegin, types.Integer, ("2", "integer")))
+        theEnd = self.resolve(theEnv, 
+                                    self.semplify(theEnv, theEnd, types.Integer, ("3", "integer")))
 
         try:
             if theBegin != theEnd:

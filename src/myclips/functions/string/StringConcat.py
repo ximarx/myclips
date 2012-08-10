@@ -27,8 +27,8 @@ class StringConcat(Function):
         concat = ""
         
         for arg in args:
-            concat += str(StringConcat.resolve(theEnv, 
-                                 StringConcat.semplify(theEnv, arg, (types.BaseParsedType, WME), ("ALL", "lexeme, number or fact-address"))))
+            concat += str(self.resolve(theEnv, 
+                                 self.semplify(theEnv, arg, (types.BaseParsedType, WME), ("ALL", "lexeme, number or fact-address"))))
                 
         return types.String(concat)
         

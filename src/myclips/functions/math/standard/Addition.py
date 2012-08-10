@@ -39,13 +39,9 @@ class Addition(Function):
         theSum = theFirst.evaluate()
         
         for (index, theSecond) in enumerate(args):
-            if isinstance(theSecond, (types.FunctionCall, types.Variable)):
-                theSecond = self.resolve(theEnv, theSecond)
-                
-            if not isinstance(theSecond, (types.Integer, types.Float)):
-                raise InvalidArgTypeError("Function + expected argument #%d to be of type integer or float"%index + 2)
             
-            theSum = theSum + theSecond.evaluate()
+            theSum = theSum + self.resolve(theEnv, 
+                                           self.semplify(theEnv, theSecond, types.Number, (str(index + 2), "integer or float")))
             
         # CLIPS documentation:
         # after all computations, if the value is still an integer, then create a new <Integer:theSum>

@@ -39,7 +39,7 @@ class Create(Function):
         theArgs = []
         for i, theArg in enumerate(args):        
             # semplify to a BaseParsedType if variable or function call and check types
-            theArg = Create.semplify(theEnv, theArg, (types.BaseParsedType, list, WME), (str(i+1), "number, lexeme, multifield or WME"))
+            theArg = self.semplify(theEnv, theArg, (types.BaseParsedType, list, WME), (str(i+1), "number, lexeme, multifield or WME"))
             if isinstance(theArg, list):
                 theArgs += theArg
             else:

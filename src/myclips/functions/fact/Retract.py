@@ -7,7 +7,7 @@ from myclips.FunctionsManager import FunctionDefinition,\
     Constraint_MinArgsLength
 import myclips.parser.Types as types
 from myclips.rete.WME import WME
-from myclips.functions.Function import Function
+from myclips.functions.Function import Function, InvalidArgValueError
 
 class Retract(Function):
     '''
@@ -27,7 +27,8 @@ class Retract(Function):
         for wme in args:
             
             # revolve variables, function calls, fact-id and fact-address 
-            wme = Function.resolve(funcEnv, wme)
+            wme = self.resolveFact(funcEnv,
+                                   self.semplify(funcEnv, wme, (WME, types.Integer, types.Symbol), ("ALL", "fact-address, fact-index or *")))
             
             if isinstance(wme, list):
                 # wme was <Symbol:*>
@@ -40,10 +41,10 @@ class Retract(Function):
             
         return returnValue
             
-    @classmethod
-    def resolve(cls, funcEnv, arg):
+    def resolveFact(self, funcEnv, arg):
         """
-        Override Function.resolve facts from args
+        Resolve integer, *, WME to a WME or a list of WME
+        or raise exception if invalid arg
         """
         if isinstance(arg, types.Integer):
             #convert the <Interger:INT> into a <WME:f-INT>
@@ -52,11 +53,10 @@ class Retract(Function):
             # if (retract *) format is used, i have to retract all
             # fact in working memory that this scope can see
             return funcEnv.network.factsForScope()
+        elif isinstance(arg, WME):
+            return arg
         else:
-            # nested call to resolve have not to resolve the Int to WME
-            # so i call the Function version of resolve
-            # instead use the super receipt
-            return Function.resolve(funcEnv, arg)
+            raise InvalidArgValueError("Invalid fact format")
             
     
 Retract.DEFINITION = FunctionDefinition("?SYSTEM?", "retract", Retract(), (WME, types.Symbol), Retract.do ,

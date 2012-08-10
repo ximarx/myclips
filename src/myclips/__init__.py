@@ -74,6 +74,16 @@ def importPath(fullpath):
 
 def main():
     t = """
+    
+    (deffunction FunzioneTest (?a)
+        (printout t "Funzione di test: " ?a crlf)
+        (if (integerp ?a) then
+            (bind ?return (+ ?a 1))
+        else
+            (bind ?return -10))
+        ?return
+    )
+    
     (deftemplate A 
         (slot a)
         (slot b))
@@ -109,6 +119,8 @@ def main():
         (printout t "Duplicate: " (duplicate ?f (b 1000)) crlf)
         (printout t "Assert-string: " (assert-string "(A Z E D)") crlf)
         (printout t "Fact-Index: " (fact-index ?f) crlf)
+        (printout t "Risultato: " (+ 1 (FunzioneTest 10)) crlf)
+        (printout t "Risultato: " (+ 1 (FunzioneTest "ciao")) crlf)
     )
     """
     n = Network()
