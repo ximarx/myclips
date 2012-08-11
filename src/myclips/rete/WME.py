@@ -76,6 +76,10 @@ class WME(MemoryItem):
     def fact(self, value):
         self._fact = value
         
+    @property
+    def tokens(self):
+        return self._tokens.values()
+        
     def linkAlphaMemory(self, alphaMemory):
         """
         Add a reference between this wme and an alpha-memory

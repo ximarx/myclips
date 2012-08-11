@@ -1,0 +1,10 @@
+[
+    {
+        "class": "DrawCircuit", 
+        "module": "myclips.functions.myclips-debug.DrawCircuit"
+    }, 
+    {
+        "class": "TraceWme", 
+        "module": "myclips.functions.myclips-debug.TraceWme"
+    }
+]

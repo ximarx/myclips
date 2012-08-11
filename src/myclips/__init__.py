@@ -144,7 +144,6 @@ def main():
         ?f <- (A (a 1) (b 2))
         =>
         (printout t "Modify: " (modify ?f (a 3) (b 10)) crlf)
-        (bind ?risposta (read))
     )
     (defrule r4
         ?f <- (A (a 3) (b 10))
@@ -157,7 +156,9 @@ def main():
         (printout t "Risultato: " (+ 1 (FunzioneTest "ciao")) crlf)
         (printout t "Altra funzione: " (Test2 (create$ 1 2)) crlf)
         (printout t "Altra funzione: " (Test2 (create$ 1 2 3)) crlf)
+        (trace-wme ?f)
         (Domanda "Il paziente ha febbre?" "" si no)
+        (draw-circuit r4 r3 r2 r)
     )
     """
     n = Network()

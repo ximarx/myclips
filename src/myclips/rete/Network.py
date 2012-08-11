@@ -279,9 +279,10 @@ class Network(object):
         except KeyError:
             # if the first lookup failed, try appending the current modulename scope
             # to the name
-            return self._rules[self.modulesManager.currentScope.moduleName+"::"+completeRuleName]
-        finally:
-            raise RuleNotFoundError("Unable to find defrule %s"%completeRuleName)
+            try:
+                return self._rules[self.modulesManager.currentScope.moduleName+"::"+completeRuleName]
+            except:
+                raise RuleNotFoundError("Unable to find defrule %s"%completeRuleName)
     
     def reset(self):
         """

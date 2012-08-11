@@ -15,6 +15,9 @@
         "import": "./multifield/functions.json"
     }, 
     {
+        "import": "./myclips-debug/functions.json"
+    }, 
+    {
         "import": "./other/functions.json"
     }, 
     {
