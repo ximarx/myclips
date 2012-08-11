@@ -88,9 +88,33 @@ def main():
         (if (= (length$ ?vector) 2) then
             (bind ?theValue (nth$ 2 ?vector))
         else
-            (bind ?theValue (first$ ?vector)))
+            (bind ?theValue (nth$ 1 (first$ ?vector))))
         ?theValue
     )
+    
+    (deffunction Domanda (?testo ?spiegazione $?valori_ammessi)
+        (format t ?testo)
+        (if (neq ?spiegazione "") 
+            then (format t " (%s perche) " (implode$ $?valori_ammessi))
+            else (format t " (%s)" (implode$ $?valori_ammessi)))
+        (format t "? ")
+        (bind ?risposta (read))
+        (if (lexemep ?risposta)                              
+            then (bind ?risposta (lowcase ?risposta)))       
+        (if (eq ?risposta perche)
+            then (format t (str-cat "%n" ?spiegazione "%n") ))
+        (while (not (member$ ?risposta $?valori_ammessi)) do
+            (format t ?testo)
+            (if (neq ?spiegazione "") 
+                then (format t "(%s perche)" (implode$ $?valori_ammessi))
+                else (format t "(%s)" (implode$ $?valori_ammessi)))
+        (format t "? ")
+        (bind ?risposta (read))
+        (if (lexemep ?risposta)
+            then (bind ?risposta (lowcase ?risposta))))
+        ?risposta
+    )
+    
             
     
     (deftemplate A 
@@ -120,6 +144,7 @@ def main():
         ?f <- (A (a 1) (b 2))
         =>
         (printout t "Modify: " (modify ?f (a 3) (b 10)) crlf)
+        (bind ?risposta (read))
     )
     (defrule r4
         ?f <- (A (a 3) (b 10))
@@ -132,6 +157,7 @@ def main():
         (printout t "Risultato: " (+ 1 (FunzioneTest "ciao")) crlf)
         (printout t "Altra funzione: " (Test2 (create$ 1 2)) crlf)
         (printout t "Altra funzione: " (Test2 (create$ 1 2 3)) crlf)
+        (Domanda "Il paziente ha febbre?" "" si no)
     )
     """
     n = Network()

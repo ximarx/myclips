@@ -93,11 +93,11 @@ Per-group manifest: `{4}`
 
     perGroupString = "  |- {0}: {1}"
     
-    print statsString.format(str(stats['functions']),
-                             str(len(stats['groups'])),
-                             "\n".join([perGroupString.format(group, str(funcs)) for (group, funcs) in stats['groups'].items()]),
-                             FUNCS_DIR + "/" + myclips.functions.FUNCTIONS_MANIFEST,
-                             "%s/{GROUP_NAME}/functions.json"%FUNCS_DIR
+    print statsString.format(str(stats['functions']), #{0}
+                             str(len(stats['groups'])), #{1}
+                             "\n".join([perGroupString.format(group, str(funcs)) for (group, funcs) in stats['groups'].items()]), #{2}
+                             FUNCS_DIR + "/" + myclips.functions.FUNCTIONS_MANIFEST, #{3}
+                             "%s/{GROUP_NAME}/functions.json"%FUNCS_DIR #{4}
                              )
     
 

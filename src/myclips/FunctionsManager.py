@@ -205,7 +205,7 @@ class Constraint_ArgType(FunctionConstraint):
                                             else True if isinstance(x, types.FunctionCall)
                                                             and any([issubclass(retType, self.argType) for retType in x.funcDefinition.returnTypes])
                                                 else False)
-        except KeyError:
+        except (KeyError, IndexError):
             if self.argRequired:
                 return False
             else:

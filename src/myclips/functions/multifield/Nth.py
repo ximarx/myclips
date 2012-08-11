@@ -36,7 +36,7 @@ class Nth(Function):
         theIndex = self.resolve(theEnv, self.semplify(theEnv, theIndex, types.Integer, ("1", "integer")))
 
         try:
-            return self.semplify(theEnv, theMultifield)[theIndex]
+            return self.semplify(theEnv, theMultifield)[theIndex-1]
         except IndexError:
             return types.Symbol("nil")
     

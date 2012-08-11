@@ -9,7 +9,6 @@ import myclips.parser.Types as types
 from pyparsing import ParseException, ParseFatalException
 from unittest.case import expectedFailure
 import pyparsing
-import logging
 from myclips.Scope import Scope
 from MyClipsBaseTest import MyClipsBaseTest
 #from myclips.parser.Templates import _SampleTemplatesInit
@@ -470,6 +469,16 @@ class ParserTest(MyClipsBaseTest):
         self.assertIsInstance(res[0], types.FunctionCall)
         self.assertEqual(len(res[0].funcArgs), 5)
         self.assertIsInstance(res[0].funcArgs[1], types.FunctionCall)
+
+    def test_ActionParser_FunctionCallWithoutArgs(self):
+        '''Check action parsed correct parsing when nested value in it'''
+        res = self._testImpl('ActionParser', r"""
+        (read)
+        """).asList()
+        
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], types.FunctionCall)
+
 
     def test_RulePropertyParser_Salience(self):
         '''Check salience correct parsing'''
