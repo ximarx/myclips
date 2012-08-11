@@ -24,6 +24,14 @@
         "module": "myclips.functions.multifield.Insert"
     }, 
     {
+        "class": "Length", 
+        "module": "myclips.functions.multifield.Length"
+    }, 
+    {
+        "class": "_Length", 
+        "module": "myclips.functions.multifield.Length"
+    }, 
+    {
         "class": "Member", 
         "module": "myclips.functions.multifield.Member"
     }, 

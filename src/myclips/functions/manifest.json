@@ -1,0 +1,29 @@
+[
+    {
+        "import": "./agenda/functions.json"
+    }, 
+    {
+        "import": "./fact/functions.json"
+    }, 
+    {
+        "import": "./io/functions.json"
+    }, 
+    {
+        "import": "./math/standard/functions.json"
+    }, 
+    {
+        "import": "./multifield/functions.json"
+    }, 
+    {
+        "import": "./other/functions.json"
+    }, 
+    {
+        "import": "./predicate/functions.json"
+    }, 
+    {
+        "import": "./procedural/functions.json"
+    }, 
+    {
+        "import": "./string/functions.json"
+    }
+]

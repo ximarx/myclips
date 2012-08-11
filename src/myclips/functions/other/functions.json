@@ -1,0 +1,10 @@
+[
+    {
+        "class": "Bind", 
+        "module": "myclips.functions.other.Bind"
+    }, 
+    {
+        "class": "Refresh", 
+        "module": "myclips.functions.other.Refresh"
+    }
+]

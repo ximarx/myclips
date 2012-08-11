@@ -5,7 +5,7 @@ from myclips.MyClipsException import MyClipsException
 from myclips.functions.Function import Function
 
 FUNCTIONS_DIR = os.path.dirname(__file__)
-FUNCTIONS_MANIFEST = "_dev_functions.json"
+FUNCTIONS_MANIFEST = "manifest.json"
 
 
 class FunctionEnv(object):

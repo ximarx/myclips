@@ -84,6 +84,15 @@ def main():
         ?return
     )
     
+    (deffunction Test2 (?vector)
+        (if (= (length$ ?vector) 2) then
+            (bind ?theValue (nth$ 2 ?vector))
+        else
+            (bind ?theValue (first$ ?vector)))
+        ?theValue
+    )
+            
+    
     (deftemplate A 
         (slot a)
         (slot b))
@@ -121,6 +130,8 @@ def main():
         (printout t "Fact-Index: " (fact-index ?f) crlf)
         (printout t "Risultato: " (+ 1 (FunzioneTest 10)) crlf)
         (printout t "Risultato: " (+ 1 (FunzioneTest "ciao")) crlf)
+        (printout t "Altra funzione: " (Test2 (create$ 1 2)) crlf)
+        (printout t "Altra funzione: " (Test2 (create$ 1 2 3)) crlf)
     )
     """
     n = Network()
