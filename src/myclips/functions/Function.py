@@ -46,7 +46,7 @@ class Function(object):
         except FunctionImplError:
             raise
         except MyClipsException, e:
-            raise FunctionInternalError(str(cls)+": "+e.message, e, traceback.format_exc())
+            raise FunctionInternalError(e.message, e, traceback.format_exc())
         except Exception, e:
             # wrap python standards exception
             # in functions exception

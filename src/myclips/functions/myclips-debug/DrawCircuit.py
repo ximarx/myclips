@@ -6,7 +6,8 @@ Created on 31/lug/2012
 from myclips.FunctionsManager import FunctionDefinition,\
     Constraint_ArgType, Constraint_MinArgsLength
 import myclips.parser.Types as types
-from myclips.functions.Function import Function
+from myclips.functions.Function import Function, InvalidArgValueError
+from myclips.rete.Network import RuleNotFoundError
 
 class DrawCircuit(Function):
     '''
@@ -20,25 +21,30 @@ class DrawCircuit(Function):
         """
         function handler implementation
         """
-        
-        _thePNodes = [theEnv.network.getPNode(ruleName) 
-                        for ruleName 
-                            in [self.resolve(theEnv, self.semplify(theEnv, ruleName, types.Symbol, ("ALL", "symbol"))) for ruleName in args]]
-        # RuleNotFoundError could be raised... but it will flow outside of the network
-        # and it's ok!
-
-        thePNodes = []
-
-        for thePNode in _thePNodes:
-            from myclips.rete.nodes.PNode import PNode
-            assert isinstance(thePNode, PNode)
-            thePNodes += [thePNode] + thePNode.getLinkedPNodes()
+        try:
+            _thePNodes = [theEnv.network.getPNode(ruleName) 
+                            for ruleName 
+                                in [self.resolve(theEnv, self.semplify(theEnv, ruleName, types.Symbol, ("ALL", "symbol"))) for ruleName in args]]
+        except RuleNotFoundError, e:
             
-        import myclips.debug as debug
-        
-        debug.draw_network_fragment(thePNodes)
-        
-        return types.NullValue()
+            raise InvalidArgValueError(e.message)
+            
+        else:
+            # RuleNotFoundError could be raised... but it will flow outside of the network
+            # and it's ok!
+    
+            thePNodes = []
+    
+            for thePNode in _thePNodes:
+                from myclips.rete.nodes.PNode import PNode
+                assert isinstance(thePNode, PNode)
+                thePNodes += [thePNode] + thePNode.getLinkedPNodes()
+                
+            import myclips.debug as debug
+            
+            debug.draw_network_fragment(thePNodes)
+            
+            return types.NullValue()
     
     
 DrawCircuit.DEFINITION = FunctionDefinition("?SYSTEM?", "draw-circuit", DrawCircuit(), types.NullValue, DrawCircuit.do ,

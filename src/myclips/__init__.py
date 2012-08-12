@@ -3,8 +3,9 @@ from myclips.rete.Network import Network
 from myclips.parser.Parser import Parser
 import myclips.parser.Types as types
 
-
 import logging as _logging
+
+VERSION="0.0-dev"
 
 FORMAT = '[%(levelname).3s %(module)s::%(funcName)s:%(lineno)d] %(message)s'
 _logging.basicConfig(format=FORMAT)
@@ -179,7 +180,4 @@ def main():
             print "%-6d %s: %s"%(salience, pnode.mainRuleName, token)
     
         return n
-
-if __name__ == '__main__':
-    main()
 
