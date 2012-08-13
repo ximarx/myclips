@@ -128,9 +128,36 @@ class AtomLocation(object):
     def __str__(self, *args, **kwargs):
         return ", ".join([x+"="+str(getattr(self, x)) for x in dir(self.__class__) if not callable(getattr(self, x))
                                                                                         and hasattr(self, "_"+x)
-                                                                                        and getattr(self, x) is not None
+                                                                                        and getattr(self, x) not in (None, False)
                                                                                         ])
 
+    def __eq__(self, other):
+        toTestItems = ["patternIndex", "slotName", "fromBegin", "beginIndex",
+                       "fromEnd", "endIndex", "isMultiField", "fullFact", "fullSlot"]
+        try:
+            for test in toTestItems:
+                # try to split for the inner reference comparison
+                splitted = test.split(".", 2)
+                if len(splitted) == 2:
+                    objRefThis = getattr(self, splitted[0])
+                    objRefOther = getattr(other, splitted[0])
+                    attribute = splitted[1]
+                else:
+                    objRefThis = self
+                    objRefOther = other
+                    attribute = splitted[0]
+                    
+                if getattr(objRefThis, attribute) != getattr(objRefOther, attribute):
+                    return False
+                
+            # everything is the same
+            return True
+        except:
+            # error? -> not equal
+            return False
+
+    def __neq__(self, other):
+        return not self.__eq__(other)
 
 class VariableLocation(AtomLocation):
     
@@ -163,6 +190,15 @@ class VariableLocation(AtomLocation):
         for key in [x for x in dir(self) if not callable(getattr(self, x)) and hasattr(self, "_"+x) and getattr(self, x) is not None]:
             setattr(reference, key, getattr(self, key))
         return reference
+    
+    def __eq__(self, other):
+        return  self.__class__ == other.__class__\
+                and self._name == other._name \
+                and AtomLocation.__eq__(self, other)
+                
+    def __neq__(self, other):
+        return not self.__eq__(other)
+    
                 
 class VariableReference(AtomLocation):
     def __init__(self, name=None, reference=None, patternIndex=None,
@@ -246,6 +282,9 @@ class VariableReference(AtomLocation):
         except:
             # error? -> not equal
             return False
+    
+    def __neq__(self, other):
+        return not self.__eq__(other)
     
 if __name__ == '__main__':
     
