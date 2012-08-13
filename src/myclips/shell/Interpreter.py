@@ -38,8 +38,8 @@ class Interpreter(object):
             
             self._internalParser = (aConstant
                                     | aGlobalVar
-                                    | aFunction
-                                    | aConstruct).setParseAction(lambda s,l,t:t.asList()[0])
+                                    | aConstruct
+                                    | aFunction).setParseAction(lambda s,l,t:t.asList()[0])
                                     
         return self._internalParser
     
@@ -53,7 +53,8 @@ class Interpreter(object):
             if self._network.getParser()._lastParseError != None and e.msg != self._network.getParser()._lastParseError:
                 raise pp.ParseFatalException(e.pstr,
                                              e.loc,
-                                             e.msg + ". Possible cause: " + self._network.getParser()._lastParseError )
+                                             #e.msg + ". Possible cause: " + 
+                                             self._network.getParser()._lastParseError )
             else:
                 raise
             

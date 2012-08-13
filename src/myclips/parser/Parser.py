@@ -670,7 +670,7 @@ class Parser(object):
                                                     | self._sb("DefFunctionConstructParser")
                                                     | self._sb("DefModuleConstructParser")
                                                     | self._sb("MyClipsDirectiveParser")
-                                                    | pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
+                                                    #| pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
                                                     )
         else:
             self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
@@ -679,7 +679,7 @@ class Parser(object):
                                                     | self._sb("DefTemplateConstructParser")
                                                     | self._sb("DefFunctionConstructParser")
                                                     | self._sb("DefModuleConstructParser")
-                                                    | pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
+                                                    #| pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
                                                     )
             
         self.subparsers["ConstructParser"]\
