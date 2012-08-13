@@ -134,7 +134,7 @@ class Network(object):
             # ... link it in the facts table ...
             self._facts[self._currentWmeId] = wme
             # ... and link the fact to the wme
-            self._factsWmeMap[fact] = wme
+            self._factsWmeMap[wme.fact] = wme
             
             # increment the fact-id counter
             self._currentWmeId += 1 
@@ -418,7 +418,6 @@ class Network(object):
         """
         return self._facts.values()
 
-    @property
     def factsForScope(self, scopeName=None):
         """
         Return a list of wme for all facts
@@ -438,8 +437,8 @@ class Network(object):
         
         # ok, the module exists. Prepare return
         return [wme for wme in self._facts.values()
-                            # fact can be saw if it was defined in the scope (for ordered)
-                            if wme.fact.moduleName == scopeName
+                            # fact can be seen if it was defined in the scope (for ordered)
+                            if wme.fact.moduleName == theScope.moduleName
                                 # of if it's a template fact and is definition is imported in the current scope 
                                 or (wme.fact.templateName is not None and theScope.templates.has(wme.fact.templateName)) ]
 

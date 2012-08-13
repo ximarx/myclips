@@ -25,19 +25,24 @@ class Fact(object):
         
     def __str__(self):
         if self._templateName is not None:
-            return "(%s %s)"%(self._templateName, " ".join(["(%s %s)"%(str(s),str(v)) for (s,v) in self._values.items()]))
+            return "(%s::%s %s)"%(self._moduleName, self._templateName, " ".join(["(%s %s)"%(str(s),str(v)) for (s,v) in self._values.items()]))
         else:
-            return "(%s)"%(" ".join([str(x) for x in self._values]))
+            return "%s::(%s)"%(self._moduleName, " ".join([str(x) for x in self._values]))
     
     def __hash__(self):
-        prefix = [self.moduleName, self.templateName]
-        if self.isTemplateFact():
-            toHash = prefix + [(key, value) if not isinstance(value, list)
-                                else (key, tuple(value))
-                                    for (key,value) in self._values.items()]
-        else:
-            toHash = prefix + self._values
-        return hash(tuple(toHash))
+        try:
+            prefix = [self.moduleName, self.templateName]
+            if self.isTemplateFact():
+                toHash = prefix + [(key, value) if not isinstance(value, list)
+                                    else (key, tuple(value))
+                                        for (key,value) in self._values.items()]
+            else:
+                toHash = prefix + self._values
+                
+            return hash(tuple(toHash))
+        except Exception, e:
+            print "WTFFFFFFFF: ", e
+            raise
         
     def __eq__(self, other):
         try:

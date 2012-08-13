@@ -8,7 +8,7 @@ from myclips.FunctionsManager import FunctionDefinition,\
 import myclips.parser.Types as types
 from myclips.rete.WME import WME
 from myclips.functions.Function import Function, InvalidArgValueError
-from copy import copy
+from copy import copy, deepcopy
 
 class Duplicate(Function):
     '''
@@ -53,7 +53,7 @@ class Duplicate(Function):
             raise InvalidArgValueError("")
         
         # 3) get a copy of the fact inside the wme
-        theBackup = copy(theFact.fact)
+        theBackup = deepcopy(theFact.fact)
         
         # 4) modify the fact with the new values for the slots:
         

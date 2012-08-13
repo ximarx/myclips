@@ -82,6 +82,9 @@ def main():
             (bind ?return (+ ?a 1))
         else
             (bind ?return -10))
+        (facts)
+        (retract *)
+        (facts)
         ?return
     )
     
@@ -157,9 +160,7 @@ def main():
         (printout t "Risultato: " (+ 1 (FunzioneTest "ciao")) crlf)
         (printout t "Altra funzione: " (Test2 (create$ 1 2)) crlf)
         (printout t "Altra funzione: " (Test2 (create$ 1 2 3)) crlf)
-        (trace-wme ?f)
         (Domanda "Il paziente ha febbre?" "" si no)
-        (draw-circuit r4 r3 r2 r)
     )
     """
     n = Network()

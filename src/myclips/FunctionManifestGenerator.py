@@ -45,7 +45,7 @@ def generate():
     
     sys.stdout = Logger(FUNCS_DIR+"/REPORT.txt")
 
-    print "MyCLIPS system functions discovery report: ", time.asctime()
+    print "//:~ MyCLIPS system functions discovery report: ", time.asctime()
     print
     
     for singleDir  in validDirs:
@@ -114,6 +114,7 @@ Per-group manifest: `{4}`
                              "%s/{GROUP_NAME}/functions.json"%FUNCS_DIR #{4}
                              )
     
+    print "//:~ ", time.asctime()
         
 
 if __name__ == '__main__':

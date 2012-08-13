@@ -189,7 +189,7 @@ class Parser(object):
         LPAR = pp.Literal("(").suppress()
         RPAR = pp.Literal(")").suppress()
         
-        self.subparsers["SymbolParser"] = pp.Word("".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;*" ]),
+        self.subparsers["SymbolParser"] = pp.Word("".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]),
                                                           "".join([ c for c in string.printable if c not in string.whitespace and c not in "\"'()&?|<~;" ]))\
                 .setParseAction(makeInstance(types.Symbol))
         

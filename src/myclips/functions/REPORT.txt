@@ -1,4 +1,4 @@
-MyCLIPS system functions discovery report:  Mon Aug 13 09:43:56 2012
+//:~ MyCLIPS system functions discovery report:  Mon Aug 13 12:23:30 2012
 
 myclips.functions.agenda
 	|--- .Focus
@@ -16,6 +16,8 @@ myclips.functions.agenda
 	|--- .SetStrategy
 	:   	|--- .SetStrategy (set-strategy)
 myclips.functions.command
+	|--- .Facts
+	:   	|--- .Facts (facts)
 	|--- .Reset
 	:   	|--- .Reset (reset)
 	|--- .Run
@@ -192,14 +194,15 @@ Number of groups: 11
   |- .predicate: 20
   |- .multifield: 14
   |- .procedural: 8
-  |- .command: 2
+  |- .command: 3
   |- .fact: 6
   |- .math.standard: 10
   |- .other: 2
 
-Number of functions: 87
+Number of functions: 88
 
 Main manifest file: `myclips/functions/manifest.json`
 Per-group manifest: `myclips/functions/{GROUP_NAME}/functions.json`
 ================================
 
+//:~  Mon Aug 13 12:23:31 2012
