@@ -32,7 +32,7 @@ class Interpreter(object):
     def parser(self):
         if self._internalParser is None:
             aConstruct = self._network.getParser().getSParser('ConstructParser')
-            aFunction = self._network.getParser().getSParser('FunctionCallParser')
+            aFunction = self._network.getParser().getSParser('RhsFunctionCallParser')
             aConstant = self._network.getParser().getSParser('ConstantParser')
             aGlobalVar = self._network.getParser().getSParser('GlobalVariableParser')
             

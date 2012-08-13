@@ -72,6 +72,18 @@ class AlphaMemory(Node, Memory, AlphaInput):
         for wme in self.items:
             wme.unlinkAlphaMemory(self)
             
+            
+        # before call the Node.delete,
+        # manually remove the parent's reference
+        # to this node (because alpha memory is in
+        # parent.memory slot, not in children
+        
+        if not self.isRightRoot():
+            self.rightParent.memory = None
+            if self.rightParent.isLeaf():
+                self.rightParent.delete()
+                self.rightParent = None
+        
         Node.delete(self)
         
     def updateChild(self, child):

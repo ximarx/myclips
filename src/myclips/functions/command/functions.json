@@ -1,0 +1,10 @@
+[
+    {
+        "class": "Reset", 
+        "module": "myclips.functions.command.Reset"
+    }, 
+    {
+        "class": "Run", 
+        "module": "myclips.functions.command.Run"
+    }
+]

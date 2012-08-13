@@ -147,6 +147,7 @@ class Shell(object):
                             print "[ERROR] ", e.msg
                         else:
                             print "[ERROR] ", e
+                            traceback.print_exc()
                     else:
                         if theResult is not None:
                             print theResult

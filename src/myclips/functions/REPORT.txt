@@ -1,0 +1,205 @@
+MyCLIPS system functions discovery report:  Mon Aug 13 09:43:56 2012
+
+myclips.functions.agenda
+	|--- .Focus
+	:   	|--- .Focus (focus)
+	|--- .GetFocus
+	:   	|--- .GetFocus (get-focus)
+	|--- .GetFocusStack
+	:   	|--- .GetFocusStack (get-focus-stack)
+	|--- .GetStrategy
+	:   	|--- .GetStrategy (get-strategy)
+	|--- .Halt
+	:   	|--- .Halt (halt)
+	|--- .PopFocus
+	:   	|--- .PopFocus (pop-focus)
+	|--- .SetStrategy
+	:   	|--- .SetStrategy (set-strategy)
+myclips.functions.command
+	|--- .Reset
+	:   	|--- .Reset (reset)
+	|--- .Run
+	:   	|--- .Run (run)
+myclips.functions.fact
+	|--- .Assert
+	:   	|--- .Assert (assert)
+	|--- .AssertString
+	:   	|--- .AssertString (assert-string)
+	|--- .Duplicate
+	:   	|--- .Duplicate (duplicate)
+	|--- .FactIndex
+	:   	|--- .FactIndex (fact-index)
+	|--- .Modify
+	:   	|--- .Modify (modify)
+	|--- .Retract
+	:   	|--- .Retract (retract)
+myclips.functions.io
+	|--- .Close
+	:   	|--- .Close (close)
+	|--- .Format
+	:   	|--- .Format (format)
+	|--- .Open
+	:   	|--- .Open (open)
+	|--- .Printout
+	:   	|--- .Printout (printout)
+	|--- .Read
+	:   	|--- .Read (read)
+	|--- .Readline
+	:   	|--- .Readline (readline)
+myclips.functions.math.standard
+	|--- .Absolute
+	:   	|--- .Absolute (abs)
+	|--- .Addition
+	:   	|--- .Addition (+)
+	|--- .Division
+	:   	|--- .Division (/)
+	|--- .Float
+	:   	|--- .Float (float)
+	|--- .Integer
+	:   	|--- .Integer (integer)
+	|--- .IntegerDivision
+	:   	|--- .IntegerDivision (div)
+	|--- .Max
+	:   	|--- .Max (max)
+	|--- .Min
+	:   	|--- .Min (min)
+	|--- .Multiplication
+	:   	|--- .Multiplication (*)
+	|--- .Subtraction
+	:   	|--- .Subtraction (-)
+myclips.functions.multifield
+	|--- .Create
+	:   	|--- .Create (create$)
+	|--- .Delete
+	:   	|--- .Delete (delete$)
+	|--- .Explode
+	:   	|--- .Explode (explode$)
+	|--- .First
+	:   	|--- .First (first$)
+	|--- .Implode
+	:   	|--- .Implode (implode$)
+	|--- .Insert
+	:   	|--- .Insert (insert$)
+	|--- .Length
+	:   	|--- .Length (length$)
+	:   	|--- ._Length (length)
+	|--- .Member
+	:   	|--- .Member (member$)
+	|--- .Nth
+	:   	|--- .Nth (nth$)
+	|--- .Replace
+	:   	|--- .Replace (replace$)
+	|--- .Rest
+	:   	|--- .Rest (rest$)
+	|--- .Subseq
+	:   	|--- .Subseq (subseq$)
+	|--- .Subsetp
+	:   	|--- .Subsetp (subsetp)
+myclips.functions.myclips-debug
+	|--- .DrawCircuit
+	:   	|--- .DrawCircuit (draw-circuit)
+	|--- .TraceWme
+	:   	|--- .TraceWme (trace-wme)
+myclips.functions.other
+	|--- .Bind
+	:   	|--- .Bind (bind)
+	|--- .Refresh
+	:   	|--- .Refresh (refresh)
+myclips.functions.predicate
+	|--- .And
+	:   	|--- .And (and)
+	|--- .Eq
+	:   	|--- .Eq (eq)
+	|--- .Evenp
+	:   	|--- .Evenp (evenp)
+	|--- .Floatp
+	:   	|--- .Floatp (floatp)
+	|--- .GreaterEqualThan
+	:   	|--- .GreaterEqualThan (>=)
+	|--- .GreaterThan
+	:   	|--- .GreaterThan (>)
+	|--- .Integerp
+	:   	|--- .Integerp (integerp)
+	|--- .LessEqualThan
+	:   	|--- .LessEqualThan (<=)
+	|--- .LessThan
+	:   	|--- .LessThan (<)
+	|--- .Lexemep
+	:   	|--- .Lexemep (lexemep)
+	|--- .Multifieldp
+	:   	|--- .Multifieldp (multifieldp)
+	|--- .Neq
+	:   	|--- .Neq (neq)
+	|--- .Not
+	:   	|--- .Not (not)
+	|--- .Numberp
+	:   	|--- .Numberp (numberp)
+	|--- .NumericEq
+	:   	|--- .NumericEq (=)
+	|--- .NumericNeq
+	:   	|--- .NumericNeq (<>)
+	|--- .Oddp
+	:   	|--- .Oddp (oddp)
+	|--- .Or
+	:   	|--- .Or (or)
+	|--- .Stringp
+	:   	|--- .Stringp (stringp)
+	|--- .Symbolp
+	:   	|--- .Symbolp (symbolp)
+myclips.functions.procedural
+	|--- .Break
+	:   	|--- .Break (break)
+	|--- .IfThenElse
+	:   	|--- .IfThenElse (if)
+	|--- .LoopForCount
+	:   	|--- .LoopForCount (loop-for-count)
+	|--- .Return
+	:   	|--- .Return (return)
+	|--- .SwitchCaseDefault
+	:   	|--- .Case (case)
+	:   	|--- .Default (default)
+	:   	|--- .Switch (switch)
+	|--- .WhileDo
+	:   	|--- .WhileDo (while)
+myclips.functions.string
+	|--- .Build
+	:   	|--- .Build (build)
+	|--- .Eval
+	:   	|--- .Eval (eval)
+	|--- .Lowcase
+	:   	|--- .Lowcase (lowcase)
+	|--- .StringCompare
+	:   	|--- .StringCompare (str-compare)
+	|--- .StringConcat
+	:   	|--- .StringConcat (str-cat)
+	|--- .StringIndex
+	:   	|--- .StringIndex (str-index)
+	|--- .StringLength
+	:   	|--- .StringLength (str-length)
+	|--- .SubString
+	:   	|--- .SubString (sub-string)
+	|--- .SymbolConcat
+	:   	|--- .SymbolConcat (sym-cat)
+	|--- .Upcase
+	:   	|--- .Upcase (upcase)
+
+================================
+Number of groups: 11
+  |- .io: 6
+  |- .string: 10
+  |- .myclips-debug: 2
+  |- .agenda: 7
+  |- .predicate: 20
+  |- .multifield: 14
+  |- .procedural: 8
+  |- .command: 2
+  |- .fact: 6
+  |- .math.standard: 10
+  |- .other: 2
+
+Number of functions: 87
+
+Main manifest file: `myclips/functions/manifest.json`
+Per-group manifest: `myclips/functions/{GROUP_NAME}/functions.json`
+================================
+

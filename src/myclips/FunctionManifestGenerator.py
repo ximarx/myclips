@@ -3,15 +3,24 @@ Created on 05/ago/2012
 
 @author: Francesco Capozzo
 '''
-import os
 from genericpath import exists, isfile, isdir
 from dircache import listdir
-import pyclbr
 import json
 import inspect
 import importlib
 import myclips.functions
+import sys
+import time
 
+
+class Logger(object):
+        def __init__(self, filename="REPORT.txt"):
+            self.terminal = sys.stdout
+            self.log = open(filename, "w")
+
+        def write(self, message):
+            self.terminal.write(message)
+            self.log.write(message)
 
 def getPaths(basePath, pathsVector):
     
@@ -33,6 +42,11 @@ def generate():
     
     stats = {"functions": 0,
              "groups": {}}
+    
+    sys.stdout = Logger(FUNCS_DIR+"/REPORT.txt")
+
+    print "MyCLIPS system functions discovery report: ", time.asctime()
+    print
     
     for singleDir  in validDirs:
         
@@ -100,6 +114,7 @@ Per-group manifest: `{4}`
                              "%s/{GROUP_NAME}/functions.json"%FUNCS_DIR #{4}
                              )
     
+        
 
 if __name__ == '__main__':
     generate()    

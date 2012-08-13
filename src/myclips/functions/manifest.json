@@ -3,6 +3,9 @@
         "import": "./agenda/functions.json"
     }, 
     {
+        "import": "./command/functions.json"
+    }, 
+    {
         "import": "./fact/functions.json"
     }, 
     {
