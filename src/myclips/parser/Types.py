@@ -16,6 +16,9 @@ class ParsedType(object):
     Conversion to native type is delegated
     to evaluate() call
     '''
+    
+    __FIELDS__=[]
+    
     def __init__(self, content):
         self.content = content
 
@@ -38,6 +41,9 @@ class BaseParsedType(ParsedType):
     Conversion to native type is done as soon as possible
     and never done again
     '''
+    
+    __FIELDS__=['content']
+    
     def __init__(self, content):
         ParsedType.__init__(self, content)
         if hasattr(self, 'converter'):
@@ -114,6 +120,7 @@ class InstanceName(BaseParsedType):
     pass
 
 class Variable(ParsedType):
+    __FIELDS__=['content']
     pass
 
 class SingleFieldVariable(Variable):
@@ -150,6 +157,7 @@ class GlobalVariable(Variable, HasScope):
         
 
 class FunctionCall(ParsedType, HasScope):
+    __FIELDS__=['funcName','funcArgs']
     def __init__(self, funcName, modulesManager, funcArgs=None):
         ParsedType.__init__(self, funcName)
         HasScope.__init__(self, modulesManager)
@@ -173,6 +181,7 @@ class FunctionCall(ParsedType, HasScope):
                                         self.funcArgs )
 
 class DefFactsConstruct(ParsedType, HasScope):
+    __FIELDS__=['deffactsName','deffactsComment','rhs']
     def __init__(self, deffactsName, modulesManager, deffactsComment=None, rhs=None):
         ParsedType.__init__(self, deffactsName)
         HasScope.__init__(self, modulesManager)
@@ -192,7 +201,7 @@ class DefFactsConstruct(ParsedType, HasScope):
 
 class OrderedRhsPattern(ParsedType):
     #converter = lambda self, t: [x.evaluate() if isinstance(x, ParsedType) else x for x in t]
-    
+    __FIELDS__=['values']
     def __init__(self, values):
         ParsedType.__init__(self, values)
         self.values = values
@@ -202,6 +211,7 @@ class OrderedRhsPattern(ParsedType):
                                         str(self.values).replace("[", "{").replace("}", "]")) #better formatting with pretty print
 
 class TemplateRhsPattern(ParsedType, HasScope):
+    __FIELDS__=['templateName', 'templateSlots']
     def __init__(self, templateName, modulesManager, templateSlots=None):
         ParsedType.__init__(self, templateName)
         HasScope.__init__(self, modulesManager)
@@ -225,6 +235,7 @@ class TemplateRhsPattern(ParsedType, HasScope):
                                         )
     
 class FieldRhsSlot(ParsedType):
+    __FIELDS__=['slotName', 'slotValue']    
     pass
 
 class MultiFieldRhsSlot(FieldRhsSlot):
@@ -251,6 +262,7 @@ class SingleFieldRhsSlot(FieldRhsSlot):
 
 
 class DefRuleConstruct(ParsedType, HasScope):
+    __FIELDS__=['defruleName', 'defruleComment', "defruleDeclaration", "lhs", "rhs"]    
     def __init__(self, defruleName, modulesManager, defruleComment=None, defruleDeclaration=None, lhs=None, rhs=None):
         ParsedType.__init__(self, defruleName)
         HasScope.__init__(self, modulesManager)
@@ -276,6 +288,7 @@ class DefRuleConstruct(ParsedType, HasScope):
                                         )
         
 class RuleProperty(ParsedType):
+    __FIELDS__=['propertyName', 'propertyValue']
     def __init__(self, propertyName, propertyValue):
         ParsedType.__init__(self, propertyName)
         self.propertyName = propertyName.evaluate() if isinstance(propertyName, ParsedType) else propertyName
@@ -290,6 +303,7 @@ class PatternCE(ParsedType):
     pass
 
 class OrderedPatternCE(PatternCE, HasScope):
+    __FIELDS__=['constraints']
     def __init__(self, constraints, modulesManager):
         PatternCE.__init__(self, constraints)
         HasScope.__init__(self, modulesManager)
@@ -303,6 +317,7 @@ class OrderedPatternCE(PatternCE, HasScope):
                                     )
 
 class TemplatePatternCE(PatternCE, HasScope):
+    __FIELDS__=['templateName', 'templateSlots']
     def __init__(self, templateName, modulesManager, templateSlots=None):
         PatternCE.__init__(self, templateName)
         HasScope.__init__(self, modulesManager)
@@ -413,6 +428,7 @@ class TemplatePatternCE(PatternCE, HasScope):
                                     )
         
 class AssignedPatternCE(PatternCE):
+    __FIELDS__=['variable', 'pattern']
     def __init__(self, variable, pattern):
         PatternCE.__init__(self, variable)
         self.variable = variable
@@ -426,6 +442,7 @@ class AssignedPatternCE(PatternCE):
     
 
 class NotPatternCE(PatternCE):
+    __FIELDS__=['pattern']
     def __init__(self, pattern):
         if isinstance(pattern, AssignedPatternCE):
             raise TypeInstanceCreationError("A pattern CE cannot be bound to a pattern-address within a not CE")
@@ -438,6 +455,7 @@ class NotPatternCE(PatternCE):
                                     )
 
 class AndPatternCE(PatternCE):
+    __FIELDS__=['patterns']
     def __init__(self, patterns):
         if len(patterns) == 0 :#and isinstance(patterns[0], AssignedPatternCE):
             raise TypeInstanceCreationError("Syntax Error: Check appropriate syntax for the and conditional element")
@@ -450,6 +468,7 @@ class AndPatternCE(PatternCE):
                                     )
 
 class OrPatternCE(PatternCE):
+    __FIELDS__=['patterns']
     def __init__(self, patterns):
         if len(patterns) > 0 and isinstance(patterns[0], AssignedPatternCE):
             raise TypeInstanceCreationError("Syntax Error:  Check appropriate syntax for the first field of a pattern.")
@@ -463,6 +482,7 @@ class OrPatternCE(PatternCE):
 
 
 class TestPatternCE(PatternCE):
+    __FIELDS__=['function']
     def __init__(self, function):
         PatternCE.__init__(self, function)
         self.function = function
@@ -474,6 +494,7 @@ class TestPatternCE(PatternCE):
 
  
 class Constraint(ParsedType):
+    __FIELDS__=['constraint']
     def __init__(self, constraint, connectedConstraints=None):
         ParsedType.__init__(self, constraint)
         self.constraint = constraint
@@ -484,6 +505,7 @@ class Constraint(ParsedType):
                                     )
 
 class ConnectedConstraint(ParsedType):
+    __FIELDS__=['constraint', 'connectedConstraints']
     def __init__(self, constraint, connectedConstraints=None):
         if connectedConstraints is None:
             raise ValueError()
@@ -513,6 +535,7 @@ class ConnectedConstraint(ParsedType):
                                     )
     
 class Term(ParsedType):
+    __FIELDS__=['term']
     def __init__(self, term):
         ParsedType.__init__(self, term)
         self.term = term
@@ -537,6 +560,7 @@ class NegativeTerm(Term):
     
     
 class FieldLhsSlot(ParsedType):
+    __FIELDS__=['slotName', 'slotValue']
     def __init__(self, slotName, slotValue):
         ParsedType.__init__(self, slotName)
         self.slotName = slotName.evaluate() if isinstance(slotName, BaseParsedType) else slotName
@@ -561,6 +585,7 @@ class SingleFieldLhsSlot(FieldLhsSlot):
                                         self.slotValue)    
 
 class SlotDefinition(ParsedType):
+    __FIELDS__=['slotName', 'attributes']
     def __init__(self, slotName, attributes=None):
         ParsedType.__init__(self, slotName)
         self.slotName = slotName.evaluate() if isinstance(slotName, BaseParsedType) else slotName
@@ -592,6 +617,7 @@ class Attribute(ParsedType):
     pass
 
 class DefaultAttribute(Attribute):
+    __FIELDS__=['defaultValue']
     def __init__(self, defaultValue):
         Attribute.__init__(self, defaultValue)
         self.defaultValue = defaultValue if isinstance(defaultValue, ParsedType) else SPECIAL_VALUES[defaultValue]
@@ -601,6 +627,7 @@ class DefaultAttribute(Attribute):
                                         self.defaultValue)    
 
 class TypeAttribute(Attribute):
+    __FIELDS__=['allowedTypes']
     def __init__(self, allowedTypes=None):
         Attribute.__init__(self, allowedTypes)
         self.allowedTypes = tuple([TYPES[x] for x in allowedTypes]) if isinstance(allowedTypes, list) else tuple([TYPES["?VARIABLE"]])
@@ -610,6 +637,7 @@ class TypeAttribute(Attribute):
                                         self.allowedTypes)    
 
 class DefTemplateConstruct(ParsedType, HasScope):
+    __FIELDS__=['templateName', 'templateComment', 'slots']
     def __init__(self, templateName, modulesManager, templateComment=None, slots=None):
         ParsedType.__init__(self, templateName)
         HasScope.__init__(self, modulesManager)
@@ -646,6 +674,7 @@ class DefTemplateConstruct(ParsedType, HasScope):
                                         self.scope.moduleName)
         
 class DefGlobalConstruct(ParsedType, HasScope):
+    __FIELDS__=['moduleName', 'assignments']
     def __init__(self, modulesManager, assignments=None, moduleName=None):
         ParsedType.__init__(self, assignments)
         
@@ -675,6 +704,7 @@ class DefGlobalConstruct(ParsedType, HasScope):
                                         self.scope.moduleName)
         
 class GlobalAssignment(ParsedType):
+    __FIELDS__=['variable', 'value', 'runningValue']
     def __init__(self, variable, value):
         ParsedType.__init__(self, variable)
         self.variable = variable
@@ -688,6 +718,7 @@ class GlobalAssignment(ParsedType):
         
         
 class PortItem(ParsedType):
+    __FIELDS__=['portType', 'portNames']
     def __init__(self, content):
         # content can be:
         #    ?ALL | ?NONE | list
@@ -743,6 +774,7 @@ class PortItem(ParsedType):
         
         
 class ImportSpecification(ParsedType):
+    __FIELDS__=['item', 'moduleName']
     def __init__(self, moduleName, item, modulesManager):
         moduleName = moduleName.evaluate() if isinstance(moduleName, BaseParsedType) else moduleName # cast to raw
         ParsedType.__init__(self, moduleName)
@@ -755,12 +787,14 @@ class ImportSpecification(ParsedType):
         
         
 class ExportSpecification(ParsedType):
+    __FIELDS__=['item']
     def __init__(self, item):
         ParsedType.__init__(self, item)
         self.item = item
         
 
 class DefModuleConstruct(ParsedType, HasScope):
+    __FIELDS__=['moduleName', 'comment', 'comment', 'specifications']
     def __init__(self, moduleName, modulesManager, specifications=None, comment=None):
         moduleName = moduleName.evaluate() if isinstance(moduleName, BaseParsedType) else moduleName
         comment = comment.evaluate().strip('"') if isinstance(comment, BaseParsedType) else comment
@@ -799,7 +833,7 @@ class DefModuleConstruct(ParsedType, HasScope):
         
         
 class DefFunctionConstruct(ParsedType, HasScope):
-    
+    __FIELDS__=['functionName', 'comment', 'params', 'actions']
     def __init__(self, functionName, modulesManager, params=None, actions=None, comment=None ):
         functionName = HasScope.cleanName(functionName.evaluate() if isinstance(functionName, BaseParsedType) else functionName)
         ParsedType.__init__(self, functionName)
