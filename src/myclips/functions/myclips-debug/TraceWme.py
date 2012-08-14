@@ -26,7 +26,7 @@ class TraceWme(Function):
             
         import myclips.debug as debug
         
-        debug.show_wme_details(theWme, explodeToken=True, explodeAMem=True)
+        debug.show_wme_details(theEnv.RESOURCES['wtrace'], theWme, explodeToken=True, explodeAMem=True)
         
         return types.NullValue()
     

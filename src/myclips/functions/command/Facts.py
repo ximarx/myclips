@@ -25,7 +25,7 @@ class Facts(Function):
     
     WARNING:
     
-    RESOURCES[t] is used for output
+    RESOURCES[wdisplay] is used for output
         
     '''
     def __init__(self, *args, **kwargs):
@@ -120,7 +120,7 @@ class Facts(Function):
         
         if len(theFacts):
 
-            theStdout = theEnv.RESOURCES['t']
+            theStdout = theEnv.RESOURCES['wdisplay']
                     
             for wme in theFacts:
                 theStdout.write("f-%-5d %s\n"%(wme.factId, wme.fact))

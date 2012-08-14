@@ -37,7 +37,7 @@ class Network(object):
     '''
 
 
-    def __init__(self, eventsManager = None, modulesManager = None):
+    def __init__(self, eventsManager = None, modulesManager = None, resources=None):
         '''
         Constructor
         '''
@@ -58,7 +58,28 @@ class Network(object):
         self._currentWmeId = 0
         self._linkedParser = None
         self._deffacts = {}
-        self._resources = {"t": sys.stdout}
+        
+        self._resources = resources or {"t" : sys.stdout,
+                                        "stdin": sys.stdin,
+                                        "stdout": sys.stdout,
+                                        "wclips": sys.stdout,
+                                        "wdialog": sys.stdout,
+                                        "wdisplay": sys.stdout,
+                                        "werror": sys.stdout,
+                                        "wwarning": sys.stdout,
+                                        "wtrace": sys.stdout}
+        
+        t = self._resources["t"]
+        self._resources.setdefault("stdin", sys.stdin)
+        self._resources.setdefault("stdout", t)
+        self._resources.setdefault("wclips", t)
+        self._resources.setdefault("wdialog", t)
+        self._resources.setdefault("wdisplay", t)
+        self._resources.setdefault("werror", t)
+        self._resources.setdefault("wwarning", t)
+        self._resources.setdefault("wtrace", t)
+        
+        self._init_resources = self._resources
         
         try:
             # assert the first fact: initial-fact
@@ -361,11 +382,11 @@ class Network(object):
         
         # close all pending resources
         for (name, res) in self._resources.items():
-            if name != 't' and hasattr(res, "close"):
+            if not self._init_resources.has_key(name) and hasattr(res, "close"):
                 res.close()
                 
         # and reset the resources map
-        self._resources = {"t": sys.stdout}
+        self._resources = self._init_resources
         
         # renew the root node
         self._root = RootNode(self)

@@ -11,7 +11,7 @@ from myclips.rete.Node import Node
 from myclips.rete.BetaInput import BetaInput
 from myclips.rete.nodes.NccNode import NccNode
 
-def show_wme_details(wme, indent=4, explodeToken=False, maxDepth=3, explodeAMem=False):
+def show_wme_details(stream, wme, indent=4, explodeToken=False, maxDepth=3, explodeAMem=False):
     
     assert isinstance(wme, WME)
 
@@ -19,79 +19,79 @@ def show_wme_details(wme, indent=4, explodeToken=False, maxDepth=3, explodeAMem=
 
     tokens = wme.tokens
 
-    print IP, "WME: f-", wme.factId," ", wme.fact
-    print IP, "  |- TOKENS: ", len(tokens)
+    print >> stream, IP, "WME: f-", wme.factId," ", wme.fact
+    print >> stream, IP, "  |- TOKENS: ", len(tokens)
     for token in tokens:
         if not explodeToken:
-            print IP, "  :  |- ",str(token)
+            print >> stream, IP, "  :  |- ",str(token)
         else:
-            show_token_details(token, indent+8, False, maxDepth-1)
-    print IP, "  |- Alpha-Memories: ", len(wme._alphaMemories)
+            show_token_details(stream, token, indent+8, False, maxDepth-1)
+    print >> stream, IP, "  |- Alpha-Memories: ", len(wme._alphaMemories)
     for am in wme._alphaMemories:
         if not explodeAMem:
-            print IP, "  :  |- " ,str(am)
+            print >> stream, IP, "  :  |- " ,str(am)
         else:
-            show_alphamemory_details(am, indent+8, False, maxDepth-1)
+            show_alphamemory_details(stream, am, indent+8, False, maxDepth-1)
             
-def show_alphamemory_details(am, indent=4, explodeWme=False, maxDepth=2):
+def show_alphamemory_details(stream, am, indent=4, explodeWme=False, maxDepth=2):
     
     IP = "".rjust(indent, ' ')
     if maxDepth <= 0:
-        print IP, '*** MAX-DEPTH ***'
+        print >> stream, IP, '*** MAX-DEPTH ***'
         return
 
     assert isinstance(am, AlphaMemory)
     
-    print IP, "AlphaMemory: ",repr(am)
+    print >> stream, IP, "AlphaMemory: ",repr(am)
     parent = am.rightParent
     pindent = IP
     while parent != None and not isinstance(parent, RootNode):
-        print pindent, "  :  |- PARENT:", parent
+        print >> stream, pindent, "  :  |- PARENT:", parent
         pindent += "    "
         parent = parent.rightParent
     
-    print IP, "  |- WMES: ", len(am.items)
+    print >> stream, IP, "  |- WMES: ", len(am.items)
     for wme in am.items:
         if not explodeWme:
-            print IP, "  :  |- ", wme
+            print >> stream, IP, "  :  |- ", wme
         else:
-            show_wme_details(wme, indent+8, False, maxDepth-1, False)
+            show_wme_details(stream, wme, indent+8, False, maxDepth-1, False)
         
     
-def show_token_details(token, indent=4, explodeWme=False, maxDepth=2):
+def show_token_details(stream, token, indent=4, explodeWme=False, maxDepth=2):
     
     IP = "".rjust(indent, ' ')
     
     if maxDepth <= 0:
-        print IP, '*** MAX-DEPTH ***'
+        print >> stream, IP, '*** MAX-DEPTH ***'
         return
     
     assert isinstance(token, Token)
     
     
     
-    print IP, "Token: ",str(token)
-    print IP, "  |- wme: ", token.wme
-    print IP, "  |- node: ", token.node
-    print IP, "  |- PARENT: "
+    print >> stream, IP, "Token: ",str(token)
+    print >> stream, IP, "  |- wme: ", token.wme
+    print >> stream, IP, "  |- node: ", token.node
+    print >> stream, IP, "  |- PARENT: "
     ttok = token.parent
     tindent = IP + "        " 
     while ttok != None:
-        print tindent, "  |- Token: ", repr(ttok)
-        print tindent, "  :    |- wme: ", ttok.wme
-        print tindent, "  :    |- #children: ", len(ttok._children)
-        print tindent, "  :    |- node: ", ttok.node
-        print tindent, "  :    |- PARENT:"
+        print >> stream, tindent, "  |- Token: ", repr(ttok)
+        print >> stream, tindent, "  :    |- wme: ", ttok.wme
+        print >> stream, tindent, "  :    |- #children: ", len(ttok._children)
+        print >> stream, tindent, "  :    |- node: ", ttok.node
+        print >> stream, tindent, "  :    |- PARENT:"
         tindent = tindent + "            "
         ttok = ttok.parent
-    print IP, "  |- CHILDREN: ", len(token._children)
+    print >> stream, IP, "  |- CHILDREN: ", len(token._children)
     for subtoken in token._children.values():
         show_token_details(subtoken, indent+8, False, maxDepth-1 )
-    print IP, "  |- NEGATIVE-JOIN-RESULTS: ", len(token._negativeJoinResults)
+    print >> stream, IP, "  |- NEGATIVE-JOIN-RESULTS: ", len(token._negativeJoinResults)
     for res in token._negativeJoinResults:
-        print IP, "  :  |- ", res
-        print IP, "     :  |- wme: ", res.wme
-        print IP, "     :  |- token: ", res.token
+        print >> stream, IP, "  :  |- ", res
+        print >> stream, IP, "     :  |- wme: ", res.wme
+        print >> stream, IP, "     :  |- token: ", res.token
     
 def draw_network_fragment(pnodes):
 

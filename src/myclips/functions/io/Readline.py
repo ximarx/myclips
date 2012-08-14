@@ -46,7 +46,7 @@ class Readline(Function):
         theName = self.resolve(theEnv, theName) if isinstance(theName, (types.FunctionCall, types.Variable)) else theName 
         
         if theName is None or (isinstance(theName, types.Symbol) and theName.pyEqual("t")):
-            theResource = sys.stdin
+            theResource = theEnv.RESOURCES["stdin"]
         elif not isinstance(theName, types.Symbol):
             raise InvalidArgTypeError("Function read expected argument #1 to be of type symbol")
         else:
