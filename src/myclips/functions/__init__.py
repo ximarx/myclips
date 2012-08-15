@@ -62,6 +62,16 @@ class SystemFunctionBroker(object):
         
         cls._functions[funcDefinition.name] = funcDefinition
         
+    @staticmethod
+    def unregister(defName):
+        """
+        Remove a definition
+        WARNING: this function call could be not effective
+            if called after a parser/a shell interpreter or a network
+            has already fetch definition 
+        """
+        cls = SystemFunctionBroker
+        del cls._functions[defName]
     
     @staticmethod
     def definitions():
