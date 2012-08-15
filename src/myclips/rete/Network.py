@@ -59,25 +59,18 @@ class Network(object):
         self._linkedParser = None
         self._deffacts = {}
         
-        self._resources = resources or {"t" : sys.stdout,
-                                        "stdin": sys.stdin,
-                                        "stdout": sys.stdout,
-                                        "wclips": sys.stdout,
-                                        "wdialog": sys.stdout,
-                                        "wdisplay": sys.stdout,
-                                        "werror": sys.stdout,
-                                        "wwarning": sys.stdout,
-                                        "wtrace": sys.stdout}
+        self._resources = resources or {"stdin": sys.stdin,
+                                        "stdout": sys.stdout}
         
-        t = self._resources["t"]
+        stdout = self._resources["stdout"]
         self._resources.setdefault("stdin", sys.stdin)
-        self._resources.setdefault("stdout", t)
-        self._resources.setdefault("wclips", t)
-        self._resources.setdefault("wdialog", t)
-        self._resources.setdefault("wdisplay", t)
-        self._resources.setdefault("werror", t)
-        self._resources.setdefault("wwarning", t)
-        self._resources.setdefault("wtrace", t)
+        self._resources.setdefault("t", stdout)
+        self._resources.setdefault("wclips", stdout)
+        self._resources.setdefault("wdialog", stdout)
+        self._resources.setdefault("wdisplay", stdout)
+        self._resources.setdefault("werror", stdout)
+        self._resources.setdefault("wwarning", stdout)
+        self._resources.setdefault("wtrace", stdout)
         
         self._init_resources = self._resources
         
