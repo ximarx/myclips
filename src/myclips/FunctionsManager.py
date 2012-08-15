@@ -214,6 +214,6 @@ class Constraint_ArgType(FunctionConstraint):
     
 def Functions_ImportSystemDefinitions():
     
-    from myclips.functions.__init__ import SystemFunctionBroker
+    from myclips.functions import SystemFunctionBroker
     
     return SystemFunctionBroker.definitions()

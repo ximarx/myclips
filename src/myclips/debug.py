@@ -93,7 +93,7 @@ def show_token_details(stream, token, indent=4, explodeWme=False, maxDepth=2):
         print >> stream, IP, "     :  |- wme: ", res.wme
         print >> stream, IP, "     :  |- token: ", res.token
     
-def draw_network_fragment(pnodes):
+def prepare_network_fragment_plotter(pnodes):
 
     try:
         from myclips.listeners._NetworkPlotterAdapter_NetworkX import _NetworkXWrapper as Plotter
@@ -150,5 +150,10 @@ def draw_network_fragment(pnodes):
         if not child.isLeftRoot():
             nodeStack.append(child.leftParent)
             
-    g.draw()
+    #g.draw()
+    return g
+
+def draw_network_fragment(pnodes):
+    
+    prepare_network_fragment_plotter(pnodes).draw()
         

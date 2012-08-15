@@ -39,12 +39,14 @@ class SystemFunctionBroker(object):
     _functions = {}
     _ready = False
         
-    @classmethod
-    def register(cls, funcInstance):
+    @staticmethod
+    def register(funcInstance, allowReplace=False):
         """
         Register a new Function instance
         as system function
         """
+        cls = SystemFunctionBroker
+        
         if not isinstance(funcInstance, Function):
             myclips.logger.error("Invalid function definition: %s", repr(funcInstance))
             return
@@ -55,20 +57,22 @@ class SystemFunctionBroker(object):
         
         assert isinstance(funcDefinition, FunctionDefinition)
         
-        if cls._functions.has_key(funcDefinition.name):
+        if not allowReplace and cls._functions.has_key(funcDefinition.name):
             raise SystemFunctionRedefinitionError("Redefinition attempt: %s"%funcDefinition.name)
         
         cls._functions[funcDefinition.name] = funcDefinition
         
     
-    @classmethod
-    def definitions(cls):
+    @staticmethod
+    def definitions():
+        cls = SystemFunctionBroker
         cls.bootstrap()
         return cls._functions
     
     
-    @classmethod
-    def bootstrap(cls):
+    @staticmethod
+    def bootstrap():
+        cls = SystemFunctionBroker
         if cls._ready:
             return
         

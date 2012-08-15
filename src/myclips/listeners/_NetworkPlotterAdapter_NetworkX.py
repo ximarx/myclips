@@ -157,7 +157,7 @@ class _NetworkXWrapper(object):
         self._G.remove_edge(child, parent)
             
             
-    def draw(self):
+    def _prepare_draw(self, resolveDynamic=False):
         
         G = self._G
                 
@@ -176,11 +176,31 @@ class _NetworkXWrapper(object):
         nccs=[n for (n,d) in G.nodes(data=True) if d['type'] == 'NccNode']
         nccps=[n for (n,d) in G.nodes(data=True) if d['type'] == 'NccPartnerNode']
         
+        if resolveDynamic:
+            for n,d in G.nodes(data=True):
+                
+                if d.has_key('label') and d.has_key('dyn_label') and callable(d['dyn_label']):
+                    d['label'] = "\\n".join([d['label'], d['dyn_label'](d['ref'])])
+                    del d['dyn_label']
+                    
+                elif d.has_key('dyn_label') and callable(d['dyn_label']):
+                    d['label'] = d['dyn_label'](d['ref'])
+                    del d['dyn_label']
+                    
+                if d.has_key('label') and d.has_key('tests') and len(d['tests']) > 0:
+                    d['label'] = "\\n".join([d['label'], "\\n".join(d['tests'])])
+                    del d['tests']
+                    
+                elif d.has_key('tests') and len(d['tests']) > 0:
+                    d['label'] = "\\n".join(d['tests'])
+                    del d['tests']
+
 
         ltests=dict([(n,"\n".join(d['tests'])) for (n,d) in G.nodes(data=True) if d.has_key('tests') and len(d['tests']) > 0])
         llabels=dict([(n,d['label']) for (n,d) in G.nodes(data=True) if d.has_key('label') and not d.has_key('dyn_label')])
         lbothlabels=dict([(n,"\n".join([d['dyn_label'](d['ref']), d['label']])) for (n,d) in G.nodes(data=True) if d.has_key('label') and d.has_key('dyn_label') and callable(d['dyn_label'])])
         ldynlabels=dict([(n,d['dyn_label'](d['ref'])) for (n,d) in G.nodes(data=True) if d.has_key('dyn_label') and ( not d.has_key('label') ) and callable(d['dyn_label'])])
+
 
         try:
             # graphviz needed, otherwise use sprint_layout
@@ -251,12 +271,34 @@ class _NetworkXWrapper(object):
         nx.draw_networkx_labels(G,pos,labels=lbothlabels,font_size=10)
         nx.draw_networkx_labels(G,pos,labels=ldynlabels,font_size=10)
         
+        #plt.savefig("weighted_graph.png") # save as png
+        #plt.show() # display
+        
+        #nx.
+        
+        #return plt        
+
+    def draw(self):
+        self._prepare_draw()
+        
         plt.axis('off')
         plt.box("off")
         plt.subplots_adjust(left=0, bottom=0, right=1, top=1,
                       wspace=0, hspace=0)
-        #plt.savefig("weighted_graph.png") # save as png
-        plt.show() # display        
+        plt.show()
+
+    def dot_string(self):
+        self._prepare_draw(resolveDynamic=True)
+    
+        #import StringIO    
+        #stringBuffer = StringIO.StringIO()
+        
+        A = nx.to_agraph(self._G)
+        
+        #nx.write_dot(self._G, stringBuffer)
+        
+        #return stringBuffer.getvalue()
+        return A.to_string()
         
     def clear(self):
         

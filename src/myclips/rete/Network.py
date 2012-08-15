@@ -62,15 +62,16 @@ class Network(object):
         self._resources = resources or {"stdin": sys.stdin,
                                         "stdout": sys.stdout}
         
-        stdout = self._resources["stdout"]
+        self._resources.setdefault("stdout", sys.stdout)
+        s = self._resources["stdout"]
         self._resources.setdefault("stdin", sys.stdin)
-        self._resources.setdefault("t", stdout)
-        self._resources.setdefault("wclips", stdout)
-        self._resources.setdefault("wdialog", stdout)
-        self._resources.setdefault("wdisplay", stdout)
-        self._resources.setdefault("werror", stdout)
-        self._resources.setdefault("wwarning", stdout)
-        self._resources.setdefault("wtrace", stdout)
+        self._resources.setdefault("t", s)
+        self._resources.setdefault("wclips", s)
+        self._resources.setdefault("wdialog", s)
+        self._resources.setdefault("wdisplay", s)
+        self._resources.setdefault("werror", s)
+        self._resources.setdefault("wwarning", s)
+        self._resources.setdefault("wtrace", s)
         
         self._init_resources = self._resources
         
