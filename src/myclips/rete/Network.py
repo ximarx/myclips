@@ -3,7 +3,7 @@ Created on 24/lug/2012
 
 @author: Francesco Capozzo
 '''
-from myclips.Agenda import Agenda
+from myclips.Agenda import Agenda, AgendaNoMoreActivationError
 import myclips.parser.Types as types
 from myclips.MyClipsException import MyClipsBugException, MyClipsException
 from myclips.rete.nodes.PropertyTestNode import PropertyTestNode
@@ -29,6 +29,7 @@ from myclips.ModulesManager import ModulesManager, UnknownModuleError
 from myclips.Fact import Fact
 from myclips.TemplatesManager import TemplateDefinition
 import sys
+from myclips.functions.Function import FunctionInternalError, HaltException
 
 
 class Network(object):
@@ -316,11 +317,11 @@ class Network(object):
         
         # close all pending resources
         for (name, res) in self._resources.items():
-            if name != 't' and hasattr(res, "close"):
+            if not self._init_resources.has_key(name) and hasattr(res, "close"):
                 res.close()
                 
         # and reset the resources map
-        self._resources = {"t": sys.stdout}
+        self._resources = self._init_resources
         
         # push the MAIN::initial-fact
         self.assertFact(Fact({}, templateName="initial-fact", moduleName="MAIN"))
@@ -415,6 +416,34 @@ class Network(object):
         self.eventsManager.fire(EventsManager.E_NODE_ADDED, self._root)
 
         # ok, all done
+
+    def run(self, steps=None):
+        
+        if steps is not None:
+            theRuns = int(steps)
+        else:
+            theRuns = True
+            
+        try:
+            while theRuns:
+                #decrease theRuns if integer
+                if theRuns is not True:
+                    theRuns -= 1
+                    
+                try:
+                    pnode, token = self.agenda.getActivation()
+                    pnode.execute(token)
+                    
+                except AgendaNoMoreActivationError:
+                    try:
+                        # try to pop the focusStack
+                        self.agenda.focusStack.pop()
+                    except IndexError:
+                        # pop from an empty stack
+                        break
+            
+        except HaltException:
+            pass
 
     
     @property
