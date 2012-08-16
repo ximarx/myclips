@@ -30,19 +30,15 @@ class Fact(object):
             return "%s::(%s)"%(self._moduleName, " ".join([str(x) for x in self._values]))
     
     def __hash__(self):
-        try:
-            prefix = [self.moduleName, self.templateName]
-            if self.isTemplateFact():
-                toHash = prefix + [(key, value) if not isinstance(value, list)
-                                    else (key, tuple(value))
-                                        for (key,value) in self._values.items()]
-            else:
-                toHash = prefix + self._values
-                
-            return hash(tuple(toHash))
-        except Exception, e:
-            print "WTFFFFFFFF: ", e
-            raise
+        prefix = [self.moduleName, self.templateName]
+        if self.isTemplateFact():
+            toHash = prefix + [(key, value) if not isinstance(value, list)
+                                else (key, tuple(value))
+                                    for (key,value) in self._values.items()]
+        else:
+            toHash = prefix + self._values
+            
+        return hash(tuple(toHash))
         
     def __eq__(self, other):
         try:
@@ -71,6 +67,10 @@ class Fact(object):
             return self._values.keys()
         else:
             raise FactSlotsNotComputableException()
+        
+    @property
+    def values(self):
+        return self._values
         
     @property
     def templateName(self):
