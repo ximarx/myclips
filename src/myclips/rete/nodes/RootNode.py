@@ -51,6 +51,11 @@ class RootNode(Node, AlphaInput):
         myclips.logger.warn("Deprecated old activation used")
         return self.rightActivation(wme)
     
-    def __repr__(self, *args, **kwargs):
-        # visualizzare informazioni su test
-        return "<RootNode of %s>"%self.network
+    def __str__(self, *args, **kwargs):
+        return "<{0}: network={2} children={3}>".format(
+                        self.__class__.__name__,
+                        str(id(self)),
+                        self.network,
+                        len(self.children)
+                    )
+

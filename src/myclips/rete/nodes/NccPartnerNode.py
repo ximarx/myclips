@@ -130,3 +130,13 @@ class NccPartnerNode(Node, BetaInput):
     def nccNode(self):
         return self._nccNode
     
+    def __str__(self, *args, **kwargs):
+        return "<{0}: left={2}, clength={3}, ncc={4}, items={5}>".format(
+                        self.__class__.__name__,
+                        str(id(self)),
+                        str(id(self.leftParent)) if not self.isLeftRoot() else "None",
+                        self._circuitLength,
+                        str(id(self.nccNode)) if self.nccNode is not None else "None",
+                        len(self._buffer),
+                    )
+    

@@ -103,14 +103,15 @@ class JoinNode(Node, HasJoinTests, AlphaInput, BetaInput):
         
     
     def __str__(self, *args, **kwargs):
-        return "<{0}{1}: tests={3}, children={2}>".format(
-                    "Dummy" if self.isLeftRoot() else "",
-                    self.__class__.__name__,
-                    len(self.children),
-                    [str(t) for t in self.tests]
-                )
+        return "<{0}: left={2}, right={3}, children={4}, tests={5}>".format(
+                        self.__class__.__name__,
+                        str(id(self)),
+                        str(id(self.leftParent)) if not self.isLeftRoot() else "None",
+                        str(id(self.rightParent)) if not self.isRightRoot() else "None",
+                        len(self.children),
+                        [str(t) for t in self.tests]
+                    )
         
-    
     
 if __name__ == '__main__':
     print JoinNode()

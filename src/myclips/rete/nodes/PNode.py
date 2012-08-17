@@ -111,10 +111,13 @@ class PNode(Node, BetaInput, Memory):
         return self._properties.get(propName, defaultValue)
     
     def __str__(self, *args, **kwargs):
-        return "<PNode: %s>"%self.ruleName
-    
-    def __repr__(self, *args, **kwargs):
-        return self.__str__()
+        return "<{0}: name={2}, left={3}, items={4}>".format(
+                        self.__class__.__name__,
+                        str(id(self)),
+                        self.ruleName,
+                        str(id(self.leftParent)) if not self.isLeftRoot() else "None",
+                        len(self._items)
+                    )
     
     # FIXME move following methods into a AgendaActivation Class
     

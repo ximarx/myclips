@@ -85,4 +85,13 @@ class BetaMemory(Node, Memory, BetaInput):
             child.leftActivation(token)
         
         
+    def __str__(self, *args, **kwargs):
+        return "<{0}: left={2}, children={3}, items={4}>".format(
+                        self.__class__.__name__,
+                        str(id(self)),
+                        str(id(self.leftParent)) if not self.isLeftRoot() else "None",
+                        len(self.children),
+                        len(self._items),
+                    )
+        
         

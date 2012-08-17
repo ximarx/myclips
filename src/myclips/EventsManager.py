@@ -24,7 +24,7 @@ class EventsManager(Observable):
     E_NODE_SHARED = 'node-shared'
 
     E_FACT_ASSERTED = 'fact-asserted'
-    E_FACT_RETRACTD = 'fact-retracted'
+    E_FACT_RETRACTED = 'fact-retracted'
     
     E_ACTION_PERFORMED = 'action-performed'
     
@@ -62,5 +62,6 @@ if __name__ == '__main__':
     import pprint
     
     em = EventsManager()
-    pprint.pprint(em.events)
+    print ", ".join(em.events)
+        
     

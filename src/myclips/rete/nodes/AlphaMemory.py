@@ -97,10 +97,11 @@ class AlphaMemory(Node, Memory, AlphaInput):
         
         
     def __str__(self, *args, **kwargs):
-        return "<{0}: parent={1}, children={2}, items={3}>".format(
-                self.__class__.__name__,
-                str(not self.isRightRoot()),
-                len(self.children),
-                len(self.items)
-            )
+        return "<{0}: right={2}, children={3}, items={4}>".format(
+                        self.__class__.__name__,
+                        str(id(self)),
+                        str(id(self.rightParent)) if not self.isRightRoot() else "None",
+                        len(self.children),
+                        len(self._items)
+                    )
         

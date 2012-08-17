@@ -74,14 +74,12 @@ class PropertyTestNode(Node, HasMemory, HasTests, AlphaInput):
         return self.rightActivation(wme)
     
     def __str__(self, *args, **kwargs):
-        return "<{0}: tests={3}, parent={1}, memory={4}, children={2}>".format(
-                self.__class__.__name__,
-                str(not self.isRightRoot()),
-                len(self.children),
-                [str(t) for t in self.tests],
-                self.hasMemory()
-            )
-        
-    def __repr__(self):
-        return self.__str__()
+        return "<{0}: right={2}, memory={3}, children={4}, tests{5}>".format(
+                        self.__class__.__name__,
+                        str(id(self)),
+                        str(id(self.rightParent)) if not self.isRightRoot() else "None",
+                        str(id(self.memory)) if not self.hasMemory() else "None",
+                        len(self.children),
+                        [str(t) for t in self.tests]
+                    )
         

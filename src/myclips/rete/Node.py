@@ -110,12 +110,17 @@ class Node(object):
         #EventManager.trigger(EventManager.E_NODE_REMOVED, self)
     
     def __str__(self, *args, **kwargs):
-        return "<{0}: leftParent={1}, rightParent={2}, children={3}>".format(
-                self.__class__.__name__,
-                str(not self.isLeftRoot()),
-                str(not self.isRightRoot()),
-                len(self.children)
-            )
+        return "<{0}: left={2}, right={3}, children={4}>".format(
+                        self.__class__.__name__,
+                        str(id(self)),
+                        str(id(self.leftParent)) if not self.isLeftRoot() else "None",
+                        str(id(self.rightParent)) if not self.isRightRoot() else "None",
+                        len(self.children)
+                    )
+        
+    def __repr__(self, *args, **kwargs):
+        return self.__str__(*args, **kwargs).replace(self.__class__.__name__, self.__class__.__name__+"@"+str(id(self)), 1)
+
     
     
     

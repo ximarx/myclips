@@ -36,8 +36,15 @@ class Memory(object):
         while len(self._items) > 0:
             self._items[self._items.keys()[0]].delete()
             
+    def __str__(self, *args, **kwargs):
+        return "<{1}#{0}: {2} items>".format(
+                        self.__class__.__name__,
+                        len(self._items)
+                    )
+        
         
     def __repr__(self, *args, **kwargs):
+        
         return "<Memory: {0} item(s)>".format(
                                             len(self._items)
                                         )

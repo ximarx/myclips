@@ -29,7 +29,7 @@ from myclips.ModulesManager import ModulesManager, UnknownModuleError
 from myclips.Fact import Fact
 from myclips.TemplatesManager import TemplateDefinition
 import sys
-from myclips.functions.Function import FunctionInternalError, HaltException
+from myclips.functions.Function import HaltException
 
 
 class Network(object):
@@ -42,7 +42,8 @@ class Network(object):
         '''
         Constructor
         '''
-        self._eventsManager = eventsManager if eventsManager is not None else EventsManager.default
+        #self._eventsManager = eventsManager if eventsManager is not None else EventsManager.default
+        self._eventsManager = eventsManager if eventsManager is not None else EventsManager()
         # if a custom modules manager is not submitted, a new default one (with MAIN scope) is used
         if modulesManager is None:
             modulesManager = ModulesManager()
@@ -155,6 +156,8 @@ class Network(object):
             # increment the fact-id counter
             self._currentWmeId += 1 
             
+            self.eventsManager.fire(EventsManager.E_FACT_ASSERTED, wme)
+            
             # propagate the new assertion in the network
             self._root.rightActivation(wme)
             
@@ -183,6 +186,8 @@ class Network(object):
         del self._facts[wme.factId]
         # and from the fact -> wme map
         del self._factsWmeMap[wme.fact]
+        
+        self.eventsManager.fire(EventsManager.E_FACT_RETRACTED, wme)
         
         # then start wme revocation from the network
         wme.delete()

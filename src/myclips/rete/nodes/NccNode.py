@@ -86,3 +86,17 @@ class NccNode(Node, Memory, BetaInput):
     @property
     def partner(self):
         return self._partner
+    
+    
+    def __str__(self, *args, **kwargs):
+        return "<{0}: left={2}, right={3}, children={4}, items={5}, partner={6}>".format(
+                        self.__class__.__name__,
+                        str(id(self)),
+                        str(id(self.leftParent)) if not self.isLeftRoot() else "None",
+                        str(id(self.rightParent)) if not self.isRightRoot() else "None",
+                        len(self.children),
+                        len(self._items),
+                        str(id(self.partner)) if self.partner is not None else "None"
+                    )
+        
+    
