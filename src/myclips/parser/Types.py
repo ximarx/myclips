@@ -794,7 +794,7 @@ class ExportSpecification(ParsedType):
         
 
 class DefModuleConstruct(ParsedType, HasScope):
-    __FIELDS__=['moduleName', 'comment', 'comment', 'specifications']
+    __FIELDS__=['moduleName', 'comment', 'specifications']
     def __init__(self, moduleName, modulesManager, specifications=None, comment=None):
         moduleName = moduleName.evaluate() if isinstance(moduleName, BaseParsedType) else moduleName
         comment = comment.evaluate().strip('"') if isinstance(comment, BaseParsedType) else comment
