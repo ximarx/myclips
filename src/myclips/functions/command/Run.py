@@ -25,8 +25,6 @@ class Run(Function):
 
         if theRuns is not None:
             theRuns = self.resolve(theEnv, self.semplify(theEnv, theRuns, types.Integer, ("1", "integer")))
-        else:
-            theRuns = True
             
         theEnv.network.run(theRuns)
         
