@@ -61,6 +61,9 @@ class BaseParsedType(ParsedType):
                 
     def __neq__(self, other):
         return not self.__eq__(other)
+    
+    def __hash__(self):
+        return hash(self.content)
 
     def __str__(self):
         return str(self.evaluate())
