@@ -193,7 +193,7 @@ class FunctionCall(ParsedType, HasScope):
     def __repr__(self, *args, **kwargs):
         return "<{0}:{1},args={2}>".format(self.__class__.__name__,
                                         self.funcName,
-                                        self.funcArgs )
+                                        repr(self.funcArgs) )
         
     def toClipsStr(self):
         return "(%s %s)"%(self.funcName," ".join([x.toClipsStr() for x in self.funcArgs]))

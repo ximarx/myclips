@@ -185,8 +185,8 @@ def normalizeAtom(atom):
     connected = []
     while not isinstance(atom, (types.Variable, types.BaseParsedType, types.FunctionCall)):
         if isinstance(atom, types.ConnectedConstraint):
-            atom = atom.constraint
             connected = atom.connectedConstraints
+            atom = atom.constraint
         
         elif isinstance(atom, types.Constraint):
             atom = atom.constraint

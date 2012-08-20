@@ -6,6 +6,7 @@ import myclips
 from myclips.functions.Function import FunctionInternalError, HaltException
 import traceback
 from myclips.Agenda import AgendaNoMoreActivationError
+from myclips.rete.Network import Network
 
 def constructs_prettyprint(constr_string, INDENT=0):
     output = sys.stdout
@@ -28,8 +29,7 @@ if __name__ == '__main__':
     s = r"""
     
 (defrule r 
-    (A B ?c)
-    (test (neq ?c C (upcase ?c)))
+    (A B|s C)
 =>
 )
 
@@ -39,9 +39,11 @@ if __name__ == '__main__':
     MM = ModulesManager()
     MM.addMainScope()
     
+    parsed = Parser(modulesManager=MM, debug=False).parse(s)
+    
     try:
     
-        [constructs_prettyprint(repr(x)) for x in Parser(modulesManager=MM, debug=False).parse(s) if isinstance(x, ParsedType)]
+        [constructs_prettyprint(repr(x)) for x in parsed if isinstance(x, ParsedType)]
             
     except Exception, err:
         try:
@@ -53,4 +55,13 @@ if __name__ == '__main__':
     finally:
         for scopeName in MM.getModulesNames():
             print MM.getScope(scopeName)
+        
+    n = Network(modulesManager=MM)
+        
+    for p in parsed:
+        
+        if p.__class__.__name__ == 'DefRuleConstruct':
+            
+            n.addRule(p)
+            
         

@@ -32,6 +32,7 @@ import sys
 from myclips.functions.Function import HaltException
 from myclips.rete.tests.DynamicFunctionTest import DynamicFunctionTest
 from myclips.rete.nodes.TestNode import TestNode
+from myclips.rete.tests.OrConnectiveTest import OrConnectiveTest
 
 
 class Network(object):
@@ -630,6 +631,7 @@ class Network(object):
                                 # share or create a property test node for each type/value at index
                                 tests = [ConstantValueAtIndexTest(indexLocation, atom)]
                                 
+                                
                                 # if this is a NegativeTest, i need to reverse all tests
                                 if isNegative:
                                     tests = [NegativeAlphaTest(t) for t in tests]
@@ -684,6 +686,7 @@ class Network(object):
                     # then check for Term (Positive/Negative) and change tests for it
                     
                     isPositive = True
+                    connectedConstraints = None
                     
                     if isinstance(fieldConstraint, types.Constraint):
                         # reduce Constraint to his content
@@ -692,6 +695,7 @@ class Network(object):
                     if isinstance(fieldConstraint, types.ConnectedConstraint):
                         # reduce ConnectedConstraint to his main constraint
                         myclips.logger.error("FIXME: Connected contraints alternative values ignored: %s", fieldConstraint.connectedConstraints)
+                        connectedConstraints = fieldConstraint.connectedConstraints
                         fieldConstraint = fieldConstraint.constraint
                         
                     if isinstance(fieldConstraint, types.PositiveTerm):
@@ -716,6 +720,29 @@ class Network(object):
                         
                         # share or create a property test node for each type/value at index
                         tests = [ConstantValueAtIndexTest(indexLocation, fieldConstraint)]
+                        
+                        if connectedConstraints:
+                            for cc in connectedConstraints:
+                                conType, conValue = cc
+                                
+                                conNegative = False if isinstance(conValue, types.PositiveTerm) else True
+                                
+                                conTerm = conValue.term
+                                    
+                                if isinstance(conTerm, types.BaseParsedType):
+                                    # need to take care of this!
+                                    # if this connected constraint has
+                                    # a base parsed type + the base term
+                                    # must be taken in account where creating
+                                    # pattern test
+                                    aSingleTest = ConstantValueAtIndexTest(indexLocation, conTerm)
+                                    if conNegative:
+                                        aSingleTest = NegativeAlphaTest(aSingleTest)
+                                    
+                                    if conType == '|':
+                                        tests.append(aSingleTest)
+                                        tests = [OrConnectiveTest(tests)]
+                        
                         
                         # if this is a NegativeTest, i need to reverse all tests
                         if not isPositive:
