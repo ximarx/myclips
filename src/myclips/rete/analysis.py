@@ -6,9 +6,9 @@ Created on 27/lug/2012
 
 import myclips.parser.Types as types
 from myclips.rete.tests.locations import VariableLocation, VariableReference
-from myclips.MyClipsException import MyClipsBugException
+from myclips.MyClipsException import MyClipsBugException, MyClipsException
 import myclips
-from copy import copy
+from copy import copy, deepcopy
 
 def getVar(varName, variables, inPatternVariables):
     if variables.has_key(varName):
@@ -246,7 +246,97 @@ def analyzePattern(thePattern, patternIndex, variables):
 
     return (inPatternVariables, inPatternReferences)
 
-
+def analyzeFunction(theFunction, patternIndex, variables, fakeVariables = None, realToFakeMap = None, vIndex = None):
+    '''
+    Analyze a FunctionCall inside a Test-CE to replace variables name with fake names
+    an bound locations to improve reuse of test-nodes (normalize variables names) 
+    
+    @param theFunction: a function call to replace
+    @type theFunction: types.FunctionCall
+    @param patternIndex: the index of the test-pattern in the chain of ce
+    @type patternIndex: int
+    @param variables: a dict of variable name => VariableReferences
+    @type variables: dict
+    @param fakeVariables: a dict of fake variables references or None (to make a new one)
+    @type fakeVariables: dict
+    @param realToFakeMap: a map of real variables names to fake ones
+    @type realToFakeMap: dict
+    @param vIndex: the index for fake variables name generation
+    @type vIndex: int
+    '''
+    
+    aNewFunctionCallArgs = []
+    fakeVariables = fakeVariables or {}
+    realToFakeMap = realToFakeMap or {}
+    vIndex = vIndex or 0;
+    
+    if isinstance(theFunction, types.FunctionCall):
+        
+        assert isinstance(theFunction, types.FunctionCall)
+        
+        for aArg in theFunction.funcArgs:
+            
+            # globals are resolved at function-call execution time
+            if isinstance(aArg, (types.SingleFieldVariable, types.MultiFieldVariable)):
+                # i've already created a fake_var for this var?
+                if not realToFakeMap.has_key(aArg.evaluate()) :
+                
+                    # where i found the variable first?
+                    mainReference = getVar(aArg.evaluate(), variables, [])
+                    
+                    if mainReference is False:
+                        raise MyClipsException("Variable %s found in the expression %s was referenced in CE #%d before being defined."%(
+                                aArg.evaluate(),
+                                theFunction.toClipsStr(),
+                                patternIndex
+                            ))
+                    
+                    varReference = VariableReference()
+                    varReference.reference = mainReference
+                    varReference.relPatternIndex = mainReference.patternIndex - patternIndex
+                    
+                    theFakeName = "%"+str(vIndex)
+                    vIndex += 1
+                    
+                    theFakeVar = aArg.__class__(types.Symbol(theFakeName)) 
+                    
+                    fakeVariables[theFakeVar.evaluate()] = varReference
+                    realToFakeMap[aArg.evaluate()] = theFakeVar.evaluate()
+                
+                else:
+                    theFakeVar = fakeVariables[realToFakeMap[aArg.evaluate()]]
+                     
+                
+                # replace the variable name with a fake name
+                #aArg.content = theFakeName
+                aNewFunctionCallArgs.append(theFakeVar)
+                
+            elif isinstance(aArg, types.FunctionCall):
+                
+                # recursion: replace arguments inside the function call
+                # fakeReferences are ignored because the dict is automatically
+                # updated by the recursion.
+                aInnerNewFunctionCall, _ = analyzeFunction(aArg, patternIndex, variables, fakeVariables, realToFakeMap, vIndex)
+                
+                # replace the old function call with a new one with fake variables
+                #theFunction.funcArgs[iArg] = aInnerNewFunctionCall
+                aNewFunctionCallArgs.append(aInnerNewFunctionCall)
+                
+            else:
+                aNewFunctionCallArgs.append(aArg)
+    
+        # get the current scope and backup it
+        _tmp_scope = theFunction.scope.modules.currentScope
+        # then change it to the original function call scope
+        theFunction.scope.modules.changeCurrentScope(theFunction.scope.moduleName)
+        # create the new function call
+        newFunctionCall = types.FunctionCall(theFunction.funcName, theFunction.scope.modules, aNewFunctionCallArgs)
+        # then restore the previous scope
+        theFunction.scope.modules.changeCurrentScope(_tmp_scope.moduleName)
+    
+        return (newFunctionCall, fakeVariables)
+    
+    else: raise TypeError("AnalyzeFunction require a FunctionCall as first argument")
 
 def normalizeLHS(lhs):
     """
@@ -310,7 +400,7 @@ def _swapAndOr(And, AndParent, AndIndex):
             elif AndIndex is not None:
                 AndParent[AndIndex] = newOr
             else:
-                raise MyClipsBugException("Parent of And is not Not and not index available too")
+                raise MyClipsBugException("Parent of And is not Not and no index is available")
             changed = True
         elif isinstance(inAndPattern, types.AndPatternCE):
             changed = _swapAndOr(inAndPattern, And.patterns, index) or changed

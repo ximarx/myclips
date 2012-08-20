@@ -78,7 +78,7 @@ class PropertyTestNode(Node, HasMemory, HasTests, AlphaInput):
                         self.__class__.__name__,
                         str(id(self)),
                         str(id(self.rightParent)) if not self.isRightRoot() else "None",
-                        str(id(self.memory)) if not self.hasMemory() else "None",
+                        str(id(self.memory)) if self.hasMemory() else "None",
                         len(self.children),
                         [str(t) for t in self.tests]
                     )

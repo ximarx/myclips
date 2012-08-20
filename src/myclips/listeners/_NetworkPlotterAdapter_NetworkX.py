@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from myclips.rete.HasTests import HasTests
 from myclips.rete.Memory import Memory
 from myclips.listeners.EventsManagerListener import EventsManagerListener
+from myclips.rete.HasJoinTests import HasJoinTests
 
 
 class _NetworkPlotterAdapter_NetworkX(EventsManagerListener):
@@ -90,7 +91,7 @@ class _NetworkXWrapper(object):
                     'type': str(node.__class__.__name__).split(".")[-1],
                     'ref': node
                 })
-            if isinstance(node, HasTests):
+            if isinstance(node, (HasTests, HasJoinTests)):
                 tests = node.tests
                 self._G.node[self._nodeid]['tests'] = [str(t) for t in tests]
              
@@ -172,7 +173,7 @@ class _NetworkXWrapper(object):
         njns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'JoinNode']
         npnodes=[n for (n,d) in G.nodes(data=True) if d['type'] == 'PNode']
         nnjns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'NegativeNode']
-        fns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'FilterNode']
+        fns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'TestNode']
         nccs=[n for (n,d) in G.nodes(data=True) if d['type'] == 'NccNode']
         nccps=[n for (n,d) in G.nodes(data=True) if d['type'] == 'NccPartnerNode']
         

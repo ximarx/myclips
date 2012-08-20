@@ -23,17 +23,20 @@ class GreaterThan(Function):
         handler of the GreaterThan function
         """
         
-        # check theValue type and resolve (if needed)
-        if isinstance(theValue, (types.FunctionCall, types.Variable)):
-            theValue = self.resolve(theEnv, theValue)
+        # resolve to the python value
+        theValue = self.resolve(theEnv, 
+                                self.semplify(theEnv, theValue, types.Number, ("1", 'number')))
 
         for theArg in args:
             # resolve the real value
             # before comparison
-            if isinstance(theArg, (types.FunctionCall, types.Variable)):
-                theArg = self.resolve(theEnv, theArg)
+            # resolve to the python value
+            theArg = self.resolve(theEnv, 
+                                    self.semplify(theEnv, theArg, types.Number, ("ALL", 'number')))
+            
+            
             # compare the python type (so 3. == 3)
-            if theValue.evaluate() <= theArg.evaluate():
+            if theValue <= theArg:
                 return types.Symbol("FALSE")
             
         return types.Symbol("TRUE")

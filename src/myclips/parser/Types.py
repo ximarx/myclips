@@ -34,6 +34,9 @@ class ParsedType(object):
                                                         self.content, 
                                                         evaluated.__class__.__name__, 
                                                         evaluated )
+    def toClipsStr(self):
+        return str(self)
+
 
 class BaseParsedType(ParsedType):
     '''
@@ -51,6 +54,9 @@ class BaseParsedType(ParsedType):
         
     def evaluate(self):
         return self.content
+    
+    def toClipsStr(self):
+        return str(self.content)
     
     def pyEqual(self, value):
         return self.content == value
@@ -124,15 +130,21 @@ class InstanceName(BaseParsedType):
 
 class Variable(ParsedType):
     __FIELDS__=['content']
-    pass
+    def __init__(self, content):
+        ParsedType.__init__(self, content)
+    def toClipsStr(self):
+        return self.evaluate()
+        
 
 class SingleFieldVariable(Variable):
     converter = lambda self, t: "?"+self.content.evaluate()
-    pass
+    def __init__(self, content):
+        Variable.__init__(self, content)
 
 class MultiFieldVariable(Variable):
     converter = lambda self, t: "$?"+self.content.evaluate()
-    pass
+    def __init__(self, content):
+        Variable.__init__(self, content)
 
 class UnnamedSingleFieldVariable(Variable):
     converter = lambda self, t: "?"
@@ -182,6 +194,9 @@ class FunctionCall(ParsedType, HasScope):
         return "<{0}:{1},args={2}>".format(self.__class__.__name__,
                                         self.funcName,
                                         self.funcArgs )
+        
+    def toClipsStr(self):
+        return "(%s %s)"%(self.funcName," ".join([x.toClipsStr() for x in self.funcArgs]))
 
 class DefFactsConstruct(ParsedType, HasScope):
     __FIELDS__=['deffactsName','deffactsComment','rhs']
@@ -201,6 +216,7 @@ class DefFactsConstruct(ParsedType, HasScope):
                                         self.rhs,
                                         self.scope.moduleName
                                         )
+    
 
 class OrderedRhsPattern(ParsedType):
     #converter = lambda self, t: [x.evaluate() if isinstance(x, ParsedType) else x for x in t]

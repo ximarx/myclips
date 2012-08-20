@@ -18,7 +18,7 @@ from myclips.rete.tests.VariableBindingTest import VariableBindingTest
 from myclips.rete.nodes.JoinNode import JoinNode
 from myclips.rete.tests.OrderedFactLengthTest import OrderedFactLengthTest
 from myclips.rete.tests.locations import VariableLocation, AtomLocation
-from myclips.rete.analysis import analyzePattern, normalizeAtom
+from myclips.rete.analysis import analyzePattern, normalizeAtom, analyzeFunction
 from myclips.rete.tests.TemplateNameTest import TemplateNameTest
 from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
 from myclips.rete.nodes.NccNode import NccNode
@@ -30,6 +30,8 @@ from myclips.Fact import Fact
 from myclips.TemplatesManager import TemplateDefinition
 import sys
 from myclips.functions.Function import HaltException
+from myclips.rete.tests.DynamicFunctionTest import DynamicFunctionTest
+from myclips.rete.nodes.TestNode import TestNode
 
 
 class Network(object):
@@ -556,7 +558,7 @@ class Network(object):
             elif isinstance(patternCE, types.TestPatternCE):
                 # a special filter must be applied to
                 # the circuit
-                pass
+                node = self._makeBetaTestCircuit(node, patternCE, prevPatterns, variables)
 
             # or and and ce must not be supported here
             # after lhs normalization
@@ -767,6 +769,24 @@ class Network(object):
          
         return self._shareNode_JoinNode(lastBetaCircuitNode, alphaMemory, tests )           
         
+        
+    def _makeBetaTestCircuit(self, lastBetaCircuitNode, patternCE, prevPatterns, variables):
+        """
+        A Test join Circuit circuit is made by a TestNode linked to 
+        a beta-memory from the left and without an alpha circuit from the right
+        """
+        
+        if lastBetaCircuitNode != None:
+            lastBetaCircuitNode = self._shareNode_BetaMemory(lastBetaCircuitNode)
+            
+        # build tests for test node
+        tests = []
+        
+        (newFunctionCall, fakeVars) = analyzeFunction(patternCE.function , len(prevPatterns), variables)
+        
+        tests.append(DynamicFunctionTest(newFunctionCall, fakeVars))
+         
+        return self._shareNode_TestNode(lastBetaCircuitNode, tests )              
 
     def _makeBetaNegativeJoinCircuit(self, lastBetaCircuitNode, alphaMemory, patternCE, prevPatterns, variables):
         
@@ -947,6 +967,38 @@ class Network(object):
         
         return newChild
     
+    def _shareNode_TestNode(self, lastCircuitNode, tests):
+            
+        if lastCircuitNode is None:
+            raise MyClipsBugException("NccNode can't be first in LHS")
+            
+        for child in lastCircuitNode.children:
+            
+            # i can't use isinstance, child must be exactly a JoinNode
+            # otherwise negative node could be shared and this is a problem
+            if (child.__class__ == JoinNode
+                # is a join node
+                    and child.tests == tests):
+                    # tests are the same too
+                
+                # i can share the node
+                self.eventsManager.fire(EventsManager.E_NODE_SHARED, child)
+                return child
+        
+        # i can't share an old node
+        # it's time to create a new one
+        
+        newChild = TestNode(leftParent=lastCircuitNode, tests=tests)
+        
+        # link the join node to the parent
+        lastCircuitNode.prependChild(newChild)
+        
+
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, newChild)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastCircuitNode, newChild, -1)
+        
+        return newChild
+        
     
     def _shareNode_NegativeJoinNode(self, lastCircuitNode, alphaMemory, tests):
             
@@ -1018,7 +1070,7 @@ class Network(object):
     def _shareNode_NccNode(self, lastCircuitNode, lastNccCircuitNode, partnerCircuitLength):
         
         if lastCircuitNode is None:
-            raise MyClipsBugException("Don't know how to handle this")
+            raise MyClipsBugException("NccNode can't be first in LHS")
         
         # try to search for a ncc child of last circuit
         for child in lastCircuitNode.children:
