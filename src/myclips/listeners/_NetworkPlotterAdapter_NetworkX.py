@@ -172,7 +172,7 @@ class _NetworkXWrapper(object):
         nbmems=[n for (n,d) in G.nodes(data=True) if d['type'] == 'BetaMemory']
         njns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'JoinNode']
         npnodes=[n for (n,d) in G.nodes(data=True) if d['type'] == 'PNode']
-        nnjns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'NegativeNode']
+        nnjns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'NegativeJoinNode']
         fns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'TestNode']
         nccs=[n for (n,d) in G.nodes(data=True) if d['type'] == 'NccNode']
         nccps=[n for (n,d) in G.nodes(data=True) if d['type'] == 'NccPartnerNode']

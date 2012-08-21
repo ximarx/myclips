@@ -45,10 +45,10 @@ class BetaMemory(Node, Memory, BetaInput):
         @type token: myclips.Token | None
         """
         
-        if not isinstance(wme, WME):
+        if wme is not None and not isinstance(wme, WME):
             raise MyClipsBugException("BetaMemory activated with a non-WME item: <%s:%s>"%(wme.__class__.__name__,
                                                                                             wme))
-        if token != None and not isinstance(token, Token):
+        if token is not None and not isinstance(token, Token):
             raise MyClipsBugException("BetaMemory activated with a non-Token item: <%s:%s>"%(wme.__class__.__name__,
                                                                                             wme))
         
@@ -82,7 +82,7 @@ class BetaMemory(Node, Memory, BetaInput):
         beta-memory
         """
         for token in self.items:
-            child.leftActivation(token)
+            child.leftActivation(token, None)
         
         
     def __str__(self, *args, **kwargs):

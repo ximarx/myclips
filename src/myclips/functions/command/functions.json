@@ -1,5 +1,9 @@
 [
     {
+        "class": "Clear", 
+        "module": "myclips.functions.command.Clear"
+    }, 
+    {
         "class": "Facts", 
         "module": "myclips.functions.command.Facts"
     }, 

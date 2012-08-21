@@ -338,7 +338,7 @@ def analyzeFunction(theFunction, patternIndex, variables, fakeVariables = None, 
     
     else: raise TypeError("AnalyzeFunction require a FunctionCall as first argument")
 
-def normalizeLHS(lhs):
+def normalizeLHS(lhs, MM):
     """
     Change patterns orders (and nested patterns order)
     to normalize lhs in a Or (And ( normal form
@@ -370,6 +370,11 @@ def normalizeLHS(lhs):
     
     while _compactPatterns(lhs):
         continue
+
+    # then add a (initial-fact)
+    # before (not or (test pattern
+    # if they are first in the a group
+    _initialFactNormalization(lhs, MM)
         
     return lhs
 
@@ -473,6 +478,35 @@ def _compactPatterns(Combiner):
                     # just continue 
         
     return changed
+
+
+def _initialFactNormalization(Combiner, MM):
+    """
+    Add (initial-fact) pattern before (not or (test if they are first in a group
+    """
+    
+    # check if the first pattern in the list is one 
+    # of the right type, otherwise, add a (initial-fact)
+    # pattern as first
+    if len(Combiner.patterns) and isinstance(Combiner.patterns[0], (types.TestPatternCE, types.NotPatternCE)):
+        # first pattern in the group is a test or a not.
+        Combiner.patterns.insert(0, _makeInitialFactPattern(MM) )
+    
+    for inCombinerPattern in Combiner.patterns:
+        if isinstance(inCombinerPattern, (types.AndPatternCE, types.OrPatternCE)):
+            # go deeper
+            _initialFactNormalization(inCombinerPattern, MM)
+            
+        elif isinstance(inCombinerPattern, types.NotPatternCE):
+            if isinstance(inCombinerPattern.pattern, (types.AndPatternCE, types.OrPatternCE)):
+                _initialFactNormalization(inCombinerPattern.pattern, MM)
+                # it's useless to restart from the begin
+                # just continue 
+        
+
+def _makeInitialFactPattern(modulesManager):
+    return types.TemplatePatternCE('initial-fact', modulesManager)
+
 
 
 def normalizeDeclarations(declarations):

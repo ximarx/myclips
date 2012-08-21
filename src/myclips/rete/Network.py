@@ -215,7 +215,7 @@ class Network(object):
             
         
         #normalize defule lhs
-        defrule.lhs = analysis.normalizeLHS(defrule.lhs)
+        defrule.lhs = analysis.normalizeLHS(defrule.lhs, defrule.scope.modules)
         # after normalization:
         #    defrule.lhs is a OrPatternCE with at least a nested AndPatternCe
         firstPNode = None
@@ -235,6 +235,7 @@ class Network(object):
                           variables=variables)
             
             lastNode.prependChild(pNode)
+            lastNode.updateChild(pNode)
             
             self.eventsManager.fire(EventsManager.E_NODE_ADDED, pNode)
             self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastNode, pNode, -1)
@@ -742,6 +743,8 @@ class Network(object):
                                     if conType == '|':
                                         tests.append(aSingleTest)
                                         tests = [OrConnectiveTest(tests)]
+                                    if conType == '&':
+                                        tests.append(aSingleTest)
                         
                         
                         # if this is a NegativeTest, i need to reverse all tests
