@@ -9,7 +9,7 @@ import myclips
 
 class Parser(object):
     
-    def __init__(self, debug=False, enableComments=False, enableDirectives=False, modulesManager=None):
+    def __init__(self, debug=False, enableComments=True, enableDirectives=True, modulesManager=None):
         
         self.subparsers = {}
         self._initied = False
@@ -35,13 +35,6 @@ class Parser(object):
             self._debug = status
             if self._initied:
                 self._changeDebug()
-        
-    def setAllowDirectives(self, newStatus):
-        if self._initied:
-            if self._enableDirectives != newStatus:
-                self._initied = False
-                self.subparsers = {}
-        self._enableDirectives = newStatus            
 
     def setAllowComments(self, newStatus):
         if self._initied:
@@ -52,9 +45,6 @@ class Parser(object):
     
     def isCommentsAllowed(self):
         return self._enableComments
-    
-    def isDirectivesAllowed(self):
-        return self._enableDirectives
     
     def _initParsers(self):
         
@@ -657,22 +647,23 @@ class Parser(object):
         
         ### HIGH-LEVEL PARSERS
         
-        ### COMMENTS & DIRECTIVE
+        ### COMMENTS OR INLINE-COMMENTS
         
-        # small speed parsing improvements disabiling directive
-        if self._enableDirectives:
-            self.subparsers["MyClipsDirectiveParser"] = pp.Regex(r'\;\@(?P<command>\w+)\((?P<params>.+?)\)')\
-                    .setName("MyClipsDirectiveParser").suppress()
-                    #.setParseAction(lambda s,l,t: ('myclips-directive', (t['command'], t['params'])))
-                
-
+        self.subparsers["ClipsCommentParser"] = pp.Regex(r";.*").setName("ClipsComment")
+        
+        # if file/string doesn't contain comments
+        # 1/3 faster parsing can be archived
+        # setting _enableComments = False
+        # if comments are disabled,
+        # extra-construct comments are allowed anyway
+        if not self._enableComments:
             self.subparsers["ConstructParser"] = ( self._sb("DefFactsConstructParser") 
                                                     | self._sb("DefGlobalConstructParser")
                                                     | self._sb("DefRuleConstructParser")
                                                     | self._sb("DefTemplateConstructParser")
                                                     | self._sb("DefFunctionConstructParser")
                                                     | self._sb("DefModuleConstructParser")
-                                                    | self._sb("MyClipsDirectiveParser")
+                                                    | self._sb("ClipsCommentParser").suppress()
                                                     #| pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
                                                     )
         else:
@@ -684,24 +675,21 @@ class Parser(object):
                                                     | self._sb("DefModuleConstructParser")
                                                     #| pp.CharsNotIn(")") - ~pp.Word(pp.printables).setName("<unknown>")
                                                     )
+            self.subparsers["ConstructParser"].ignore(self._sb("ClipsCommentParser"))#\
             
         self.subparsers["ConstructParser"]\
                 .setParseAction(forwardParsed(key=0))
                 #.setDebug(self._debug)
-
-        # if file/string doesn't contain comments
-        # 1/3 faster parsing can be archived
-        # setting containsComments = False
-        if self._enableComments:
-            self.subparsers["ClipsCommentParser"] = (
-                        #pp.Regex(r'\;^\@.*?\n')
-                        ( ";" + pp.NotAny('@') + pp.SkipTo("\n") ).setName("ClipsComment")
-                        )
-            self.subparsers["ConstructParser"].ignore(self._sb("ClipsCommentParser"))#\
-                  
         
         self.subparsers["CLIPSProgramParser"] = pp.OneOrMore( self.getSParser("ConstructParser") )\
                 .setParseAction(forwardParsed())
+        
+        self.subparsers['ExtendedCLIPSProgramParser'] = pp.OneOrMore(self._sb('ConstantParser')
+                                                                        | self._sb('GlobalVariableParser')
+                                                                        | self._sb('ConstructParser')
+                                                                        | self._sb('RhsFunctionCallParser'))\
+                .setParseAction(forwardParsed())
+
 
         for k in self.subparsers.keys():
             self.subparsers[k].setName(k).setDebug(self._debug)
@@ -716,10 +704,13 @@ class Parser(object):
     # shortcut
     _sb = getSParser
     
-    def parse(self, text, filterReturn=False):
+    def parse(self, text, filterReturn=False, extended=False):
+        
+        parserName = 'CLIPSProgramParser' if not extended else 'ExtendedCLIPSProgramParser'
+        
         try:
             return [x for x 
-                        in self.getSParser('CLIPSProgramParser').parseString(text, True).asList() 
+                        in self.getSParser(parserName).parseString(text, True).asList() 
                             if not isinstance(x, (str, unicode)) # always filter simple strings
                                 # filter functions/templates/modules constructs (they are loaded in the MM)
                                 and (( filterReturn and isinstance(x, (types.DefFactsConstruct, types.DefRuleConstruct)))
@@ -732,7 +723,6 @@ class Parser(object):
                                              e.msg + ". Possible cause: " + self._lastParseError )
             else:
                 raise
-            
     
     def _changeDebug(self):
         for p in self.subparsers:

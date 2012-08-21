@@ -8,6 +8,10 @@
         "module": "myclips.functions.command.Facts"
     }, 
     {
+        "class": "Load", 
+        "module": "myclips.functions.command.Load"
+    }, 
+    {
         "class": "Reset", 
         "module": "myclips.functions.command.Reset"
     }, 
