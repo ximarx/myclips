@@ -103,11 +103,12 @@ class TemplateDefinition(RestrictedDefinition):
             except FactInvalidSlotName:
                 # the slotName is not set in the fact
                 # check if a default attr is available for the slot
-                # if the default is ?NONE raise error (not nil value admitted)
+                # if the default is ?NONE raise error (nil value is not admitted)
                 # else use the default value or None
                 
                 if slotDef.hasSlotAttribute(Attribute_DefaultValue.attributeType):
-                    defValue = slotDef.getSlotAttribute(Attribute_DefaultValue.attributeType)
+                    defValue = slotDef.getSlotAttribute(Attribute_DefaultValue.attributeType).getDefaultValue()
+                    print defValue
                     
                     if defValue is None:
                         return "Slot %s requires a value because of its (default ?NONE) attribute"%slotName
@@ -116,8 +117,11 @@ class TemplateDefinition(RestrictedDefinition):
  
                 else:
                     import myclips.parser.Types as types
-                    # is not default attribute is used, default ?DERIVE is default (and it means None)
-                    fact[slotName] = types.SPECIAL_VALUES['?DERIVE']
+                    # is not default attribute is used, default ?DERIVE is default (and it means nil for singleslot, [] for multislot)
+                    if slotDef.getSlotType() == SlotDefinition.TYPE_MULTI:
+                        fact[slotName] = []
+                    else:
+                        fact[slotName] = types.SPECIAL_VALUES['?DERIVE']
             
         # check if some slot in the fact has no definition
         for slotInFact in fact.slots():
@@ -169,7 +173,7 @@ class SlotDefinition(object):
         # if a definition of default value is
         # available, it will overwrite this default            
         attrs = {
-            Attribute_DefaultValue.attributeType : Attribute_DefaultValue(types.NullValue())
+            Attribute_DefaultValue.attributeType : Attribute_DefaultValue(types.SPECIAL_VALUES['?DERIVE'] if sType == SlotDefinition.TYPE_SINGLE else [])
         }
         
         for sattr in psl.attributes:

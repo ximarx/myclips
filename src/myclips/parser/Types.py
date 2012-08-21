@@ -932,7 +932,7 @@ SPECIAL_VALUES = {
     "?NONE" 
         : None,     # FORCE value specification in template slot
     "?DERIVE"
-        : NullValue(),   # Same as default=None
+        : Symbol('nil'),   # Same as default=None
 }
     
 TYPES = {

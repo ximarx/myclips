@@ -282,7 +282,10 @@ class Parser(object):
         self.subparsers["OrderedRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.ZeroOrMore(self._sb("RhsFieldParser")) + RPAR)\
                 .setParseAction(makeInstance(types.OrderedRhsPattern, None))
 
-        self.subparsers["TemplateRhsPatternParser"] = (LPAR + self._sb("SymbolParser") + pp.Group(pp.ZeroOrMore(self._sb("RhsSlotParser"))) + RPAR)\
+        self.subparsers["TemplateRhsPatternParser"] = (LPAR
+                                                        + self._sb("SymbolParser")
+                                                        + pp.Group(pp.ZeroOrMore(self._sb("RhsSlotParser"))) 
+                                                        + RPAR)\
                 .setParseAction(makeInstanceDict(types.TemplateRhsPattern, {'templateName': 0, 
                                                                                   'templateSlots': 1,
                                                                                   "modulesManager": self._modulesManager
@@ -420,8 +423,8 @@ class Parser(object):
                                                                                  "modulesManager": self._modulesManager
                                                                                  }))
         
-        self.subparsers['PatternCEParser'] = (self._sb("OrderedPatternCEParser")
-                                              | self._sb("TemplatePatternCEParser"))\
+        self.subparsers['PatternCEParser'] = (self._sb("TemplatePatternCEParser")
+                                              | self._sb("OrderedPatternCEParser"))\
                 .setParseAction(forwardParsed(key=0))
                 
         self.subparsers['AssignedPatternCEParser'] = (self._sb("SingleFieldVariableParser") 
