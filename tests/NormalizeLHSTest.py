@@ -7,9 +7,13 @@ import unittest
 import myclips.parser.Types as types
 import myclips.rete.analysis as analysis
 from MyClipsBaseTest import MyClipsBaseTest
+from myclips.ModulesManager import ModulesManager
+from myclips.rete.Network import Network
 
 class NormalizeLHSTest(MyClipsBaseTest):
 
+    def setUp(self):
+        self.MM = Network().modulesManager
 
     def test_SimpleAndOrReversion(self):
         
@@ -18,7 +22,7 @@ class NormalizeLHSTest(MyClipsBaseTest):
                     "C"
             ])]
         
-        lhs = analysis.normalizeLHS(lhs)
+        lhs = analysis.normalizeLHS(lhs,  self.MM)
         
         self.assertIsInstance(lhs, types.OrPatternCE)
         self.assertIsInstance(lhs.patterns[0], types.AndPatternCE)
@@ -38,7 +42,7 @@ class NormalizeLHSTest(MyClipsBaseTest):
                         ])
             ])]
 
-        lhs = analysis.normalizeLHS(lhs)
+        lhs = analysis.normalizeLHS(lhs, self.MM)
         
         self.assertIsInstance(lhs, types.OrPatternCE)
         permutations = []
@@ -58,15 +62,15 @@ class NormalizeLHSTest(MyClipsBaseTest):
                     types.OrPatternCE(["C", "D"])
             )]
 
-        lhs = analysis.normalizeLHS(lhs)
+        lhs = analysis.normalizeLHS(lhs, self.MM)
 
         self.assertIsInstance(lhs, types.OrPatternCE)
         
         permutations = []
         for i in range(0,2):
             self.assertIsInstance(lhs.patterns[i], types.AndPatternCE)
-            self.assertIsInstance(lhs.patterns[i].patterns[0], types.NotPatternCE)
-            permutations.append(lhs.patterns[i].patterns[0].pattern)
+            self.assertIsInstance(lhs.patterns[i].patterns[1], types.NotPatternCE)
+            permutations.append(lhs.patterns[i].patterns[1].pattern)
             
         permutationExpected = ["C", "D"]
         
@@ -86,19 +90,19 @@ class NormalizeLHSTest(MyClipsBaseTest):
                         ])
             )]
 
-        lhs = analysis.normalizeLHS(lhs)
+        lhs = analysis.normalizeLHS(lhs,  self.MM)
 
         self.assertIsInstance(lhs, types.OrPatternCE)
         
         permutations = []
         for i in range(0,4):
             self.assertIsInstance(lhs.patterns[i], types.AndPatternCE)
-            self.assertIsInstance(lhs.patterns[i].patterns[0], types.NotPatternCE)
-            if isinstance(lhs.patterns[i].patterns[0].pattern, types.AndPatternCE):
+            self.assertIsInstance(lhs.patterns[i].patterns[1], types.NotPatternCE)
+            if isinstance(lhs.patterns[i].patterns[1].pattern, types.AndPatternCE):
                 permutations.append("~({0})".format(" ".join([t if not isinstance(t, types.NotPatternCE) else "~"+t.pattern 
-                                     for t in lhs.patterns[i].patterns[0].pattern.patterns])))
+                                     for t in lhs.patterns[i].patterns[1].pattern.patterns])))
             else:
-                permutations.append("~"+lhs.patterns[i].patterns[0].pattern)
+                permutations.append("~"+lhs.patterns[i].patterns[1].pattern)
             
         permutationExpected = ["~C", "~D", "~(Z ~W)", "~(Z ~X)"]
         

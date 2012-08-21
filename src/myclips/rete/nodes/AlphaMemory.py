@@ -95,7 +95,6 @@ class AlphaMemory(Node, Memory, AlphaInput):
         for wme in self.items:
             child.rightActivation(wme)
         
-        
     def __str__(self, *args, **kwargs):
         return "<{0}: right={2}, children={3}, items={4}>".format(
                         self.__class__.__name__,

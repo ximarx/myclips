@@ -55,6 +55,8 @@ class PropertyTestNode(Node, HasMemory, HasTests, AlphaInput):
             oldChildren = self._children
             # store the current memory in a buffer var
             oldMemory = self.memory
+            
+            self.memory = None
             self._children = [child]
             
             # this will call the right activation for this node

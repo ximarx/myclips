@@ -29,6 +29,11 @@ class WME(MemoryItem):
         and delete the wme itself
         """
         
+#        print "Delete richiesta"
+#        import myclips.debug as debug
+#        import sys
+#        debug.show_wme_details(sys.stdout, self, explodeToken=True, maxDepth=10, explodeAMem=True)
+        
         # at first, remove this wme from all
         # alpha memories and reset the container
         for memory in self._alphaMemories:
@@ -109,7 +114,7 @@ class WME(MemoryItem):
         self._negativeJoinResults.remove(njr)
         
     def __hash__(self, *args, **kwargs):
-        return self.factId
+        return hash(self.factId)
     
     def __eq__(self, other):
         return ( isinstance(other, WME) and self.factId == other.factId)

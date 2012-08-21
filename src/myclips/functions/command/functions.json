@@ -14,5 +14,9 @@
     {
         "class": "Run", 
         "module": "myclips.functions.command.Run"
+    }, 
+    {
+        "class": "Watch", 
+        "module": "myclips.functions.command.Watch"
     }
 ]

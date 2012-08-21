@@ -21,6 +21,7 @@ from myclips.rete.nodes.NccPartnerNode import NccPartnerNode
 from myclips.EventsManager import EventsManager
 from myclips.Fact import Fact
 from MyClipsBaseTest import MyClipsBaseTest
+from myclips.rete.Memory import Memory
 #from myclips.TemplatesManager import TemplateDefinition, SlotDefinition
 
 # disable all logging from modules
@@ -149,6 +150,38 @@ class NetworkTest(MyClipsBaseTest):
         self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items[0].fact, fact)
         self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items[0].fact[0], types.Symbol)
 
+    def test_RetractFact(self):
+        
+        self.network.retractFact(self.network.getWmeFromId(0))
+        
+        self.assertEqual(len(self.network.facts), 0)
+
+
+    def test_RetractUsedFact(self):
+
+        prevLen = len(self.network.facts)
+
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[
+                types.OrderedPatternCE([
+                        types.Symbol("A"),
+                        types.Symbol("B"),
+                        types.Symbol("C"),
+                    ], self.MM)
+            ]))
+        
+        wme, _ = self.network.assertFact(fact([types.Symbol("A"), types.Symbol("B"), types.Symbol("C")]))
+        
+        self.network.retractFact(self.network.getWmeFromId(wme.factId))
+        
+        self.assertEqual(len(self.network.facts), prevLen)
+
+
+    def test_RetractUsedFact0(self):
+
+        self.network.addRule(types.DefRuleConstruct("A", self.MM, lhs=[]))
+        self.network.retractFact(self.network.getWmeFromId(0))
+        self.assertEqual(len(self.network.facts), 0)
+        
 
     def test_DummyJoinNodePropagation(self):
         
@@ -695,6 +728,7 @@ class NetworkTest(MyClipsBaseTest):
         
         self.assertFalse(trap.leftCatch)
         
+    
 
 
 if __name__ == "__main__":

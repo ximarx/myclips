@@ -33,6 +33,7 @@ from myclips.functions.Function import HaltException
 from myclips.rete.tests.DynamicFunctionTest import DynamicFunctionTest
 from myclips.rete.nodes.TestNode import TestNode
 from myclips.rete.tests.OrConnectiveTest import OrConnectiveTest
+import traceback
 
 
 class Network(object):
@@ -376,11 +377,15 @@ class Network(object):
         self.eventsManager.fire(EventsManager.E_NETWORK_CLEAR_PRE, self)
         
         # retract all facts
-        for wme in self.facts:
-            self.retractFact(wme)
+        try:
+            for wme in self.facts:
+                self.retractFact(wme)
+        except:
+            traceback.print_exc()
+            raise
 
         # destroy the network
-        for rule in self._rules.values():
+        for rule in self._rules.keys():
             self._rules[rule].delete()
             del self._rules[rule]
         
@@ -549,12 +554,15 @@ class Network(object):
                     lastNccCircuitNode = self._makeNetwork(node, patternCE.pattern.patterns, prevPatterns, variables, testsQueue)
                     node = self._makeBetaNccCircuit(node, lastNccCircuitNode, len(patternCE.pattern.patterns))
                     # inner conditions already appended by recursive call
-                    avoidAppend = True
+                    # but i have to add a +1 for the (not (...))
+                    #avoidAppend = True
                 else:
                     # a simple negative join node is required
 
                     alphaMemory = self._makeAlphaCircuit(patternCE.pattern, testsQueue)
                     node = self._makeBetaNegativeJoinCircuit(node, alphaMemory, patternCE, prevPatterns, variables)
+                    prevPatterns.append(patternCE)
+                    patternCE = patternCE.pattern
 
                 
             elif isinstance(patternCE, types.TestPatternCE):
@@ -826,7 +834,9 @@ class Network(object):
         # build tests for join node
         tests = []
         
-        (newBindings, references) = analyzePattern(patternCE, len(prevPatterns), variables)
+        (newBindings, references) = analyzePattern(patternCE.pattern, len(prevPatterns) + 1, variables)
+        
+        # new BINDINGS??? Need to raise error!
         
         # need to merge new bindings in variables
         variables.update(dict([(var.name, var) for var in newBindings]))

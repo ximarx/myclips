@@ -11,7 +11,7 @@ FORMAT = '[%(levelname).3s %(module)s::%(funcName)s:%(lineno)d] %(message)s'
 _logging.basicConfig(format=FORMAT)
 
 logger = _logging.getLogger('myclips')
-logger.setLevel(_logging.DEBUG)
+logger.setLevel(_logging.WARNING)
 
 # THIS FLAG WILL BE USEFULL IF
 # A STRICT_MODE WILL BE AVAILABLE 
