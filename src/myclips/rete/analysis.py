@@ -345,7 +345,14 @@ def normalizeLHS(lhs, MM):
     with all nested Or regrouped in a single
     top level Or
     """
+    
     if isinstance(lhs, list):
+        
+        # check if LHS has not pattern and handle this case as
+        # (or (and (initial-fact)))
+        if len(lhs) == 0:
+            return types.OrPatternCE([types.AndPatternCE([_makeInitialFactPattern(MM)])])
+        
         # wrap the pattern list with an AndCE
         lhs = types.AndPatternCE(lhs)
         
