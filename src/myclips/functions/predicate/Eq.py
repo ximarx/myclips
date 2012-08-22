@@ -23,17 +23,17 @@ class Eq(Function):
         """
         
         # check theValue type and resolve (if needed)
-        if isinstance(theValue, (types.FunctionCall, types.Variable)):
-            theValue = self.resolve(theEnv, theValue)
+        #if isinstance(theValue, (types.FunctionCall, types.Variable)):
+        #    theValue = self.resolve(theEnv, theValue)
+        theValue = self.semplify(theEnv, theValue)
 
         for theArg in args:
             # resolve the real value
             # before comparison
-            if isinstance(theArg, (types.FunctionCall, types.Variable)):
-                theArg = self.resolve(theEnv, theArg)
+            theArg = self.semplify(theEnv, theArg)
             # != and == operators for BaseParsedType are overrided for 
             # types + value comparisong
-            if theValue != theArg:
+            if not theValue == theArg:
                 return types.Symbol("FALSE")
             
         return types.Symbol("TRUE")

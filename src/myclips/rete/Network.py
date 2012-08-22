@@ -344,6 +344,9 @@ class Network(object):
         # and reset the resources map
         self._resources = self._init_resources
         
+        # reset the agenda
+        self._agenda = Agenda(self)
+        
         # push the MAIN::initial-fact
         self.assertFact(Fact({}, templateName="initial-fact", moduleName="MAIN"))
         

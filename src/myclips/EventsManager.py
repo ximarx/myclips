@@ -34,6 +34,10 @@ class EventsManager(Observable):
     # args: actionname, *args
     E_ACTION_PERFORMED = 'action-performed'
     
+    # args: actionname, *args
+    E_ACTION_RETURNVALUE = 'action-returnvalue'
+    
+    
     # args: oldfocus, newfocus
     E_FOCUS_CHANGED = 'focus-changed'
     

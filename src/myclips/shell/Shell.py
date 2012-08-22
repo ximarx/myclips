@@ -142,9 +142,11 @@ class Shell(object):
                         theResult = self._interpreter.evaluate(theResult)
                     except MyClipsException, e:
                         print "[ERROR] ", e.message
+                        #traceback.print_exc()
                     except Exception, e:
                         if hasattr(e, 'msg'):
                             print "[ERROR] ", e.msg
+                            traceback.print_exc()
                         else:
                             print "[ERROR] ", e
                             traceback.print_exc()

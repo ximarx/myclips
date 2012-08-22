@@ -134,6 +134,11 @@ class Variable(ParsedType):
         ParsedType.__init__(self, content)
     def toClipsStr(self):
         return self.evaluate()
+    def __repr__(self, *args, **kwargs):
+        evaluated = self.evaluate()
+        return "<{0}:{1}>".format(self.__class__.__name__, evaluated )
+    def __str__(self, *args, **kwargs):
+        return self.toClipsStr()
         
 
 class SingleFieldVariable(Variable):

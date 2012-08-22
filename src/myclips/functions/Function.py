@@ -21,12 +21,17 @@ class Function(object):
         
     @staticmethod
     def doExecute(theFunction, theEnv, triggerEvent=True):
+        from myclips.EventsManager import EventsManager
         try:
-            from myclips.EventsManager import EventsManager
             theEnv.network.eventsManager.fire(EventsManager.E_ACTION_PERFORMED, theFunction.funcDefinition.name, theFunction.funcArgs )
         except:
             pass
-        return theFunction.funcDefinition.linkedType.__class__.execute(theFunction.funcDefinition.linkedType, theEnv, *(theFunction.funcArgs))
+        returnValue = theFunction.funcDefinition.linkedType.__class__.execute(theFunction.funcDefinition.linkedType, theEnv, *(theFunction.funcArgs))
+        try:
+            theEnv.network.eventsManager.fire(EventsManager.E_ACTION_RETURNVALUE, returnValue )
+        except:
+            pass
+        return returnValue
 
     @classmethod
     def execute(cls, theFunction, theEnv, *args, **kargs):

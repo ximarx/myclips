@@ -56,6 +56,12 @@ class Format(Function):
                 # revolve variables and function calls
                 returnValueRaw.append(self.resolve(funcEnv, self.semplify(funcEnv, fragment)))
                 
+            # execute replacement of special chars:
+            #     
+            theFormat = theFormat.replace("%n", "\n")\
+                                    .replace("%r", "\r")\
+                                    #.replace("%%", "%")
+                
                 
             # theFormat is a string
             returnValueRaw = theFormat%tuple(returnValueRaw)
