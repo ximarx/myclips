@@ -11,17 +11,13 @@ import sys
 
 class Agenda(Function):
     '''
-    Displays facts stored in the fact-list.
-    
-    (facts [<module-name>] [<start-integer-expression> [<end-integer-expression> [<max-integer-expression>]]])
+    Displays all activations on the agenda. This function has no return value.
 
-    If <module-name> is not specified, then only facts visible to the current module will be displayed. 
-    If <module-name> is specified, then only facts visible to the specified module are displayed. 
-    If the symbol * is used for <module-name>, then facts from any module may be displayed. 
-    If the start argument is specified, only facts with fact-indices greater than or equal to this argument are displayed. 
-    If the end argument is specified, only facts with fact-indices less than or equal to this argument are displayed. 
-    If the max argument is specified, then no facts will be displayed beyond the specified maximum number of facts to be displayed. 
-    This function has no return value.
+    (agenda [<module-name>])
+
+    If <module-name> is unspecified, then all activations in the current module (not the current focus) are displayed. 
+    If <module-name> is specified, then all activations on the agenda of the specified module are displayed. 
+    If <module-name> is the symbol *, then the activations on all agendas in all modules are displayed.
     
     WARNING:
     
