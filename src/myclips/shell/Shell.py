@@ -160,7 +160,7 @@ class Shell(object):
                             self._completer.addWord(aVar.strip())                    
                     
                 
-        except EOFError:
+        except (EOFError, SystemExit):
             print "Bye!"
         except:
             print

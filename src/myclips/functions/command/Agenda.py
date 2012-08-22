@@ -3,11 +3,9 @@ Created on 13/ago/2012
 
 @author: Francesco Capozzo
 '''
-from myclips.FunctionsManager import FunctionDefinition, Constraint_ExactArgsLength,\
-    Constraint_MaxArgsLength, Constraint_ArgType
+from myclips.FunctionsManager import FunctionDefinition, Constraint_MaxArgsLength, Constraint_ArgType
 import myclips.parser.Types as types
 from myclips.functions.Function import Function
-import sys
 
 class Agenda(Function):
     '''

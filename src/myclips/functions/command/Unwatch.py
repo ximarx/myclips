@@ -3,16 +3,9 @@ Created on 13/ago/2012
 
 @author: Francesco Capozzo
 '''
-from myclips.FunctionsManager import FunctionDefinition, Constraint_ExactArgsLength,\
-    Constraint_ArgType, Constraint_MinArgsLength
+from myclips.FunctionsManager import FunctionDefinition, Constraint_ArgType, Constraint_MinArgsLength
 import myclips.parser.Types as types
 from myclips.functions.Function import Function
-from myclips.listeners.NetworkBuildPrinter import NetworkBuildPrinter
-from myclips.listeners.FactsWatcher import FactsWatcher
-from myclips.listeners.RulesWatcher import RulesWatcher
-from myclips.listeners.FocusWatcher import FocusWatcher
-from myclips.listeners.ActivationsWatcher import ActivationsWatcher
-from myclips.listeners.ActionsWatcher import ActionsWatcher
 
 class Unwatch(Function):
     '''
@@ -34,7 +27,7 @@ class Unwatch(Function):
         
         if len(args):
             args = dict([(x, True) for x in self.resolve(theEnv, 
-                                                         self.semplify(theEnv, args, types.Lexeme, ("ALL", "string or symbol")))])
+                                                         self.semplify(theEnv, args))])
             
             if args.has_key("all") or args.has_key("network"):
                 try:

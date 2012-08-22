@@ -8,6 +8,10 @@
         "module": "myclips.functions.command.Clear"
     }, 
     {
+        "class": "Exit", 
+        "module": "myclips.functions.command.Exit"
+    }, 
+    {
         "class": "Facts", 
         "module": "myclips.functions.command.Facts"
     }, 
