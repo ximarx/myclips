@@ -10,7 +10,8 @@ import myclips.parser.Types as types
 from myclips.rete.Token import Token
 from myclips.rete.tests.locations import VariableLocation
 from myclips.functions import FunctionEnv
-from myclips.FunctionsManager import FunctionDefinition
+#from myclips.FunctionsManager import FunctionDefinition
+from myclips.functions.Function import Function
 
 class PNode(Node, BetaInput, Memory):
     '''
@@ -143,11 +144,13 @@ class PNode(Node, BetaInput, Memory):
             assert isinstance(action, types.FunctionCall)
             
             # get the function definition linked to the FunctionCall
-            funcDefinition = action.funcDefinition
+            #funcDefinition = action.funcDefinition
             
-            assert isinstance(funcDefinition, FunctionDefinition)
+            #assert isinstance(funcDefinition, FunctionDefinition)
             # expand the args 
-            funcDefinition.linkedType.__class__.execute(funcDefinition.linkedType, theEnv, *(action.funcArgs))
+            #funcDefinition.linkedType.__class__.execute(funcDefinition.linkedType, theEnv, *(action.funcArgs))
+            
+            Function.doExecute(action, theEnv)
         
         # ...
         

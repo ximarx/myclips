@@ -18,6 +18,14 @@ class Function(object):
     
     def __init__(self, *args, **kwargs):
         object.__init__(self, *args, **kwargs)
+        
+    @staticmethod
+    def doExecute(theFunction, theEnv, triggerEvent=True):
+        try:
+            from myclips.EventsManager import EventsManager
+            theEnv.network.eventsManager.fire(EventsManager.E_ACTION_PERFORMED, theFunction.funcDefinition.name, theFunction.funcArgs )
+        finally:
+            return theFunction.funcDefinition.linkedType.__class__.execute(theFunction.funcDefinition.linkedType, theEnv, *(theFunction.funcArgs))
 
     @classmethod
     def execute(cls, theFunction, theEnv, *args, **kargs):
@@ -73,14 +81,15 @@ class Function(object):
             return arg.evaluate()
         elif isinstance(arg, types.FunctionCall):
             # indirect recursion on execute with
-            return arg.funcDefinition.linkedType.__class__.execute(arg.funcDefinition.linkedType, theEnv, *(arg.funcArgs))
+            #return arg.funcDefinition.linkedType.__class__.execute(arg.funcDefinition.linkedType, theEnv, *(arg.funcArgs))
+            return Function.doExecute(arg, theEnv)
         elif isinstance(arg, (types.SingleFieldVariable, types.MultiFieldVariable )):
             # resolve the variable value vs theEnv.variables dict
             return theEnv.variables[arg.evaluate()]
         elif isinstance(arg, types.GlobalVariable):
             # resolve the variable value vs theEnv.globals
             return theEnv.modulesManager.currentScope.globalsvars.getDefinition(arg.evaluate()).linkedType.runningValue
-        elif isinstance(arg, list):
+        elif isinstance(arg, (list, tuple)):
             # recursiong to resolve for inner objects
             return [self.resolve(theEnv, x) for x in arg]
         else:
@@ -113,7 +122,7 @@ class Function(object):
         '''
         if isinstance(arg, (types.FunctionCall, types.Variable)):
             theResolved = self.resolve(theEnv, arg)
-        elif isinstance(arg, list):
+        elif isinstance(arg, (list, tuple)):
             theResolved = [self.semplify(theEnv, x) for x in arg]
         else:
             theResolved = arg

@@ -8,10 +8,15 @@ from myclips.Observable import Observable
 
 class EventsManager(Observable):
     
+    # args: complete-main-rulename, complete-rulename, token linearized (no-None)
     E_RULE_FIRED = 'rule-fired'
+    # args: complete-main-rulename, complete-rulename, token linearized (no-None)
     E_RULE_ACTIVATED = 'rule-activated'
+    # args: complete-main-rulename, complete-rulename, token linearized (no-None)
     E_RULE_DEACTIVATED = 'rule-deactivated'
+    # args: defruleconstruct, pnode
     E_RULE_ADDED = 'rule-added'
+    # args: pnode
     E_RULE_REMOVED = 'rule-removed'
     
     E_NODE_ADDED = 'node-added'
@@ -26,7 +31,11 @@ class EventsManager(Observable):
     E_FACT_ASSERTED = 'fact-asserted'
     E_FACT_RETRACTED = 'fact-retracted'
     
+    # args: actionname, *args
     E_ACTION_PERFORMED = 'action-performed'
+    
+    # args: oldfocus, newfocus
+    E_FOCUS_CHANGED = 'focus-changed'
     
     E_STRATEGY_CHANGED = 'strategy-changed'
 

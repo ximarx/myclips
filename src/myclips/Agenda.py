@@ -68,8 +68,6 @@ class Agenda(object):
 
         salience = pnode.getSalience()
 
-        self._network.eventsManager.fire(EventsManager.E_RULE_ACTIVATED, pnode, token)
-
         try:
             per_module_activations = self._activations[pnode.moduleName]
         except KeyError:
@@ -94,6 +92,8 @@ class Agenda(object):
         #    (it know how to insert the activation in
         #        its own container)
         self._strategy.insert(same_salience_queue, pnode, token)
+        
+        self._network.eventsManager.fire(EventsManager.E_RULE_ACTIVATED, pnode.completeMainRuleName(), pnode.completeRuleName(), token.linearize(False))
     
     def getActivation(self):
         '''
@@ -162,6 +162,19 @@ class Agenda(object):
         #    to an unique string of the token's wme list
         fired_per_rule.add(token.hashString)
         
+        # add the activation in the ignored_activation:
+        # until a retract remove this activation
+        # it's still valid, but ignored
+        try:
+            ruleDict = self._ignored_activations[pnode.completeRuleName()]
+        except KeyError:
+            # no ignored activations for this rule, create a new dict for it
+            ruleDict = {}
+            self._ignored_activations[pnode.completeRuleName()] = ruleDict
+            
+        ruleDict[token.hashString] = (pnode, token)
+        
+        # then return the activation        
         return (pnode, token)
         
     def refresh(self, completeRuleName):
@@ -184,7 +197,7 @@ class Agenda(object):
         except KeyError:
             # no fired activations (this implies no ignored activation too)
             # or
-            # fired activations but no ignored activation yer
+            # fired activations but no ignored activation yet
             # nothing to do, return
             return
         
@@ -195,8 +208,6 @@ class Agenda(object):
         
         salience = pnode.getSalience()
         
-        self._network.eventsManager.fire(EventsManager.E_RULE_ACTIVATED, pnode, token)
-
         ########################################################
         # Remove the activation from activables agenda, if any #
         ########################################################
@@ -214,6 +225,9 @@ class Agenda(object):
                 
             if len(per_module_activations) == 0:
                 del self._activations[pnode.moduleName]
+                
+            # the event is fired only for deactivation of activables!
+            self._network.eventsManager.fire(EventsManager.E_RULE_DEACTIVATED, pnode.completeMainRuleName(), pnode.completeRuleName(), token.linearize(False))
                 
         except (KeyError, ValueError):
             # no per-module activations
@@ -289,8 +303,8 @@ class Agenda(object):
         Change the current strategy with a new one
         resorting the activations with the strategy 
         """
-        self._network.eventsManager.fire(EventsManager.E_STRATEGY_CHANGED, strategy)
         if self._strategy != strategy:
+            self._network.eventsManager.fire(EventsManager.E_STRATEGY_CHANGED, self._strategy.getName(), strategy.getName())
             oldStrategy = self._strategy
             self._strategy = strategy
             if not self.isEmptyAllModules():

@@ -7,6 +7,7 @@ Created on 12/ago/2012
 import pyparsing as pp
 import myclips.parser.Types as types
 from myclips.functions import FunctionEnv
+from myclips.functions.Function import Function
 
 class Interpreter(object):
     '''
@@ -74,9 +75,11 @@ class Interpreter(object):
                 
                 # prepare the FunctionEnv object    
                 theEnv = FunctionEnv({}, self._network, self._network.modulesManager, self._network.resources)
-                funcDefinition = parsed.funcDefinition
+                #funcDefinition = parsed.funcDefinition
+                #theResult = funcDefinition.linkedType.__class__.execute(funcDefinition.linkedType, theEnv, *(parsed.funcArgs))
+                # replace old function bootstrap method with a faster one
+                theResult = Function.doExecute(parsed, theEnv)
                 
-                theResult = funcDefinition.linkedType.__class__.execute(funcDefinition.linkedType, theEnv, *(parsed.funcArgs))
                 if not isinstance(theResult, types.NullValue):
                     return theResult
             

@@ -13,7 +13,7 @@ from unittest.case import skipIf
 import myclips
 
 
-class GetFocusTest(BaseFunctionTest):
+class FocusTest(BaseFunctionTest):
 
     def setUp(self):
         BaseFunctionTest.setUp(self)

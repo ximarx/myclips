@@ -1,5 +1,9 @@
 [
     {
+        "class": "Agenda", 
+        "module": "myclips.functions.command.Agenda"
+    }, 
+    {
         "class": "Clear", 
         "module": "myclips.functions.command.Clear"
     }, 
@@ -18,6 +22,10 @@
     {
         "class": "Run", 
         "module": "myclips.functions.command.Run"
+    }, 
+    {
+        "class": "Unwatch", 
+        "module": "myclips.functions.command.Unwatch"
     }, 
     {
         "class": "Watch", 

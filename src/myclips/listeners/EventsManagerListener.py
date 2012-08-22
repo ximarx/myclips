@@ -22,6 +22,18 @@ class EventsManagerListener(Observer):
         Observer.__init__(self, handlerMap)
         
     def install(self, eventsManager=None):
+        '''
+        Install this listener inside an observable EventsManager
+        If no EventsManager is submitted, EventsManager.default will be used
+        
+        Before the listener can be installed, any previous installation
+        will be reverted
+        
+        @param eventsManager: the EventsManager to install to
+        @type eventsManager: EventsManager
+        @return: The listener itself
+        @rtype: EventsManagerListener
+        '''
         if eventsManager is None:
             eventsManager = EventsManager.default
         
@@ -31,7 +43,7 @@ class EventsManagerListener(Observer):
         
         self._EM = eventsManager
         self._installImpl()
-        
+        return self
         
     def _installImpl(self):
         
@@ -39,6 +51,10 @@ class EventsManagerListener(Observer):
             self._EM.registerObserver(event, self)
         
     def uninstall(self):
+        '''
+        Remove this object from the eventsManager's listeners 
+        '''
+        
         if self._EM is None:
             return
         

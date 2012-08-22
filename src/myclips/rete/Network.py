@@ -34,6 +34,7 @@ from myclips.rete.tests.DynamicFunctionTest import DynamicFunctionTest
 from myclips.rete.nodes.TestNode import TestNode
 from myclips.rete.tests.OrConnectiveTest import OrConnectiveTest
 import traceback
+from myclips.Settings import Settings
 
 
 class Network(object):
@@ -42,7 +43,7 @@ class Network(object):
     '''
 
 
-    def __init__(self, eventsManager = None, modulesManager = None, resources=None):
+    def __init__(self, eventsManager = None, modulesManager = None, resources=None, settings=None):
         '''
         Constructor
         '''
@@ -64,6 +65,7 @@ class Network(object):
         self._currentWmeId = 0
         self._linkedParser = None
         self._deffacts = {}
+        self._settings = settings or Settings()
         
         self._resources = resources or {"stdin": sys.stdin,
                                         "stdout": sys.stdout}
@@ -160,7 +162,7 @@ class Network(object):
             # increment the fact-id counter
             self._currentWmeId += 1 
             
-            self.eventsManager.fire(EventsManager.E_FACT_ASSERTED, wme)
+            self.eventsManager.fire(EventsManager.E_FACT_ASSERTED, wme, True)
             
             # propagate the new assertion in the network
             self._root.rightActivation(wme)
@@ -171,7 +173,12 @@ class Network(object):
         else:
             # the same fact is already in the network
             # just return the old fact and the isNotNew mark
-            return (self._factsWmeMap[fact], False)
+            
+            wme = self._factsWmeMap[fact]
+            # fire an event
+            self.eventsManager.fire(EventsManager.E_FACT_ASSERTED, wme, False)
+            
+            return (wme, False)
         
     def retractFact(self, wme):
         """
@@ -262,6 +269,10 @@ class Network(object):
             
         try:
             self._rules[completeRuleName].delete()
+            # after token removal, refresh the rulename:
+            # if a new rule with the same name is added
+            # the rule need to have a new history
+            self.agenda.refresh(completeRuleName)
             del self._rules[completeRuleName]
         except KeyError:
             raise RuleNotFoundError("Unable to find defrule %s"%completeRuleName)
@@ -446,12 +457,19 @@ class Network(object):
                     
                 try:
                     pnode, token = self.agenda.getActivation()
+                    self.eventsManager.fire(EventsManager.E_RULE_FIRED, pnode.completeMainRuleName(), pnode.completeRuleName(), token.linearize(False))
                     pnode.execute(token)
                     
                 except AgendaNoMoreActivationError:
                     try:
                         # try to pop the focusStack
-                        self.agenda.focusStack.pop()
+                        oldFocus = self.agenda.focusStack.pop()
+                        try:
+                            newFocus = self.agenda.focusStack[-1]
+                        except IndexError:
+                            newFocus = None
+                        self.eventsManager.fire(EventsManager.E_FOCUS_CHANGED, oldFocus, newFocus)
+                        
                     except IndexError:
                         # pop from an empty stack
                         break
@@ -467,6 +485,10 @@ class Network(object):
     @property
     def resources(self):
         return self._resources
+    
+    @property
+    def settings(self):
+        return self._settings
         
     @property
     def facts(self):

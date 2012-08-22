@@ -108,6 +108,9 @@ class DynamicFunctionTest(BetaTest):
             # Another type of exception catch
             # better log this
             myclips.logger.warning("Unexpected exception catch in %s: token=%s, wme=%s, exception=%s", self, token, wme, repr(e))
+            #import traceback
+            #import sys
+            #traceback.print_stack(file=sys.stderr)
             # anyway test failed
             return False
     

@@ -25,17 +25,10 @@ class Upcase(Function):
         @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-12.3.html#Heading237
         """
         
-        # normalize theString
-        if isinstance(theString, (types.Variable, types.FunctionCall)):
-            theString = self.resolve(theEnv, theString)
-        if isinstance(theString, types.String):
-            theContent = theString.evaluate()[1:-1]
-        elif isinstance(theString, types.Symbol):
-            theContent = theString.evaluate()
-        else:
-            raise InvalidArgTypeError("Function upcase expected argument #1 to be of type string or symbol")
+        theSemplified = self.semplify(theEnv, theString, types.Lexeme, ('1', 'string or symbol'))
+        theString = self.resolve(theEnv, theSemplified)
         
-        return theString.__class__(theContent.upper())
+        return theSemplified.__class__(theString.upper())
         
         
     
