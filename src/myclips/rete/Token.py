@@ -49,7 +49,7 @@ class Token(MemoryItem):
             self._parent._children[self] = self
         
         # for tree-based token/wme removal, i need to store a reference
-        # to this token in the wme that has a part in token creation
+        # to this token in the wme that has a role in token creation
         if wme is not None:
             wme.linkToken(self)
             
@@ -96,7 +96,7 @@ class Token(MemoryItem):
         if isinstance(self._node, Memory):
             self._node.removeItem(self)
         
-        # wme could be None if match comes
+        # wme could be None if match came
         # from negative/ncc nodes
         if self.wme is not None:
             self.wme.unlinkToken(self)
@@ -145,7 +145,7 @@ class Token(MemoryItem):
             nccOwner = self.nccOwner
             self.nccOwner.unlinkNccResult(self)
             # if the token has the owner, then the _node is an ncc-partner
-            for child in self._node.nccNode.child:
+            for child in self._node.nccNode.children:
                 child.leftActivation(nccOwner, None)
             
         
@@ -207,10 +207,14 @@ class Token(MemoryItem):
         return self._hashString
 
     def __hash__(self, *args, **kwargs):
-        return hash(self.hashString)
+        return hash(str(id(self.node)) + self.hashString)
     
     def __eq__(self, other):
-        return (isinstance(other, Token) and self.hashString == other.hashString)
+        return (isinstance(other, Token) 
+                and self.hashString == other.hashString
+                and self.wme == other.wme
+                and self.node == other.node
+                and self.nccOwner == other.nccOwner)
     
     def __neq__(self, other):
         return not self.__eq__(other)

@@ -24,8 +24,9 @@ class Function(object):
         try:
             from myclips.EventsManager import EventsManager
             theEnv.network.eventsManager.fire(EventsManager.E_ACTION_PERFORMED, theFunction.funcDefinition.name, theFunction.funcArgs )
-        finally:
-            return theFunction.funcDefinition.linkedType.__class__.execute(theFunction.funcDefinition.linkedType, theEnv, *(theFunction.funcArgs))
+        except:
+            pass
+        return theFunction.funcDefinition.linkedType.__class__.execute(theFunction.funcDefinition.linkedType, theEnv, *(theFunction.funcArgs))
 
     @classmethod
     def execute(cls, theFunction, theEnv, *args, **kargs):
