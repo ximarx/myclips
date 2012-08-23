@@ -8,6 +8,7 @@ from myclips.FunctionsManager import FunctionDefinition, Constraint_ExactArgsLen
 import myclips.parser.Types as types
 from myclips.functions.Function import Function, InvalidArgValueError
 from genericpath import exists
+import os
 
 class Load(Function):
     '''
@@ -24,6 +25,8 @@ class Load(Function):
 
         aPath = self.resolve(theEnv, 
                              self.semplify(theEnv, aPath, types.Lexeme, ('1', 'symbol or string')))
+        
+        aPath = os.path.abspath(aPath)
         
         if not exists(aPath):
             raise InvalidArgValueError("Function load was unable to open file %s"%aPath)
