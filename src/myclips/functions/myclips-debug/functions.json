@@ -4,6 +4,14 @@
         "module": "myclips.functions.myclips-debug.DrawCircuit"
     }, 
     {
+        "class": "SetLogLevel", 
+        "module": "myclips.functions.myclips-debug.SetLogLevel"
+    }, 
+    {
+        "class": "TraceScope", 
+        "module": "myclips.functions.myclips-debug.TraceScope"
+    }, 
+    {
         "class": "TraceWme", 
         "module": "myclips.functions.myclips-debug.TraceWme"
     }

@@ -629,12 +629,12 @@ class Network(object):
             
             lastCircuitNode = self._root
 
-            # first thing to do is add a filter per-module
-            # ordered facts are visible only in the module
-            # who assert them
-            lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [ScopeTest(patternCE.scope.moduleName)])
-            
             if isinstance(patternCE, types.TemplatePatternCE):
+                
+                # scope for template-CE must be made against the template module,
+                # not the rule's or pattern's scope
+                lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [ScopeTest(patternCE.templateDefinition.moduleName)])
+                
                 
                 lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [TemplateNameTest(patternCE.templateName)])
                 
@@ -701,6 +701,11 @@ class Network(object):
                         raise MyClipsBugException("Unknown slot type: %s"%slot.__class__.__name__)
                 
             elif isinstance(patternCE, types.OrderedPatternCE):
+                
+                # first thing to do is add a filter per-module
+                # ordered facts are visible only in the module
+                # who assert them
+                lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [ScopeTest(patternCE.scope.moduleName)])
                 
                 multiFieldDelta = 0
                 

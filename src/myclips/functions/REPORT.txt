@@ -1,4 +1,4 @@
-//:~ MyCLIPS system functions discovery report:  Wed Aug 22 11:47:00 2012
+//:~ MyCLIPS system functions discovery report:  Thu Aug 23 16:17:16 2012
 
 myclips.functions.agenda
 	|--- .Focus
@@ -112,6 +112,10 @@ myclips.functions.multifield
 myclips.functions.myclips-debug
 	|--- .DrawCircuit
 	:   	|--- .DrawCircuit (draw-circuit)
+	|--- .SetLogLevel
+	:   	|--- .SetLogLevel (set-log-level)
+	|--- .TraceScope
+	:   	|--- .TraceScope (trace-scope)
 	|--- .TraceWme
 	:   	|--- .TraceWme (trace-wme)
 myclips.functions.other
@@ -201,7 +205,7 @@ myclips.functions.string
 Number of groups: 11
   |- .io: 6
   |- .string: 10
-  |- .myclips-debug: 2
+  |- .myclips-debug: 4
   |- .agenda: 7
   |- .predicate: 20
   |- .multifield: 14
@@ -211,10 +215,10 @@ Number of groups: 11
   |- .math.standard: 10
   |- .other: 2
 
-Number of functions: 94
+Number of functions: 96
 
-Main manifest file: `myclips/functions/manifest.json`
-Per-group manifest: `myclips/functions/{GROUP_NAME}/functions.json`
+Main manifest file: `C:\Users\Ximarx\git\myclips\src\myclips\functions/manifest.json`
+Per-group manifest: `C:\Users\Ximarx\git\myclips\src\myclips\functions/{GROUP_NAME}/functions.json`
 ================================
 
-//:~  Wed Aug 22 11:47:01 2012
+//:~  Thu Aug 23 16:17:17 2012
