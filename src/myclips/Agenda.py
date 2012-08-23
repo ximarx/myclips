@@ -331,7 +331,7 @@ class Agenda(object):
             for salience in saliences:
                 for (pnode, token) in self._strategy.iterable(self._activations[moduleName][salience]):
                     activations.append((salience, pnode, token))
-            activations.reverse()
+            #activations.reverse()
             return activations
         except:
             return []
