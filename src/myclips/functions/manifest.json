@@ -21,6 +21,9 @@
         "import": "./myclips-debug/functions.json"
     }, 
     {
+        "import": "./myclips-profile/functions.json"
+    }, 
+    {
         "import": "./other/functions.json"
     }, 
     {
