@@ -24,21 +24,21 @@ class Printout(Function):
         # convert <TYPE:value> to python value
         resourceId = Function.resolve(self, funcEnv, self.semplify(funcEnv, resourceId, types.Symbol, ("1", "symbol")))
         
-        try:
-            resource = funcEnv.RESOURCES[resourceId]
-        except KeyError:
-            raise InvalidArgValueError("Resource with logical name %s cannot be found"%str(resourceId))
-        else:
-            returnValue = None
-        
-            for fragment in args:
-                
-                # revolve variables and function calls
-                fragment = self.resolve(funcEnv, self.semplify(funcEnv, fragment))
-                
-                resource.write(str(fragment))
-                
-            return returnValue
+        if resourceId != "nil":
+            try:
+                resource = funcEnv.RESOURCES[resourceId]
+            except KeyError:
+                raise InvalidArgValueError("Resource with logical name %s cannot be found"%str(resourceId))
+            else:
+            
+                for fragment in args:
+                    
+                    # revolve variables and function calls
+                    fragment = self.resolve(funcEnv, self.semplify(funcEnv, fragment))
+                    
+                    resource.write(str(fragment))
+                    
+        return types.NullValue()
     
     def resolve(self, funcEnv, arg):
         """
