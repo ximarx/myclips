@@ -64,7 +64,7 @@ class BetaMemory(Node, Memory, BetaInput):
         for child in self.children:
             child.leftActivation(token, None)
     
-    def delete(self):
+    def delete(self, notifierRemoval=None, notifierUnlinking=None):
         """
         Remove the beta-memory from the network
         """
@@ -72,7 +72,7 @@ class BetaMemory(Node, Memory, BetaInput):
         Memory.delete(self)
             
         # then i can call parent destructor
-        Node.delete(self)
+        Node.delete(self, notifierRemoval, notifierUnlinking)
         
         
     def updateChild(self, child):

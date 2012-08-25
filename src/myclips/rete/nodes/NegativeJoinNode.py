@@ -110,7 +110,7 @@ class NegativeJoinNode(JoinNode, Memory):
             if not token.hasNegativeJoinResults():
                 child.leftActivation(token, None)
     
-    def delete(self):
+    def delete(self, notifierRemoval=None, notifierUnlinking=None):
         """
         Remove the negative join node from the network
         and delete all tokens created by this node
@@ -119,7 +119,7 @@ class NegativeJoinNode(JoinNode, Memory):
         Memory.delete(self)
             
         # then i can call parent destructor
-        JoinNode.delete(self)
+        JoinNode.delete(self, notifierRemoval, notifierUnlinking)
         
     def __str__(self, *args, **kwargs):
         return "<{0}: left={2}, right={3}, children={4}, items={5}, tests={6}>".format(

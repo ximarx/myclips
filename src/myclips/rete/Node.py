@@ -86,7 +86,7 @@ class Node(object):
         """
         raise NotImplementedError()
     
-    def delete(self):
+    def delete(self, notifierRemoval=None, notifierUnlinking=None):
         """
         Execute standard operations for
         node removal from the network
@@ -94,20 +94,29 @@ class Node(object):
         """
         
         if not self.isLeftRoot():
-            #EventManager.trigger(EventManager.E_NODE_UNLINKED, self, self.leftRoot)
+            # trigger unlinking events
+            if callable(notifierUnlinking):
+                notifierUnlinking(self.leftParent, self)
+                
             self.leftParent.removeChild(self)
             # check if leftParent is still usefull
             # otherwise forward deletion to it
             if self.leftParent.isLeaf():
-                self.leftParent.delete()
+                self.leftParent.delete(notifierRemoval, notifierUnlinking)
                 
         if not self.isRightRoot():
-            #EventManager.trigger(EventManager.E_NODE_UNLINKED, self, self.rightRoot)
+            # trigger unlinking events
+            if callable(notifierUnlinking):
+                notifierUnlinking(self.rightParent, self)
+                
             self.rightParent.removeChild(self)
             if self.rightParent.isLeaf():
-                self.rightParent.delete()
+                self.rightParent.delete(notifierRemoval, notifierUnlinking)
         
-        #EventManager.trigger(EventManager.E_NODE_REMOVED, self)
+        # notify listeners using the notifier function handler
+        # often this is a lambda wrapping EventsManager.fire(EventsManager.E_NODE_REMOVAL)
+        if callable(notifierRemoval):
+            notifierRemoval(self)
     
     def __str__(self, *args, **kwargs):
         return "<{0}: left={2}, right={3}, children={4}>".format(

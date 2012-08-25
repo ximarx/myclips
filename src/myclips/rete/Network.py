@@ -268,7 +268,11 @@ class Network(object):
         completeRuleName = "::".join([moduleName, ruleName])
             
         try:
-            self._rules[completeRuleName].delete()
+            
+            notifierRemoval = lambda *args, **kwargs: self.eventsManager.fire(EventsManager.E_NODE_REMOVED, *args, **kwargs)
+            notifierUnlinking = lambda *args, **kwargs: self.eventsManager.fire(EventsManager.E_NODE_UNLINKED, *args, **kwargs)
+            
+            self._rules[completeRuleName].delete(notifierRemoval, notifierUnlinking)
             # after token removal, refresh the rulename:
             # if a new rule with the same name is added
             # the rule need to have a new history

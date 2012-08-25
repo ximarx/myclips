@@ -51,11 +51,11 @@ class TestNode(Node, HasJoinTests, BetaInput):
             if self.isValid(item, None):
                 child.leftActivation(item, None)
 
-    def delete(self):
-        """
-        Delete the JoinNode
-        """
-        Node.delete(self)
+#    def delete(self, notifierRemoval=None, notifierUnlinking=None):
+#        """
+#        Delete the TestNode
+#        """
+#        Node.delete(self, notifierRemoval, notifierUnlinking)
         
     
     def __str__(self, *args, **kwargs):

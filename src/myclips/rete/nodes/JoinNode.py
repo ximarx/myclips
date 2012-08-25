@@ -95,11 +95,11 @@ class JoinNode(Node, HasJoinTests, AlphaInput, BetaInput):
         # 3)
         self._children = children_buffer
 
-    def delete(self):
-        """
-        Delete the JoinNode
-        """
-        Node.delete(self)
+#    def delete(self, notifierRemoval=None, notifierUnlinking=None):
+#        """
+#        Delete the JoinNode
+#        """
+#        Node.delete(self, notifierRemoval, notifierUnlinking)
         
     
     def __str__(self, *args, **kwargs):

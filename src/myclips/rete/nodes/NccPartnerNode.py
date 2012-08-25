@@ -98,7 +98,7 @@ class NccPartnerNode(Node, BetaInput):
         # when main node will be activated, it will read and flush the buffer
         self._buffer.append(nToken)
         
-    def delete(self):
+    def delete(self, notifierRemoval=None, notifierUnlinking=None):
         """
         Delete all token in the results buffer
         and then remove the node from the network.
@@ -111,7 +111,7 @@ class NccPartnerNode(Node, BetaInput):
             # from it
             self._buffer.pop().delete()
             
-        Node.delete(self)
+        Node.delete(self, notifierRemoval, notifierUnlinking)
         
 #    # NO UPDATE IS NEEDED
 #    def updateChild(self, child):

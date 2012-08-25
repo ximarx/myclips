@@ -38,8 +38,8 @@ class RootNode(Node, AlphaInput):
         for wme in self.network.facts:
             child.rightActivation(wme)
             
-    def delete(self):
-        myclips.logger.warning("RootNode delete called. Network is empty")
+    def delete(self, notifierRemoval=None, notifierUnlinking=None):
+        myclips.logger.info("RootNode delete called. Network is empty")
             
     @property
     def network(self):

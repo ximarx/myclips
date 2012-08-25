@@ -57,7 +57,7 @@ class AlphaMemory(Node, Memory, AlphaInput):
         for child in self.children:
             child.rightActivation(wme)
     
-    def delete(self):
+    def delete(self, notifierRemoval=None, notifierUnlinking=None):
         """
         Remove the alpha-memory from the network
         """
@@ -79,12 +79,15 @@ class AlphaMemory(Node, Memory, AlphaInput):
         # parent.memory slot, not in children
         
         if not self.isRightRoot():
+            if callable(notifierUnlinking):
+                notifierUnlinking(self.rightParent, self)
+            
             self.rightParent.memory = None
             if self.rightParent.isLeaf():
-                self.rightParent.delete()
+                self.rightParent.delete(notifierRemoval, notifierUnlinking)
                 self.rightParent = None
         
-        Node.delete(self)
+        Node.delete(self, notifierRemoval, notifierUnlinking)
         
     def updateChild(self, child):
         """

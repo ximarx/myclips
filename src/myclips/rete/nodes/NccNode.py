@@ -61,17 +61,17 @@ class NccNode(Node, Memory, BetaInput):
             for child in self.children:
                 child.leftActivation(token, None)
         
-    def delete(self):
+    def delete(self, notifierRemoval=None, notifierUnlinking=None):
         """
         Remove this node and the partner from the network
         """
         # notify unlink between ncc and partner
         #EventManager.trigger(EventManager.E_NODE_UNLINKED, self.get_partner(), self)
         # then destroy the partner
-        self.partner.delete()
+        self.partner.delete(notifierRemoval, notifierUnlinking)
         # and last destroy this node itself
         Memory.delete(self)
-        Node.delete(self)
+        Node.delete(self, notifierRemoval, notifierUnlinking)
         
     def updateChild(self, child):
         """

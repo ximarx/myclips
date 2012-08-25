@@ -48,15 +48,15 @@ class PNode(Node, BetaInput, Memory):
         # and remove the activation
         self._network.agenda.remove(self, item)
         
-    def delete(self):
+    def delete(self, notifierRemoval=None, notifierUnlinking=None):
         if self.isMain:
             for linkedNode in self._linkedPNodes:
-                linkedNode.delete()
+                linkedNode.delete(notifierRemoval, notifierUnlinking)
                 
             self._linkedPNodes = []
             
         Memory.delete(self)
-        Node.delete(self)
+        Node.delete(self, notifierRemoval, notifierUnlinking)
 
     def linkOrClause(self, pnode):
         self._linkedPNodes.append(pnode)
