@@ -4,6 +4,7 @@ Created on 04/lug/2012
 @author: Francesco Capozzo
 '''
 from myclips.rete.MemoryItem import MemoryItem
+import collections
 
 class Memory(object):
     '''
@@ -15,7 +16,7 @@ class Memory(object):
         '''
         Constructor
         '''
-        self._items = {}
+        self._items = collections.OrderedDict()
 
     @property
     def items(self):

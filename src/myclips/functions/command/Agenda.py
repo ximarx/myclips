@@ -50,6 +50,7 @@ class Agenda(Function):
         
         else:
             acts = theEnv.network.agenda.activations(theModule)
+            #acts.reverse()
             actCount += len(acts)
             for (salience, pnode, token) in acts:
                 theStdout.write("%-6d %s: %s\n"%(salience, pnode.mainRuleName, token))

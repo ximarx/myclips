@@ -326,12 +326,12 @@ class Agenda(object):
     def activations(self, moduleName=None):
         moduleName = moduleName if moduleName is not None else self._network.modulesManager.currentScope.moduleName
         try:
-            saliences = sorted(self._activations[moduleName].keys(), reverse=True)
+            saliences = sorted(self._activations[moduleName].keys())
             activations = []
             for salience in saliences:
                 for (pnode, token) in self._strategy.iterable(self._activations[moduleName][salience]):
                     activations.append((salience, pnode, token))
-            #activations.reverse()
+            activations.reverse()
             return activations
         except:
             return []
