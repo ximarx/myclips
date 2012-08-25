@@ -50,12 +50,20 @@ class NetworkBuildPrinter(EventsManagerListener):
         try:
             theParentSign = self._nodeMap[theParent]
         except:
-            theParentSign = "#UNK %s"%str(theParent)
+            try:
+                self.onNodeAdded(theParent)
+                theParentSign = self._nodeMap[theParent]
+            except:
+                theParentSign = "#UNK %s"%str(theParent)
 
         try:
             theNodeSign = self._nodeMap[theNode]
         except:
-            theNodeSign = "#UNK %s"%str(theNode)
+            try:
+                self.onNodeAdded(theNode)
+                theNodeSign = self._nodeMap[theNode]
+            except:
+                theNodeSign = "#UNK %s"%str(theNode)
 
             
         print >> self._resource, "+Link: %s --%s--> %s"%(theParentSign,
