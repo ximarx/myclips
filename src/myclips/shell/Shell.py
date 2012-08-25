@@ -143,10 +143,11 @@ class Shell(object):
                     except MyClipsException, e:
                         print "[ERROR] ", e.message
                         #traceback.print_exc()
+                        myclips.logger.warning(traceback.format_exc())
                     except Exception, e:
                         if hasattr(e, 'msg'):
                             print "[ERROR] ", e.msg
-                            traceback.print_exc()
+                            myclips.logger.error(traceback.format_exc())
                         else:
                             print "[ERROR] ", e
                             traceback.print_exc()

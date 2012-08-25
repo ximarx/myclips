@@ -85,7 +85,7 @@ class AlphaMemory(Node, Memory, AlphaInput):
             self.rightParent.memory = None
             if self.rightParent.isLeaf():
                 self.rightParent.delete(notifierRemoval, notifierUnlinking)
-                self.rightParent = None
+            self.rightParent = None
         
         Node.delete(self, notifierRemoval, notifierUnlinking)
         
