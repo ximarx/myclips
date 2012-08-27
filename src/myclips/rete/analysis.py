@@ -44,7 +44,7 @@ def getVar(varName, variables, inPatternVariables):
 
 
 
-def analyzeFunction(theFunction, patternIndex, variables, fakeVariables = None, realToFakeMap = None, vIndex = None):
+def analyzeFunction(theFunction, patternIndex, variables, inPatternVariables=None, fakeVariables = None, realToFakeMap = None, vIndex = None, fakeNames = None):
     '''
     Analyze a FunctionCall inside a Test-CE to replace variables name with fake names
     an bound locations to improve reuse of test-nodes (normalize variables names) 
@@ -63,8 +63,10 @@ def analyzeFunction(theFunction, patternIndex, variables, fakeVariables = None, 
     @type vIndex: int
     '''
     
+    inPatternVariables = inPatternVariables or []
     aNewFunctionCallArgs = []
     fakeVariables = fakeVariables or {}
+    fakeNames = fakeNames or {}
     realToFakeMap = realToFakeMap or {}
     vIndex = vIndex or 0;
     
@@ -80,7 +82,7 @@ def analyzeFunction(theFunction, patternIndex, variables, fakeVariables = None, 
                 if not realToFakeMap.has_key(aArg.evaluate()) :
                 
                     # where i found the variable first?
-                    mainReference = getVar(aArg.evaluate(), variables, [])
+                    mainReference = getVar(aArg.evaluate(), variables, inPatternVariables)
                     
                     if mainReference is False:
                         raise MyClipsException("Variable %s found in the expression %s was referenced in CE #%d before being defined."%(
@@ -100,9 +102,10 @@ def analyzeFunction(theFunction, patternIndex, variables, fakeVariables = None, 
                     
                     fakeVariables[theFakeVar.evaluate()] = varReference
                     realToFakeMap[aArg.evaluate()] = theFakeVar.evaluate()
+                    fakeNames[aArg.evaluate()] = theFakeVar 
                 
                 else:
-                    theFakeVar = fakeVariables[realToFakeMap[aArg.evaluate()]]
+                    theFakeVar = fakeNames[aArg.evaluate()]
                      
                 
                 # replace the variable name with a fake name
@@ -114,7 +117,7 @@ def analyzeFunction(theFunction, patternIndex, variables, fakeVariables = None, 
                 # recursion: replace arguments inside the function call
                 # fakeReferences are ignored because the dict is automatically
                 # updated by the recursion.
-                aInnerNewFunctionCall, _ = analyzeFunction(aArg, patternIndex, variables, fakeVariables, realToFakeMap, vIndex)
+                aInnerNewFunctionCall, _ = analyzeFunction(aArg, patternIndex, variables, inPatternVariables, fakeVariables, realToFakeMap, vIndex)
                 
                 # replace the old function call with a new one with fake variables
                 #theFunction.funcArgs[iArg] = aInnerNewFunctionCall
@@ -194,7 +197,7 @@ def _analyzeTerm(atomLocation, aTerm, variables, inPatternVariables):
     elif isinstance(aTerm, types.FunctionCall):
         # well... this is a special case. This must be converted in a
         # (test (function-call))
-        _newFunc, _fakeVar = analyzeFunction(aTerm, atomLocation.patternIndex, variables)
+        _newFunc, _fakeVar = analyzeFunction(aTerm, atomLocation.patternIndex, variables, inPatternVariables)
         joinTests.append(DynamicFunctionTest(_newFunc, _fakeVar))
         
     # unnamed multifield and single field are ignored

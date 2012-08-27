@@ -28,6 +28,7 @@ from myclips.rete.nodes.TestNode import TestNode
 import traceback
 from myclips.Settings import Settings
 from myclips.rete.tests.locations import VariableLocation
+from myclips.rete.nodes.ExistsNode import ExistsNode
 
 
 class Network(object):
@@ -224,7 +225,7 @@ class Network(object):
             
             variables = {}
             
-            lastNode = self._makeNetwork(None, AndInOr.patterns, None, variables)
+            lastNode, _ = self._makeNetwork(None, AndInOr.patterns, 0, variables)
             
             # I need to create a PNode (and it must always linked to the first PNode created)
             pNode = PNode(ruleName=defrule.defruleName, 
@@ -534,14 +535,11 @@ class Network(object):
     def modulesManager(self):
         return self._modulesManager
 
-    def _makeNetwork(self, node, patterns, prevPatterns=None, variables=None):
+    def _makeNetwork(self, node, patterns, prevPatterns=0, variables=None):
         
         variables = {} if variables is None else variables
-        prevPatterns = [] if prevPatterns is None else prevPatterns
         
         for patternCE in patterns:
-            
-            avoidAppend = False
             
             # get the pattern type:
             if isinstance(patternCE, (types.TemplatePatternCE, 
@@ -554,11 +552,11 @@ class Network(object):
                 # i use the assigned only to store info about variable
                 # use old way to store variables coordinates, waiting for a new one
                 if isinstance(patternCE, types.AssignedPatternCE):
-                    variables[patternCE.variable.evaluate()] = VariableLocation(patternCE.variable.evaluate(), len(prevPatterns), fullFact=True)
+                    variables[patternCE.variable.evaluate()] = VariableLocation(patternCE.variable.evaluate(), prevPatterns, fullFact=True)
                     patternCE = patternCE.pattern
                 
                 inPatternVariables = []
-                alphaTests, joinTests = analysis.analyzePattern(patternCE, len(prevPatterns), variables, inPatternVariables)
+                alphaTests, joinTests = analysis.analyzePattern(patternCE, prevPatterns, variables, inPatternVariables)
                 
                 # merge inPatternVariables to variables
                 variables.update(dict([(var.name, var) for var in inPatternVariables]))
@@ -567,6 +565,8 @@ class Network(object):
                 # then a join + beta node if needed (beta join circuit)
                 alphaMemory = self._makeAlphaCircuit(alphaTests)
                 node = self._makeBetaJoinCircuit(node, alphaMemory, joinTests)
+                
+                prevPatterns += 1
                 
                 
             elif isinstance(patternCE, types.NotPatternCE):
@@ -578,18 +578,31 @@ class Network(object):
                     # that's it: ncc required
                     
                     # this build the normal circuit
-                    lastNccCircuitNode = self._makeNetwork(node, patternCE.pattern.patterns, prevPatterns, variables)
-                    node = self._makeBetaNccCircuit(node, lastNccCircuitNode, len(patternCE.pattern.patterns))
+                    lastNccCircuitNode, circuitPatternCount = self._makeNetwork(node, patternCE.pattern.patterns, prevPatterns, variables)
+                    node = self._makeBetaNccCircuit(node, lastNccCircuitNode, circuitPatternCount - prevPatterns )
                     # inner conditions already appended by recursive call
                     # but i have to add a +1 for the (not (...))
                     #avoidAppend = True
+                    prevPatterns = circuitPatternCount + 1
+                    
+                elif isinstance(patternCE.pattern, types.NotPatternCE):
+                    
+                    inPatternVariables = []
+                    
+                    alphaTests, joinTests = analysis.analyzePattern(patternCE.pattern.pattern, prevPatterns, variables, inPatternVariables)
+    
+                    alphaMemory = self._makeAlphaCircuit(alphaTests)
+                    node = self._makeBetaExistsCircuit(node, alphaMemory)
+                    
+                    prevPatterns += 1
+                    
                 else:
                     # a simple negative join node is required
                     
                     inPatternVariables = []
                     # add 1 to pattern index because the values are in the inner not pattern
                     # so the (not (condition)) count as 2
-                    alphaTests, joinTests = analysis.analyzePattern(patternCE.pattern, len(prevPatterns) + 1, variables, inPatternVariables)
+                    alphaTests, joinTests = analysis.analyzePattern(patternCE.pattern, prevPatterns + 1, variables, inPatternVariables)
                     
                     # merge inPatternVariables to variables
                     variables.update(dict([(var.name, var) for var in inPatternVariables]))
@@ -599,14 +612,24 @@ class Network(object):
                     alphaMemory = self._makeAlphaCircuit(alphaTests)
                     node = self._makeBetaNegativeJoinCircuit(node, alphaMemory, joinTests)
                     
-                    prevPatterns.append(patternCE)
-                    patternCE = patternCE.pattern
+                    prevPatterns += 2
 
                 
             elif isinstance(patternCE, types.TestPatternCE):
                 # a special filter must be applied to
                 # the circuit
                 node = self._makeBetaTestCircuit(node, patternCE, prevPatterns, variables)
+
+            elif isinstance(patternCE, types.ExistsPatternCE):
+                
+                inPatternVariables = []
+                
+                alphaTests, joinTests = analysis.analyzePattern(patternCE, prevPatterns, variables, inPatternVariables)
+
+                alphaMemory = self._makeAlphaCircuit(alphaTests)
+                node = self._makeBetaExistsCircuit(node, alphaMemory)
+                    
+                prevPatterns += 1
 
             # or and and ce must not be supported here
             # after lhs normalization
@@ -617,23 +640,8 @@ class Network(object):
             # and-ce could be only after a not-ce or the main or-ce
             #    (managed by addRule method)
             #     and are managed as a ncc circuit
-
-            #elif isinstance(patternCE, types.AndPatternCE):
-                # need to add support for andCE
-                # pass
-                #node = self._makeNetwork(node, patternCE.patterns, prevPatterns, variables, testsQueue)
-                # inner conditions already appended
-                #avoidAppend = True  
-
-                
-            #elif isinstance(patternCE, types.OrPatternCE):
-                # need to add support for orCE
-                # pass
-        
-            if not avoidAppend:
-                prevPatterns.append(patternCE)
             
-        return node
+        return node, prevPatterns
             
     def _makeAlphaCircuit(self, alphaTests):
         lastCircuitNode = self._root
@@ -666,7 +674,7 @@ class Network(object):
         # build tests for test node
         tests = []
         
-        (newFunctionCall, fakeVars) = analysis.analyzeFunction(patternCE.function , len(prevPatterns), variables)
+        (newFunctionCall, fakeVars) = analysis.analyzeFunction(patternCE.function , prevPatterns, variables)
         
         tests.append(DynamicFunctionTest(newFunctionCall, fakeVars))
          
@@ -679,6 +687,14 @@ class Network(object):
             
         return self._shareNode_NegativeJoinNode(lastBetaCircuitNode, alphaMemory, joinTests )           
         
+
+    def _makeBetaExistsCircuit(self, lastBetaCircuitNode, alphaMemory):
+        
+        if lastBetaCircuitNode != None:
+            lastBetaCircuitNode = self._shareNode_BetaMemory(lastBetaCircuitNode)
+            
+        return self._shareNode_ExistsNode(lastBetaCircuitNode, alphaMemory )           
+
 
     def _makeBetaNccCircuit(self, lastBetaCircuitNode, lastNccCircuitNode, nccCircuitLength):
         
@@ -869,7 +885,7 @@ class Network(object):
         self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastCircuitNode, newChild, -1)
         
         return newChild
-        
+       
     
     def _shareNode_NegativeJoinNode(self, lastCircuitNode, alphaMemory, tests):
             
@@ -880,7 +896,7 @@ class Network(object):
                 
                 # i can't use isinstance, child must be exactly a JoinNode
                 # otherwise negative node could be shared and this is a problem
-                if (child.__class__ == JoinNode
+                if (child.__class__ == NegativeJoinNode
                     # is a join node
                     and child.rightParent == alphaMemory
                         # alpha memory is the same
@@ -937,6 +953,48 @@ class Network(object):
 
         
         return newChild    
+
+    def _shareNode_ExistsNode(self, lastCircuitNode, alphaMemory):
+            
+        # check if i can share looking at beta network first
+        if lastCircuitNode is not None:
+            
+            for child in lastCircuitNode.children:
+                
+                # i can't use isinstance, child must be exactly a JoinNode
+                # otherwise negative node could be shared and this is a problem
+                if (child.__class__ == ExistsNode
+                    # is a exists node
+                    and child.rightParent == alphaMemory):
+                    
+                    # i can share the node
+                    self.eventsManager.fire(EventsManager.E_NODE_SHARED, child)
+                    return child
+
+            
+        # i can't share an old node
+        # it's time to create a new one
+        
+        newChild = ExistsNode(rightParent=alphaMemory, leftParent=lastCircuitNode)
+        # link the new join to the right alpha memory
+        alphaMemory.prependChild(newChild)
+        
+        # link the join node to the parent
+        lastCircuitNode.prependChild(newChild)
+        
+        # try to update from the right
+        alphaMemory.updateChild(newChild)
+            
+        #myclips.logger.info("New node: %s", newChild)
+        #myclips.logger.info("Right-linked node: %s to %s", newChild, alphaMemory)
+        #myclips.logger.info("Left-linked node: %s to %s", newChild, lastCircuitNode)
+
+        self.eventsManager.fire(EventsManager.E_NODE_ADDED, newChild)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, lastCircuitNode, newChild, -1)
+        self.eventsManager.fire(EventsManager.E_NODE_LINKED, alphaMemory, newChild, 1)
+
+        
+        return newChild      
     
     def _shareNode_NccNode(self, lastCircuitNode, lastNccCircuitNode, partnerCircuitLength):
         

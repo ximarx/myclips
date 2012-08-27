@@ -4,6 +4,10 @@
         "module": "myclips.functions.command.Agenda"
     }, 
     {
+        "class": "Batch", 
+        "module": "myclips.functions.command.Batch"
+    }, 
+    {
         "class": "Clear", 
         "module": "myclips.functions.command.Clear"
     }, 

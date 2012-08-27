@@ -7,6 +7,7 @@ from myclips.functions.Function import FunctionInternalError, HaltException
 import traceback
 from myclips.Agenda import AgendaNoMoreActivationError
 from myclips.rete.Network import Network
+from myclips.listeners.NetworkBuildPrinter import NetworkBuildPrinter
 
 def constructs_prettyprint(constr_string, INDENT=0):
     output = sys.stdout
@@ -28,20 +29,42 @@ if __name__ == '__main__':
     
     s = r"""
     
-(defrule r 
-    (A B|s C)
-=>
-)
+(deftemplate possible (slot value) (slot group) (slot id))
+(deftemplate impossible (slot value) (slot rank) (slot id))
+(deftemplate rank (slot value) (slot process))
+(deftemplate technique (slot name) (slot rank))
+    
+(defrule naked-single-group
+   
+   (phase match)
 
+   (rank (value ?p) (process yes))
+
+   (technique (name Naked-Single) (rank ?p))
+   
+   (possible (value ?v) (group ?g) (id ?id))
+   
+   (not (possible (value ~?v) (group ?g) (id ?id)))
+   
+   (possible (value ?v) (group ?g) (id ?id2&~?id))
+   
+   (not (impossible (id ?id2) (value ?v) (rank ?p)))
+   
+   =>
+   )
+   
+(defrule r
+    => (draw-circuit naked-single-group))
+   
 """
 
 
     MM = ModulesManager()
     MM.addMainScope()
     
-    parsed = Parser(modulesManager=MM, debug=False).parse(s)
-    
     try:
+    
+        parsed = Parser(modulesManager=MM, debug=False).parse(s)
     
         [constructs_prettyprint(repr(x)) for x in parsed if isinstance(x, ParsedType)]
             
@@ -52,16 +75,20 @@ if __name__ == '__main__':
             # raise the original exception,
             # pretty printer failed
             raise err
-    finally:
-        for scopeName in MM.getModulesNames():
-            print MM.getScope(scopeName)
+#    finally:
+#        for scopeName in MM.getModulesNames():
+#            print MM.getScope(scopeName)
         
     n = Network(modulesManager=MM)
+    
+    NetworkBuildPrinter(sys.stdout).install(n.eventsManager)
         
     for p in parsed:
         
         if p.__class__.__name__ == 'DefRuleConstruct':
             
             n.addRule(p)
+            
+    n.run(1)
             
         

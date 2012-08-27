@@ -171,6 +171,7 @@ class _NetworkXWrapper(object):
         nctns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'PropertyTestNode']
         nbmems=[n for (n,d) in G.nodes(data=True) if d['type'] == 'BetaMemory']
         njns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'JoinNode']
+        nexs=[n for (n,d) in G.nodes(data=True) if d['type'] == 'ExistsNode']
         npnodes=[n for (n,d) in G.nodes(data=True) if d['type'] == 'PNode']
         nnjns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'NegativeJoinNode']
         fns=[n for (n,d) in G.nodes(data=True) if d['type'] == 'TestNode']
@@ -229,6 +230,11 @@ class _NetworkXWrapper(object):
         # JOINS
         nx.draw_networkx_nodes(G,pos,nodelist=njns,
                                node_size=900,alpha=0.7,node_color='w',node_shape='v')
+
+        # EXISTS
+        nx.draw_networkx_nodes(G,pos,nodelist=nexs,
+                               node_size=900,alpha=0.7,node_color='b',node_shape='v')
+
 
         # BETA MEMORIES
         nx.draw_networkx_nodes(G,pos,nodelist=nbmems,

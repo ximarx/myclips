@@ -21,6 +21,7 @@ class WME(MemoryItem):
         self._negativeJoinResults = []
         self._factId = factId
         self._fact = fact
+        self._existsNode = []
         
         
     def delete(self):
@@ -39,6 +40,10 @@ class WME(MemoryItem):
         for memory in self._alphaMemories:
             memory.removeItem(self)
         self._alphaMemories = []
+
+        for memory in self._existsNode:
+            memory.reduceCount()
+        self._existsNode = []
         
         # then, revoke all token where this wme
         # has a role
@@ -97,6 +102,19 @@ class WME(MemoryItem):
         Remove a reference between this wme and an alpha-memory
         """
         self._alphaMemories.remove(alphaMemory)
+        
+    def linkExistsNode(self, existsNode):
+        """
+        Add a reference between this wme and an alpha-memory
+        who store it
+        """
+        self._existsNode.append(existsNode)
+        
+    def unlinkExistsNode(self, existsNode):
+        """
+        Remove a reference between this wme and an alpha-memory
+        """
+        self._existsNode.remove(existsNode)        
         
     def linkToken(self, token):
         self._tokens[token] = token

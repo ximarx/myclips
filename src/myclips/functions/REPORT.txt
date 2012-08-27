@@ -1,4 +1,4 @@
-//:~ MyCLIPS system functions discovery report:  Sat Aug 25 18:34:55 2012
+//:~ MyCLIPS system functions discovery report:  Mon Aug 27 21:00:18 2012
 
 myclips.functions.agenda
 	|--- .Focus
@@ -18,6 +18,8 @@ myclips.functions.agenda
 myclips.functions.command
 	|--- .Agenda
 	:   	|--- .Agenda (agenda)
+	|--- .Batch
+	:   	|--- .Batch (batch)
 	|--- .Clear
 	:   	|--- .Clear (clear)
 	|--- .Exit
@@ -213,16 +215,16 @@ Number of groups: 12
   |- .predicate: 20
   |- .multifield: 14
   |- .procedural: 8
-  |- .command: 9
+  |- .command: 10
   |- .fact: 6
   |- .math.standard: 10
   |- .myclips-profile: 1
   |- .other: 2
 
-Number of functions: 97
+Number of functions: 98
 
 Main manifest file: `C:\Users\Ximarx\git\myclips\src\myclips\functions/manifest.json`
 Per-group manifest: `C:\Users\Ximarx\git\myclips\src\myclips\functions/{GROUP_NAME}/functions.json`
 ================================
 
-//:~  Sat Aug 25 18:34:56 2012
+//:~  Mon Aug 27 21:00:18 2012

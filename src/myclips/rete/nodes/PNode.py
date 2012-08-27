@@ -130,8 +130,12 @@ class PNode(Node, BetaInput, Memory):
         linearToken = theToken.linearize()
         
         for theVar, theLocation in self._variables.items():
-            assert isinstance(theLocation, VariableLocation)
-            resolved[theVar] = theLocation.toValue(linearToken[theLocation.patternIndex])
+            try:
+                assert isinstance(theLocation, VariableLocation)
+                resolved[theVar] = theLocation.toValue(linearToken[theLocation.patternIndex])
+            except:
+                import myclips
+                myclips.logger.debug("%s: unresolvable variable %s: %s:%s %s", self.completeRuleName(), theVar, theLocation.patternIndex, theLocation, linearToken )
         
         # prepare the FunctionEnv object    
         theEnv = FunctionEnv(resolved, self._network, self._network.modulesManager, self._network.resources)

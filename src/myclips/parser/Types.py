@@ -477,6 +477,20 @@ class NotPatternCE(PatternCE):
         return "<{0}:{1}>".format(self.__class__.__name__,
                                     self.pattern
                                     )
+        
+class ExistsPatternCE(PatternCE):
+    __FIELDS__=['pattern']
+    def __init__(self, pattern):
+        if isinstance(pattern, AssignedPatternCE):
+            raise TypeInstanceCreationError("A pattern CE cannot be bound to a pattern-address within a exists CE")
+        PatternCE.__init__(self, pattern)
+        self.pattern = pattern
+        
+    def __repr__(self, *args, **kwargs):
+        return "<{0}:{1}>".format(self.__class__.__name__,
+                                    self.pattern
+                                    )
+        
 
 class AndPatternCE(PatternCE):
     __FIELDS__=['patterns']
