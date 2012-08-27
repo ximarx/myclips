@@ -16,3 +16,5 @@ class AlphaTest(object):
     def __eq__(self, other):
         return (self.__class__ == other.__class__)
     
+    def __neq__(self, other):
+        return not self.__eq__(other)

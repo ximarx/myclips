@@ -5,12 +5,34 @@ Created on 27/lug/2012
 '''
 
 import myclips.parser.Types as types
-from myclips.rete.tests.locations import VariableLocation, VariableReference
+from myclips.rete.tests.locations import VariableLocation, VariableReference,\
+    AtomLocation
 from myclips.MyClipsException import MyClipsBugException, MyClipsException
-import myclips
-from copy import copy, deepcopy
+from myclips.rete.tests.AlphaInBetaNetworkTest import AlphaInBetaNetworkTest
+from myclips.rete.tests.OrConnectiveTest import OrConnectiveTest
+from myclips.rete.tests.OrderedFactLengthTest import OrderedFactLengthTest
+from myclips.rete.tests.ScopeTest import ScopeTest
+from myclips.rete.tests.TemplateNameTest import TemplateNameTest
+from myclips.rete.tests.MultislotLengthTest import MultislotLengthTest
+from myclips.rete.tests.ConstantValueAtIndexTest import ConstantValueAtIndexTest
+from myclips.rete.tests.NegativeAlphaTest import NegativeAlphaTest
+from myclips.rete.tests.DynamicFunctionTest import DynamicFunctionTest
+from myclips.rete.tests.VariableBindingTest import VariableBindingTest
+from copy import copy
 
 def getVar(varName, variables, inPatternVariables):
+    '''
+    Get a location where the ?varName variable
+    was found first or False if the ?varName is not defined yet
+    
+    @param varName: a variable name
+    @type varName: string
+    @param variables: a dict of varName => VariableLocation
+    @param inPatternVariables: a list of variable found in the same pattern
+        and not merged to the main dict yet
+    @return: VariableLocation or False
+    '''
+    
     if variables.has_key(varName):
         return variables[varName]
     
@@ -21,230 +43,6 @@ def getVar(varName, variables, inPatternVariables):
     return False
 
 
-def analyzeSequence(sequence, variables):
-    
-    inPatternVariables = []
-    inPatternReferences = []
-
-    prevMultifieldCount = 0
-    
-    for (fIndex, field) in enumerate(sequence):
-        
-        field, isNegative, connectedConstraints = normalizeAtom(field)
-        if len(connectedConstraints) > 0:
-            myclips.logger.error("FIXME: Connected contraints ignored in sequence analysis: %s", connectedConstraints)
-        
-        varLocation = None
-        
-        if isinstance(field, (types.SingleFieldVariable, types.BaseParsedType, types.UnnamedSingleFieldVariable)):
-            # ignora tutte le cose non "variabili" nell'analisi
-            # ma il fatto che abbia trovato un elemento di lunghezza
-            # conosciuta dopo ad un eventuale multifield
-            # mi dice che il multifield nn si puo estendere oltre una
-            # certa lunghezza.
-            # aggiorno tutte le variabili precedenti con questa informazione
-            for var in inPatternVariables:
-                if var.fromEnd:
-                    var.endIndex += 1
-
-            for var in inPatternReferences:
-                if var.fromEnd:
-                    var.endIndex += 1
-        
-        if isinstance(field, types.SingleFieldVariable) and not isinstance(field, types.UnnamedSingleFieldVariable):
-            # ho trovato una variabile
-            # controllo se ce l'ho gia
-                
-            # nuova occorrenza
-            varLocation = VariableLocation(field.evaluate())
-            varLocation.isMultifield = False
-            
-            varLocation.beginIndex = fIndex
-            varLocation.endIndex = 0
-            
-            varLocation.fromBegin = (prevMultifieldCount == 0)
-            varLocation.fromEnd = (prevMultifieldCount > 0)
-
-            
-        elif isinstance(field, types.MultiFieldVariable):
-            
-            if not isinstance(field, types.UnnamedMultiFieldVariable):
-                
-                # nuova occorrenza
-                varLocation = VariableLocation(field.evaluate())
-                #varLocation.patternIndex = index
-                varLocation.isMultiField = True
-                
-                varLocation.beginIndex = fIndex
-                varLocation.endIndex = 0
-                
-                varLocation.fromBegin = (prevMultifieldCount == 0)
-                varLocation.fromEnd = (prevMultifieldCount > 0)
-
-            # DOPO AVER CREATO LA VARIABILE
-            # AGGIORNO IL CONTATORE
-            prevMultifieldCount += 1
-            
-                
-        if varLocation is not None: 
-            mainDefinition = getVar(varLocation.name, variables, inPatternVariables)
-            if not mainDefinition:
-                inPatternVariables.append(varLocation)
-                
-            else:
-                # convert the variable location, in a variable reference
-                varReference = VariableReference()
-                varLocation.toVarReference(varReference)
-                varReference.reference = mainDefinition
-                varReference.isNegative = isNegative
-                inPatternReferences.append(varReference)
-    
-    for var in inPatternVariables:
-        if not var.fromBegin:
-            var.fromBegin = None
-            var.beginIndex = None
-        elif not var.fromEnd:
-            var.fromEnd = None
-            var.endIndex = None
-
-    for var in inPatternReferences:
-        if not var.fromBegin:
-            var.fromBegin = None
-            var.beginIndex = None
-        elif not var.fromEnd:
-            var.fromEnd = None
-            var.endIndex = None
-
-    
-    return (inPatternVariables, inPatternReferences)
-    
-
-def VariableAnalysis(thePatterns, variables = None, joinConstraints = None, indexPrefix = 0):
-    variables = {} if variables is None else variables
-    joinConstraints = [] if joinConstraints is None else joinConstraints
-    for (index, thePattern) in enumerate(thePatterns):
-        inPatternVariables = []
-        inPatternReferences = []
-        index += indexPrefix
-
-        if isinstance(thePattern, types.AssignedPatternCE):
-        
-            if not not getVar(thePattern.variable.evaluate(), variables, []):
-                raise MyClipsBugException("Assigned variable in assigned-pattern-CE can't be a reference")
-            
-            varLocation = VariableLocation()
-            varLocation.name = thePattern.variable.evaluate()
-            varLocation.patternIndex = index
-            inPatternVariables.append(varLocation)
-            
-            thePattern = thePattern.pattern
-        
-        if isinstance(thePattern, types.OrderedPatternCE):
-        
-            (inPatternVariables, inPatternReferences) = analyzeSequence(thePattern.constraints, variables)
-        
-        if isinstance(thePattern, types.TemplatePatternCE):
-            for slot in thePattern.templateSlots:
-                if isinstance(slot, types.SingleFieldLhsSlot):
-                    if isinstance(slot.slotValue, types.SingleFieldVariable):
-                        varLocation = VariableLocation(slot.slotValue.evaluate())
-                        varLocation.slotName = slot.slotName
-                        varLocation.patternIndex = index
-                        mainReference = getVar(slot.slotValue.evaluate(), variables, inPatternVariables)
-                        if not mainReference:
-                            inPatternVariables.append(varLocation)
-                        else:
-                            varReference = varLocation.toVarReference()
-                            varReference.reference = mainReference
-                            inPatternReferences.append(varReference)
-                            
-                else:
-                    (inPatternVariables, inPatternReferences) = analyzeSequence(slot.slotValue, variables)
-                    for var in inPatternVariables:
-                        var.patternIndex = index
-                        var.slot = slot.slotName
-                    for var in inPatternReferences:
-                        var.patternIndex = index
-                        var.slot = slot.slotName
-                
-        # set patternIndex to variables and references
-        for var in inPatternVariables:
-            var.patternIndex = index
-
-        for var in inPatternReferences:
-            var.relPatternIndex = var.reference.patternIndex - index
-                    
-        variables.update(dict([(var.name, var) for var in inPatternVariables]))
-        joinConstraints.append(inPatternReferences)
-        
-    return (variables, joinConstraints)
-
-def normalizeAtom(atom):
-    
-    isNegative = False
-    connected = []
-    while not isinstance(atom, (types.Variable, types.BaseParsedType, types.FunctionCall)):
-        if isinstance(atom, types.ConnectedConstraint):
-            connected = atom.connectedConstraints
-            atom = atom.constraint
-        
-        elif isinstance(atom, types.Constraint):
-            atom = atom.constraint
-            
-        elif isinstance(atom, types.PositiveTerm):
-            atom = atom.term
-            
-        elif isinstance(atom, types.NegativeTerm):
-            atom = atom.term
-            isNegative = True
-    
-    return (atom, isNegative, connected)
-
-def analyzePattern(thePattern, patternIndex, variables):
-    inPatternReferences = []
-    inPatternVariables = []
-
-    if isinstance(thePattern, types.OrderedPatternCE):
-    
-        (inPatternVariables, inPatternReferences) = analyzeSequence(thePattern.constraints, variables)
-    
-    if isinstance(thePattern, types.TemplatePatternCE):
-        for slot in thePattern.templateSlots:
-            if isinstance(slot, types.SingleFieldLhsSlot):
-                
-                # normalize to basetype or variable
-                slotValue, isNegative, connectedConstraints = normalizeAtom(slot.slotValue)
-                if len(connectedConstraints) > 0:
-                    myclips.logger.error("FIXME: Connected contraints ignored in pattern analysis: %s", connectedConstraints)
-                
-                if isinstance(slotValue, types.SingleFieldVariable):
-                    varLocation = VariableLocation(slotValue.evaluate())
-                    varLocation.slotName = slot.slotName
-                    varLocation.fullSlot = True
-                    mainReference = getVar(slotValue.evaluate(), variables, inPatternVariables)
-                    if not mainReference:
-                        inPatternVariables.append(varLocation)
-                    else:
-                        varReference = VariableReference()
-                        varLocation.toVarReference(varReference)
-                        varReference.reference = mainReference
-                        varReference.isNegative = isNegative
-                        inPatternReferences.append(varReference)
-                        
-            else:
-                (inPatternVariables, inPatternReferences) = analyzeSequence(slot.slotValue, variables)
-                for var in inPatternVariables:
-                    var.slotName = slot.slotName
-                for var in inPatternReferences:
-                    var.slotName = slot.slotName
-
-    for var in inPatternVariables:
-        var.patternIndex = patternIndex
-
-    for var in inPatternReferences:
-        var.relPatternIndex = var.reference.patternIndex - patternIndex
-
-    return (inPatternVariables, inPatternReferences)
 
 def analyzeFunction(theFunction, patternIndex, variables, fakeVariables = None, realToFakeMap = None, vIndex = None):
     '''
@@ -337,6 +135,328 @@ def analyzeFunction(theFunction, patternIndex, variables, fakeVariables = None, 
         return (newFunctionCall, fakeVariables)
     
     else: raise TypeError("AnalyzeFunction require a FunctionCall as first argument")
+    
+
+
+    
+def _analyzeTerm(atomLocation, aTerm, variables, inPatternVariables):
+    '''
+    Analyze a types.Term and create a list of pattern tests and join tests
+    to describe the term
+    
+    @param atomLocation: the location of the term inside the LHS
+    @param aTerm: a types.Term element
+    @param variables: a dict of varName => VarLocation(s) in previous patterns
+    @param inPatternVariables: a list of VarLocations in the current pattern
+    '''
+    
+
+    alphaTests = []
+    joinTests = []
+    
+    isNegative = True if isinstance(aTerm, types.NegativeTerm) else False
+    # dewrap: aTerm from a Term object to Term's content 
+    aTerm = aTerm.term
+    
+    if isinstance(aTerm, (types.MultiFieldVariable, types.SingleFieldVariable)):
+        varLocation = VariableLocation.fromAtomLocation(aTerm.evaluate(), atomLocation)
+        # check the main location of the variable
+        # but if it's the same of this location, ignore the cc
+        mainReference = getVar(aTerm.evaluate(), variables, inPatternVariables)
+        if mainReference is not False:
+            # create a reference to this variable
+            varReference = VariableReference()
+            varLocation.toVarReference(varReference)
+            varReference.reference = mainReference
+            varReference.isNegative = isNegative
+            # calcolate the relPatternIndex
+            if varLocation.patternIndex is not None:
+                varReference.relPatternIndex = mainReference.patternIndex - varLocation.patternIndex
+            else:
+                varReference.relPatternIndex = 0
+            
+            # make a new join test
+            joinTests.append(VariableBindingTest(varReference))
+            
+        else:
+            # unknown variable!
+            inPatternVariables.append(varLocation)
+        
+    elif isinstance(aTerm, types.BaseParsedType):
+        # a pattern test is required, but created by _makeAlphaNetwork. so ignore
+        # remove patternIndex location from the atomLocation
+        # because alpha tests are always on the wme from the right
+        atomLocationCopy = copy(atomLocation)
+        atomLocationCopy.patternIndex = None
+        aAlphaTest = ConstantValueAtIndexTest(atomLocationCopy, aTerm)
+        alphaTests.append(aAlphaTest if not isNegative else NegativeAlphaTest(aAlphaTest))
+    
+    elif isinstance(aTerm, types.FunctionCall):
+        # well... this is a special case. This must be converted in a
+        # (test (function-call))
+        _newFunc, _fakeVar = analyzeFunction(aTerm, atomLocation.patternIndex, variables)
+        joinTests.append(DynamicFunctionTest(_newFunc, _fakeVar))
+        
+    # unnamed multifield and single field are ignored
+        
+    return (alphaTests, joinTests)
+
+    
+def _analyzeConstraint(aConstraint, atomLocation, variables, inPatternVariables):
+    '''
+    Analyze a types.Constraint or types.ConnectedConstraint element
+    to extract a list of pattern-test or join-test over the element
+     
+    @param aConstraint: a types.Constraint or a types.ConnectedConstraint
+    @param atomLocation: the item location
+    @param variables: a dict of variables found in previous patterns
+    @param inPatternVariables: a list of variables found in the current pattern
+    '''
+    
+    # both connected than simple constraints have got the $.constraint field to analyze
+    # but first field in ordered could be not wrapped by Constraint or CConstraint
+    # so, a normalization must be applied
+    firstField = aConstraint.constraint if isinstance(aConstraint, (types.ConnectedConstraint, types.Constraint)) else aConstraint
+    firstField = types.PositiveTerm(firstField) if not isinstance(firstField, types.Term) else firstField 
+    
+    alphaTests, joinTests = _analyzeTerm(atomLocation, firstField, variables, inPatternVariables)
+    
+    # but only ConnectedConstraints has a connectedConstraint field
+    
+    if isinstance(aConstraint, types.ConnectedConstraint):
+    
+        ccLength = len(aConstraint.connectedConstraints)
+        for i in range(0, ccLength):
+            conj, aTerm = aConstraint.connectedConstraints[i]
+    
+            alphas, joins = _analyzeTerm(atomLocation, aTerm, variables, inPatternVariables)
+            
+            if conj == "|": # // or
+                # wrap the cc in a or ( [tests] | B )
+                
+                if len(joinTests) > 0:
+                    # all tests for this constraint must be done on beta network
+                    if len(alphas) > 0:
+                        joins = [AlphaInBetaNetworkTest(alphas)]
+    
+                    if len(joins) > 0:
+                        #joinTests += joins
+                        joinTests = joinTests[:-1] + [OrConnectiveTest(joinTests[-1:] + joins)]
+                else:
+                    if len(alphas) > 0:
+                        alphaTests = alphaTests[:-1] + [OrConnectiveTest(alphaTests[-1:] + alphas)]
+                    elif len(joins) > 0:
+                        # need to be carefull:
+                        # if i got a new join test and i got previous
+                        # alpha tests, i need to convert them in alpha-in-beta-network tests
+                        if len(alphaTests) > 0:
+                            joinTests = [AlphaInBetaNetworkTest(alphaTests[:-1])] + [OrConnectiveTest([AlphaInBetaNetworkTest(alphaTests[-1:])] + joins)]
+                            alphaTests = []
+                            
+                        else:
+                            joinTests = [OrConnectiveTest(joins)] 
+                
+                
+            else: # conj == & // and
+    
+                if len(joinTests) > 0:
+                    # all tests for this constraint must be done on beta network
+                    if len(alphas) > 0:
+                        joins = [AlphaInBetaNetworkTest(alphas)]
+    
+                    if len(joins) > 0:
+                        joinTests += joins
+                else:
+                    if len(alphas) > 0:
+                        alphaTests += alphas
+                    elif len(joins) > 0:
+                        # need to be carefull:
+                        # if i got a new join test and i got previous
+                        # alpha tests, i need to convert them in alpha-in-beta-network tests
+                        if len(alphaTests) > 0:
+                            joinTests = [AlphaInBetaNetworkTest(alphaTests)] + joins
+                            alphaTests = []
+                        else:
+                            joinTests = joins
+    
+    return (alphaTests, joinTests)
+    
+def _isMultifield(atom):
+    '''
+    Check the atom composition and return True
+    if it could contain a multifield element
+    
+    FunctionCall evaluation is done checking return types:
+    if list is one of their possible values, this function return True
+    
+    $.constraint field is evaluated for types.ConnectedConstraint atoms
+    (this means only the first element of a CC)
+    
+    @param atom: a types.Constraint or types.ConnectedConstraint element
+    @rtype: boolean
+    '''
+    
+    
+    while not isinstance(atom, (types.Variable, types.BaseParsedType, types.FunctionCall)):
+        if isinstance(atom, types.ConnectedConstraint):
+            atom = atom.constraint
+        
+        elif isinstance(atom, types.Constraint):
+            atom = atom.constraint
+            
+        elif isinstance(atom, types.Term):
+            atom = atom.term
+            
+        else:
+            break
+        
+    if isinstance(atom, types.FunctionCall):
+        # check the return values: it could be a multifield?
+        return list in atom.funcDefinition.returnTypes
+    else:
+        return isinstance(atom, (types.MultiFieldVariable, types.UnnamedMultiFieldVariable))
+    
+    
+def _toAtomSequence(aSequence):
+    
+    prevMultifieldCount = 0
+    returnSequence = []
+    
+    for fieldIndex, fieldContent in enumerate(aSequence):
+        
+        atomLocation = AtomLocation()
+        isMultiField = _isMultifield(fieldContent) 
+        
+        if prevMultifieldCount and isMultiField:
+            raise MyClipsException("Two multifields in a single expression found!")
+            
+        # calculate position from the end
+        if prevMultifieldCount == 0:
+            atomLocation.beginIndex = fieldIndex
+            atomLocation.fromBegin = True
+            
+        if prevMultifieldCount > 0 or isMultiField :
+            atomLocation.endIndex = len(aSequence) - fieldIndex - 1
+            atomLocation.fromEnd = True
+            
+        if isMultiField:
+            prevMultifieldCount += 1
+            atomLocation.isMultiField = True
+            
+        returnSequence.append((atomLocation, fieldContent))
+        
+    return returnSequence
+    
+    
+def _patternToAtomLocations(aPatternCE, patternIndex):
+    
+    if isinstance(aPatternCE, types.OrderedPatternCE):
+        
+        returnSequence = _toAtomSequence(aPatternCE.constraints)
+        for atomLocation, _ in returnSequence:
+            atomLocation.patternIndex = patternIndex
+    
+        return returnSequence
+    
+    elif isinstance(aPatternCE, types.TemplatePatternCE):
+        
+        returnSequence = []
+        
+        for slot in aPatternCE.templateSlots:
+            
+            if isinstance(slot, types.SingleFieldLhsSlot):
+                # easy to handle: convert the location to a atom location with a field element
+                atomLocation = AtomLocation()
+                atomLocation.slotName = slot.slotName
+                atomLocation.fullSlot = True
+                atomLocation.patternIndex = patternIndex
+            
+                returnSequence.append((atomLocation, slot.slotValue))
+                
+            else:
+                
+                multifieldSequence = _toAtomSequence(slot.slotValue)
+                for atomLocation, _ in returnSequence:
+                    atomLocation.patternIndex = patternIndex
+                    atomLocation.slotName = slot.slotName
+                    
+                returnSequence += multifieldSequence
+                
+        return returnSequence
+        
+    else:
+        raise ValueError("Invalid aPatternCE types: %s"%aPatternCE.__class__.__name__)
+    
+    
+def analyzePattern(aPatternCE, patternIndex, variables, inPatternVariables):
+    
+    # this function iterate over aPatternCE's elements and
+    # call other analysis function to create alpha/join tests about the elements
+    # then return the list of list of alpha and join tests
+    
+    listOfAlphas = []
+    listOfJoins = []
+    
+    atoms = _patternToAtomLocations(aPatternCE, patternIndex)
+    
+    prevSlotName = None
+    addMultifieldLength = False # starting value == True because on first lostname change from None to slotName
+                            # the slottest length must not be added
+    lastMultiSlotIndex = -1
+    
+    for (atomLocation, aConstraint) in atoms:
+        
+        # check slot focus change and need to add multi-slot length test
+        if isinstance(aPatternCE, types.TemplatePatternCE):
+            
+            # on slot name change
+            if prevSlotName != atomLocation.slotName:
+                # if a length test could be usefull
+                if addMultifieldLength:
+                    # add it
+                    listOfAlphas.append(MultislotLengthTest(prevSlotName, lastMultiSlotIndex + 1))
+            
+                prevSlotName = atomLocation.slotName
+                lastMultiSlotIndex = -1
+                # choose if this slot need a length test: if is a multislot, then it could need one
+                # otherwise no for sure!
+                addMultifieldLength = False if atomLocation.fullSlot is True else True
+                
+            # choose if this multislot still need a length test: if no multifield value
+            # has been found it could need one!
+            addMultifieldLength = addMultifieldLength and not atomLocation.isMultiField
+            lastMultiSlotIndex += 1 
+        
+        alphas, joins = _analyzeConstraint(aConstraint, atomLocation, variables, inPatternVariables)
+        
+        if len(alphas) > 0:
+            listOfAlphas.append(alphas)
+            
+        # some alpha test could be added for TemplateFact: if multifieldSlot length test could be add
+            
+        if len(joins) > 0:
+            listOfJoins += joins
+            
+    if isinstance(aPatternCE, types.OrderedPatternCE):
+        # need to add a scope-test as first test in alpha
+        listOfAlphas.insert(0, [ScopeTest(aPatternCE.scope.moduleName)])
+        
+        # need to add a length if no multifield inside!
+        # if the last atom location of the sequence of atoms has fromEnd = True
+        # then at least 1 multifield is in the sequence and no length test must be added
+        if atoms[-1][0].fromEnd is not True:
+            listOfAlphas.append( [OrderedFactLengthTest(len(aPatternCE.constraints))] )
+            
+    elif isinstance(aPatternCE, types.TemplatePatternCE):
+        # order of test insertion is reversed because a insert-top is done
+        listOfAlphas.insert(0, [TemplateNameTest(aPatternCE.templateName)])
+        listOfAlphas.insert(0, [ScopeTest(aPatternCE.templateDefinition.moduleName)])
+        # real order will be:
+        # ROOT -> SCOPE -> TEMPLATE -> SLOTS...
+        
+            
+    return listOfAlphas, listOfJoins
+    
 
 def normalizeLHS(lhs, MM):
     """
@@ -550,7 +670,7 @@ if __name__ == '__main__':
     
     lhs = normalizeLHS(lhs)
     
-    
     pprint.pprint(lhs)
+    
     
     

@@ -4,17 +4,14 @@ Created on 24/lug/2012
 @author: Francesco Capozzo
 '''
 from myclips.rete.tests.AlphaTest import AlphaTest
-from myclips.rete.WME import WME
 import myclips
-from myclips.rete.tests import getWmeFragmentValue
-from myclips.Fact import FactLengthNotComputableException, FactInvalidSlotName,\
-    FactInvalidIndex
+from myclips.rete.tests.BetaTest import BetaTest
 
-class OrConnectiveTest(AlphaTest):
+class OrConnectiveTest(AlphaTest, BetaTest):
     '''
-    Check if a constant value of type Symbol, Integer, Float, String
-    is place at a specified index. Index could be a exact index
-    or an minimu index
+    Forward execution of tests to wrapped tests
+    This test is both an AlphaTest and a BetaTest:
+    isValid call is forwarded as is to subtests
     '''
 
 
@@ -28,24 +25,20 @@ class OrConnectiveTest(AlphaTest):
     def tests(self):
         return self._tests
     
-    def isValid(self, wme):
+    def isValid(self, *args):
         try:
             for sTest in self.tests:
-                if sTest.isValid(wme):
+                if sTest.isValid(*args):
                     return True
                 
             return False
             
-        except (FactLengthNotComputableException, FactInvalidSlotName, FactInvalidIndex):
-            return False
-        except KeyError:
-            return False
         except Exception, e:
-            myclips.logger.warn("Unexpected exception caught in ConstantValueAtIndexTest: %s", repr(e))
+            myclips.logger.warn("Unexpected exception caught in OrConnectiveTest: %s", repr(e))
             return False
     
     def __str__(self, *args, **kwargs):
-        return " or ".join(self.tests)
+        return "OR(" + ",\n".join([str(x) for x in self.tests]) + ")"
         
     def __eq__(self, other):
         return self.__class__ == other.__class__ \

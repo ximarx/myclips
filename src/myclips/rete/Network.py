@@ -7,19 +7,12 @@ from myclips.Agenda import Agenda, AgendaNoMoreActivationError
 import myclips.parser.Types as types
 from myclips.MyClipsException import MyClipsBugException, MyClipsException
 from myclips.rete.nodes.PropertyTestNode import PropertyTestNode
-from myclips.rete.tests.ScopeTest import ScopeTest
-from myclips.rete.tests.ConstantValueAtIndexTest import ConstantValueAtIndexTest
-from myclips.rete.tests.NegativeAlphaTest import NegativeAlphaTest
 from myclips.rete.nodes.AlphaMemory import AlphaMemory
 from myclips.rete.nodes.RootNode import RootNode
 from myclips.rete.WME import WME
 from myclips.rete.nodes.BetaMemory import BetaMemory
 from myclips.rete.tests.VariableBindingTest import VariableBindingTest
 from myclips.rete.nodes.JoinNode import JoinNode
-from myclips.rete.tests.OrderedFactLengthTest import OrderedFactLengthTest
-from myclips.rete.tests.locations import VariableLocation, AtomLocation
-from myclips.rete.analysis import analyzePattern, normalizeAtom, analyzeFunction
-from myclips.rete.tests.TemplateNameTest import TemplateNameTest
 from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
 from myclips.rete.nodes.NccNode import NccNode
 from myclips.rete import analysis
@@ -32,9 +25,9 @@ import sys
 from myclips.functions.Function import HaltException
 from myclips.rete.tests.DynamicFunctionTest import DynamicFunctionTest
 from myclips.rete.nodes.TestNode import TestNode
-from myclips.rete.tests.OrConnectiveTest import OrConnectiveTest
 import traceback
 from myclips.Settings import Settings
+from myclips.rete.tests.locations import VariableLocation
 
 
 class Network(object):
@@ -541,13 +534,12 @@ class Network(object):
     def modulesManager(self):
         return self._modulesManager
 
-    def _makeNetwork(self, node, patterns, prevPatterns=None, variables=None, testsQueue=None):
+    def _makeNetwork(self, node, patterns, prevPatterns=None, variables=None):
         
         variables = {} if variables is None else variables
         prevPatterns = [] if prevPatterns is None else prevPatterns
-        testsQueue = [] if testsQueue is None else testsQueue 
         
-        for (pIndex, patternCE) in enumerate(patterns):
+        for patternCE in patterns:
             
             avoidAppend = False
             
@@ -562,13 +554,19 @@ class Network(object):
                 # i use the assigned only to store info about variable
                 # use old way to store variables coordinates, waiting for a new one
                 if isinstance(patternCE, types.AssignedPatternCE):
-                    variables[patternCE.variable.evaluate()] = VariableLocation(patternCE.variable.evaluate(), patternIndex=pIndex, fullFact=True)
+                    variables[patternCE.variable.evaluate()] = VariableLocation(patternCE.variable.evaluate(), len(prevPatterns), fullFact=True)
                     patternCE = patternCE.pattern
+                
+                inPatternVariables = []
+                alphaTests, joinTests = analysis.analyzePattern(patternCE, len(prevPatterns), variables, inPatternVariables)
+                
+                # merge inPatternVariables to variables
+                variables.update(dict([(var.name, var) for var in inPatternVariables]))
                 
                 # requires a simple alpha circuit,
                 # then a join + beta node if needed (beta join circuit)
-                alphaMemory = self._makeAlphaCircuit(patternCE, testsQueue)
-                node = self._makeBetaJoinCircuit(node, alphaMemory, patternCE, prevPatterns, variables)
+                alphaMemory = self._makeAlphaCircuit(alphaTests)
+                node = self._makeBetaJoinCircuit(node, alphaMemory, joinTests)
                 
                 
             elif isinstance(patternCE, types.NotPatternCE):
@@ -580,16 +578,27 @@ class Network(object):
                     # that's it: ncc required
                     
                     # this build the normal circuit
-                    lastNccCircuitNode = self._makeNetwork(node, patternCE.pattern.patterns, prevPatterns, variables, testsQueue)
+                    lastNccCircuitNode = self._makeNetwork(node, patternCE.pattern.patterns, prevPatterns, variables)
                     node = self._makeBetaNccCircuit(node, lastNccCircuitNode, len(patternCE.pattern.patterns))
                     # inner conditions already appended by recursive call
                     # but i have to add a +1 for the (not (...))
                     #avoidAppend = True
                 else:
                     # a simple negative join node is required
-
-                    alphaMemory = self._makeAlphaCircuit(patternCE.pattern, testsQueue)
-                    node = self._makeBetaNegativeJoinCircuit(node, alphaMemory, patternCE, prevPatterns, variables)
+                    
+                    inPatternVariables = []
+                    # add 1 to pattern index because the values are in the inner not pattern
+                    # so the (not (condition)) count as 2
+                    alphaTests, joinTests = analysis.analyzePattern(patternCE.pattern, len(prevPatterns) + 1, variables, inPatternVariables)
+                    
+                    # merge inPatternVariables to variables
+                    variables.update(dict([(var.name, var) for var in inPatternVariables]))
+                    
+                    # requires a simple alpha circuit,
+                    # then a join + beta node if needed (beta join circuit)
+                    alphaMemory = self._makeAlphaCircuit(alphaTests)
+                    node = self._makeBetaNegativeJoinCircuit(node, alphaMemory, joinTests)
+                    
                     prevPatterns.append(patternCE)
                     patternCE = patternCE.pattern
 
@@ -626,220 +635,23 @@ class Network(object):
             
         return node
             
-    def _makeAlphaCircuit(self, patternCE, testQueue):
-            import myclips
-            # first i need to check the type of the patternCE
-            # to create the correct list of tests
-            
-            lastCircuitNode = self._root
+    def _makeAlphaCircuit(self, alphaTests):
+        lastCircuitNode = self._root
 
-            if isinstance(patternCE, types.TemplatePatternCE):
-                
-                # scope for template-CE must be made against the template module,
-                # not the rule's or pattern's scope
-                lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [ScopeTest(patternCE.templateDefinition.moduleName)])
-                
-                
-                lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [TemplateNameTest(patternCE.templateName)])
-                
-                for slot in patternCE.templateSlots:
-                    
-                    if isinstance(slot, types.MultiFieldLhsSlot):
-                        
-                        multiFieldCount = 0
-                        
-                        for atomIndex, slotAtom in enumerate(slot.slotValue):
-                            
-                            atom, isNegative, connectedConstraints = normalizeAtom(slotAtom)
-                            
-                            # not fieldConstraint is a BaseParsedType | Variable
-                            # only check for BaseParsedType, variables ignored
-                            if isinstance(atom, types.BaseParsedType):
-                                
-                                indexLocation = AtomLocation()
-                                indexLocation.slotName = slot.slotName
-                                
-                                if multiFieldCount > 0:
-                                    indexLocation.fromEnd = True
-                                    indexLocation.endIndex = len(slot.slotValue) - atomIndex - 1
-                                else:
-                                    indexLocation.fromBegin = True
-                                    indexLocation.beginIndex = atomIndex
-                                
-                                # share or create a property test node for each type/value at index
-                                tests = [ConstantValueAtIndexTest(indexLocation, atom)]
-                                
-                                
-                                # if this is a NegativeTest, i need to reverse all tests
-                                if isNegative:
-                                    tests = [NegativeAlphaTest(t) for t in tests]
-                                    
-                                lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, tests)
-                                
-                            elif isinstance(atom, types.MultiFieldVariable):
-                                
-                                # if i got a multifield variable in the multislot,
-                                # any index of constant value must be computed from the end
-                                multiFieldCount += 1
-                            
-                    
-                    elif isinstance(slot, types.SingleFieldLhsSlot):
-                        atom, isNegative, connectedConstraints = normalizeAtom(slot.slotValue)
-                        
-                        if isinstance(atom, types.Variable):
-                            continue
-                        
-                        indexLocation = AtomLocation(slotName=slot.slotName)
-                        indexLocation.isMultiField = False
-                        indexLocation.fullSlot = True
-                        
-                        tests = [ConstantValueAtIndexTest(indexLocation, atom)]
-                        
-                        if isNegative:
-                            tests = [NegativeAlphaTest(t) for t in tests]
-                            
-                        lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, tests)
-                    
-                    else:
-                        myclips.logger.error("Unknown slot type in TemplatePatternCE: %s", slot.__class__.__name__)
-                        raise MyClipsBugException("Unknown slot type: %s"%slot.__class__.__name__)
-                
-            elif isinstance(patternCE, types.OrderedPatternCE):
-                
-                # first thing to do is add a filter per-module
-                # ordered facts are visible only in the module
-                # who assert them
-                lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [ScopeTest(patternCE.scope.moduleName)])
-                
-                multiFieldDelta = 0
-                
-                # this is easy to do:
-                # first field is a symbol for parser constraints, but manually
-                # submitted rules could have any types of value as first
-                for (fieldIndex, fieldConstraint) in enumerate(patternCE.constraints):
-                    
-                    # ordered fact constraint could be:
-                    #    BaseParsedType: (usually the first field is always a Symbol if rule is parsed)
-                    #    Constraint<Term<BaseParsedType>
-                    #    ConnectedConstraints<Term<BaseParsedType>, [[#connective, <Term>]*]>
-                    # 
-                    # Strategy is to check if is constraints first. If it is,
-                    # replace fieldConstraints value with constraint value and continue
-                    #
-                    # then check for Term (Positive/Negative) and change tests for it
-                    
-                    isPositive = True
-                    connectedConstraints = None
-                    
-                    if isinstance(fieldConstraint, types.Constraint):
-                        # reduce Constraint to his content
-                        fieldConstraint = fieldConstraint.constraint
-                        
-                    if isinstance(fieldConstraint, types.ConnectedConstraint):
-                        # reduce ConnectedConstraint to his main constraint
-                        myclips.logger.error("FIXME: Connected contraints alternative values ignored: %s", fieldConstraint.connectedConstraints)
-                        connectedConstraints = fieldConstraint.connectedConstraints
-                        fieldConstraint = fieldConstraint.constraint
-                        
-                    if isinstance(fieldConstraint, types.PositiveTerm):
-                        fieldConstraint = fieldConstraint.term
-                    
-                    if isinstance(fieldConstraint, types.NegativeTerm):
-                        isPositive = False
-                        fieldConstraint = fieldConstraint.term
-                        
-                    # not fieldConstraint is a BaseParsedType | Variable
-                    # only check for BaseParsedType, variables ignored
-                    if isinstance(fieldConstraint, types.BaseParsedType):
-                        
-                        indexLocation = AtomLocation()
-                        
-                        if multiFieldDelta > 0:
-                            indexLocation.fromEnd = True
-                            indexLocation.endIndex = len(patternCE.constraints) - fieldIndex - 1
-                        else:
-                            indexLocation.fromBegin = True
-                            indexLocation.beginIndex = fieldIndex 
-                        
-                        # share or create a property test node for each type/value at index
-                        tests = [ConstantValueAtIndexTest(indexLocation, fieldConstraint)]
-                        
-                        if connectedConstraints:
-                            for cc in connectedConstraints:
-                                conType, conValue = cc
-                                
-                                conNegative = False if isinstance(conValue, types.PositiveTerm) else True
-                                
-                                conTerm = conValue.term
-                                    
-                                if isinstance(conTerm, types.BaseParsedType):
-                                    # need to take care of this!
-                                    # if this connected constraint has
-                                    # a base parsed type + the base term
-                                    # must be taken in account where creating
-                                    # pattern test
-                                    aSingleTest = ConstantValueAtIndexTest(indexLocation, conTerm)
-                                    if conNegative:
-                                        aSingleTest = NegativeAlphaTest(aSingleTest)
-                                    
-                                    if conType == '|':
-                                        tests.append(aSingleTest)
-                                        tests = [OrConnectiveTest(tests)]
-                                    if conType == '&':
-                                        tests.append(aSingleTest)
-                        
-                        
-                        # if this is a NegativeTest, i need to reverse all tests
-                        if not isPositive:
-                            tests = [NegativeAlphaTest(t) for t in tests]
-                            
-                        lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, tests)
-                        
-                    elif isinstance(fieldConstraint, types.MultiFieldVariable):
-                        
-                        # if i got a multifield variable in a field of the ordered, any
-                        # field constant value index after this it's not an exact index
-                        # position, but is a "minimum index"
-                        multiFieldDelta += 1
-                        
-                # at the end of the loop
-                # i need to check if i have to add a lenght test over
-                # the circuit (if no multifield variable is used)
-                if multiFieldDelta == 0:
-                    lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, [
-                                    OrderedFactLengthTest(fieldIndex + 1)
-                                ])
-                        
-            else:
-                myclips.logger.critical("Unknown patternCE type: %s", patternCE.__class__.__name__)
-                raise MyClipsBugException("Unknown patternCE type: %s"%patternCE.__class__.__name__)
-            
-            # Here i've built all property test node
-            # it's time to link an alpha memory at the end of them
-            
-            lastCircuitNode = self._shareNode_AlphaMemoryNode(lastCircuitNode)
-            
-            return lastCircuitNode
+        # create or share a PropertyTestNode for each test group
+        for tests in alphaTests:
+            lastCircuitNode = self._shareNode_PropertyTestNode(lastCircuitNode, tests)
         
-    def _makeBetaJoinCircuit(self, lastBetaCircuitNode, alphaMemory, patternCE, prevPatterns, variables):
+        lastCircuitNode = self._shareNode_AlphaMemoryNode(lastCircuitNode)
+        
+        return lastCircuitNode
+        
+    def _makeBetaJoinCircuit(self, lastBetaCircuitNode, alphaMemory, joinTests):
         
         if lastBetaCircuitNode != None:
             lastBetaCircuitNode = self._shareNode_BetaMemory(lastBetaCircuitNode)
-            
-        # build tests for join node
-        tests = []
-        
-        (newBindings, references) = analyzePattern(patternCE, len(prevPatterns), variables)
-        
-        # need to merge new bindings in variables
-        variables.update(dict([(var.name, var) for var in newBindings]))
-    
-        # need to create a test of each reference in references
-        for reference in references:
-            tests.append(VariableBindingTest(reference))
-            
          
-        return self._shareNode_JoinNode(lastBetaCircuitNode, alphaMemory, tests )           
+        return self._shareNode_JoinNode(lastBetaCircuitNode, alphaMemory, joinTests )         
         
         
     def _makeBetaTestCircuit(self, lastBetaCircuitNode, patternCE, prevPatterns, variables):
@@ -854,33 +666,18 @@ class Network(object):
         # build tests for test node
         tests = []
         
-        (newFunctionCall, fakeVars) = analyzeFunction(patternCE.function , len(prevPatterns), variables)
+        (newFunctionCall, fakeVars) = analysis.analyzeFunction(patternCE.function , len(prevPatterns), variables)
         
         tests.append(DynamicFunctionTest(newFunctionCall, fakeVars))
          
         return self._shareNode_TestNode(lastBetaCircuitNode, tests )              
 
-    def _makeBetaNegativeJoinCircuit(self, lastBetaCircuitNode, alphaMemory, patternCE, prevPatterns, variables):
+    def _makeBetaNegativeJoinCircuit(self, lastBetaCircuitNode, alphaMemory, joinTests):
         
         if lastBetaCircuitNode != None:
             lastBetaCircuitNode = self._shareNode_BetaMemory(lastBetaCircuitNode)
             
-        # build tests for join node
-        tests = []
-        
-        (newBindings, references) = analyzePattern(patternCE.pattern, len(prevPatterns) + 1, variables)
-        
-        # new BINDINGS??? Need to raise error!
-        
-        # need to merge new bindings in variables
-        variables.update(dict([(var.name, var) for var in newBindings]))
-    
-        # need to create a test of each reference in references
-        for reference in references:
-            tests.append(VariableBindingTest(reference))
-            
-         
-        return self._shareNode_NegativeJoinNode(lastBetaCircuitNode, alphaMemory, tests )           
+        return self._shareNode_NegativeJoinNode(lastBetaCircuitNode, alphaMemory, joinTests )           
         
 
     def _makeBetaNccCircuit(self, lastBetaCircuitNode, lastNccCircuitNode, nccCircuitLength):

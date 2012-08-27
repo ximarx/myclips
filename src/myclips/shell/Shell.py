@@ -144,6 +144,9 @@ class Shell(object):
                         print "[ERROR] ", e.message
                         #traceback.print_exc()
                         myclips.logger.warning(traceback.format_exc())
+                        if len(e.args) == 3:
+                            myclips.logger.warning("Caused by:\n%s", e.args[2])
+
                     except Exception, e:
                         if hasattr(e, 'msg'):
                             print "[ERROR] ", e.msg

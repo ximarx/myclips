@@ -73,7 +73,7 @@ class ConstantValueAtIndexTest(AlphaTest):
             return False
     
     def __str__(self, *args, **kwargs):
-        return "%s=%s"%(self.index,
+        return "%s=%s"%(str(self.index),
                                self.value)
         
     def __eq__(self, other):

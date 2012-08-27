@@ -6,7 +6,7 @@ Created on 24/lug/2012
 from myclips.rete.tests.BetaTest import BetaTest
 import myclips
 from myclips.rete.tests.locations import VariableReference
-from myclips.rete.tests import getTokenAnchestor, getWmeFragmentValue
+from myclips.rete.tests import getTokenAnchestor
 
 class VariableBindingTest(BetaTest):
     '''
@@ -79,13 +79,13 @@ class VariableBindingTest(BetaTest):
         except Exception, e:
             # Another type of exception catch
             # better log this
-            myclips.logger.warning("Unexpected exception catch in %s: token=%s, wme=%s, exception=%s", self, token, wme, repr(e))
+            myclips.logger.warning("Unexpected exception caught in %s: token=%s, wme=%s, exception=%s", self, token, wme, repr(e))
             # anyway test failed
             return False
     
     def __str__(self, *args, **kwargs):
-        return "test: "+str(self._reference)
-        
+        return str(self._reference)
+    
     def __eq__(self, other):
         return self.__class__ == other.__class__ \
                 and self._reference == other._reference

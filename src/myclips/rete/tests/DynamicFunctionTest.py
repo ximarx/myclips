@@ -115,7 +115,7 @@ class DynamicFunctionTest(BetaTest):
             return False
     
     def __str__(self, *args, **kwargs):
-        return "test: "+str(self._function)+" with "+str(self._references)
+        return self._function.toClipsStr() + " with "+", ".join(["%s=%s"%(str(k),str(v).split("=", 2)[-1]) for (k,v) in self.references.items()])
         
     def __eq__(self, other):
         return self.__class__ == other.__class__ \

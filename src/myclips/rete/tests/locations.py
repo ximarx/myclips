@@ -125,11 +125,24 @@ class AtomLocation(object):
     def fullSlot(self, value):
         self._fullSlot = value
 
-    def __str__(self, *args, **kwargs):
-        return ", ".join([x+"="+str(getattr(self, x)) for x in dir(self.__class__) if not callable(getattr(self, x))
-                                                                                        and hasattr(self, "_"+x)
-                                                                                        and getattr(self, x) not in (None, False)
-                                                                                        ])
+    def __str__(self):
+        if not self.fullFact:
+            if self.isMultiField:
+                indexFragment = "[%d:%d]"%(self.slotName, self.beginIndex, self.endIndex)
+            elif not self.fullSlot:
+                indexFragment = "[%s%s]"%( "-" if self.fromEnd else "", str(self.endIndex + 1) if self.fromEnd else str(self.beginIndex))
+            else:
+                indexFragment = ""
+            
+            if self.slotName is not None:
+                indexFragment = ".%s%s"%(self.slotName, indexFragment)
+        else:
+            indexFragment = ""
+        
+        return indexFragment
+
+    def __repr__(self, *args, **kwargs):
+        return "<AtomLocation %s>"%self.__str__()
 
     def __eq__(self, other):
         toTestItems = ["patternIndex", "slotName", "fromBegin", "beginIndex",
@@ -176,18 +189,19 @@ class VariableLocation(AtomLocation):
     def name(self, value):
         self._name = value
 
-    def __str__(self, *args, **kwargs):
+    def __str__(self):
+        return "%s:%s"%(self.name, super(VariableLocation, self).__str__())
+
+    def __repr__(self, *args, **kwargs):
         return "<VariableLocation:{0},{1}>".format(
                 self.name,
                 super(VariableLocation, self).__str__()
             )
         
-    def __repr__(self, *args, **kwargs):
-        return self.__str__()
     
     def toVarReference(self, reference=None):
         reference = VariableReference() if reference is None else reference
-        for key in [x for x in dir(self) if not callable(getattr(self, x)) and hasattr(self, "_"+x) and getattr(self, x) is not None]:
+        for key in [x for x in dir(self) if not callable(getattr(self, x)) and hasattr(self, "_"+x) and getattr(self, x) is not None and x != 'patternIndex' ]:
             setattr(reference, key, getattr(self, key))
         return reference
     
@@ -199,6 +213,20 @@ class VariableLocation(AtomLocation):
     def __neq__(self, other):
         return not self.__eq__(other)
     
+    @staticmethod
+    def fromAtomLocation(varName, atomLocation):
+        vL = VariableLocation(varName, 
+                              atomLocation.patternIndex, 
+                              atomLocation.slotName, 
+                              atomLocation.fromBegin, 
+                              atomLocation.beginIndex, 
+                              atomLocation.fromEnd, 
+                              atomLocation.endIndex, 
+                              atomLocation.isMultiField, 
+                              atomLocation.fullFact, 
+                              atomLocation.fullSlot)
+        
+        return vL
                 
 class VariableReference(AtomLocation):
     def __init__(self, name=None, reference=None, patternIndex=None,
@@ -248,13 +276,15 @@ class VariableReference(AtomLocation):
 
         
     def __str__(self, *args, **kwargs):
-        return "<VariableReference:{0},{1}>".format(
-                self.name,
-                super(VariableReference, self).__str__()
-            )        
+        return "{0}=[{1}]{2}".format(
+                    super(VariableReference, self).__str__(),
+                    self.relPatternIndex,
+                    super(VariableLocation, self.reference).__str__()
+            )
+            
     
-    def __repr__(self):
-        return self.__str__()
+    def __repr__(self, *args, **kwargs):
+        return "<VariableReference:%s>"%self.__str__()
     
     def __eq__(self, other):
         toTestItems = ['__class__', 'relPatternIndex', 'isNegative', 'isMultiField',
