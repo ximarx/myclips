@@ -29,32 +29,18 @@ if __name__ == '__main__':
     
     s = r"""
     
-(deftemplate possible (slot value) (slot group) (slot id))
+(deftemplate possible (slot value) (slot group) (slot id)  (slot row)  (slot column))
 (deftemplate impossible (slot value) (slot rank) (slot id))
 (deftemplate rank (slot value) (slot process))
 (deftemplate technique (slot name) (slot rank))
     
 (defrule naked-single-group
    
-   (phase match)
-
-   (rank (value ?p) (process yes))
-
-   (technique (name Naked-Single) (rank ?p))
-   
-   (possible (value ?v) (group ?g) (id ?id))
-   
-   (not (possible (value ~?v) (group ?g) (id ?id)))
-   
-   (possible (value ?v) (group ?g) (id ?id2&~?id))
-   
-   (not (impossible (id ?id2) (value ?v) (rank ?p)))
+   (A ?v1 ?v2)
+   (possible (value ?v& ?v1 | ?v2) (row ?r) (column ~?c1&~?c2) (id ?id))
    
    =>
    )
-   
-(defrule r
-    => (draw-circuit naked-single-group))
    
 """
 
@@ -88,7 +74,5 @@ if __name__ == '__main__':
         if p.__class__.__name__ == 'DefRuleConstruct':
             
             n.addRule(p)
-            
-    n.run(1)
             
         

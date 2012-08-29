@@ -15,11 +15,18 @@ class CircuitExpect(object):
     def __init__(self, aTrap):
         self.theTrap = aTrap
     
-    def success(self):
+    def hasSuccess(self):
+        return self.theTrap.isSucceeded > 0
+    
+    def hasFailure(self):
+        return self.theTrap.isFailed > 0
+    
+    def succeeded(self):
         return self.theTrap.isSucceeded
     
-    def failure(self):
+    def failed(self):
         return self.theTrap.isFailed
+
     
     def both(self):
         return (self.theTrap.isSucceeded, self.theTrap.isFailed)
@@ -27,17 +34,15 @@ class CircuitExpect(object):
 
 class EventTrap(EventsManagerListener):
     def __init__(self):
-        self.isFailed = False
-        self.isSucceeded = False
+        self.isFailed = 0
+        self.isSucceeded = 0
         EventsManagerListener.__init__(self, {'test-failed': self.failed, 'test-succeeded': self.succeeded})
         
     def failed(self, *args, **kargs):
-        self.isSucceeded = False
-        self.isFailed = True
+        self.isFailed += 1
         
     def succeeded(self, *args, **kargs):
-        self.isSucceeded = True
-        self.isFailed = False
+        self.isSucceeded += 1
     
 
 class BaseCircuitTest(MyClipsBaseTest):

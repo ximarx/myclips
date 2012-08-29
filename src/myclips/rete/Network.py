@@ -625,6 +625,8 @@ class Network(object):
                 # a special filter must be applied to
                 # the circuit
                 node = self._makeBetaTestCircuit(node, patternCE, prevPatterns, variables)
+                
+                prevPatterns += 1
 
             elif isinstance(patternCE, types.ExistsPatternCE):
                 
@@ -863,7 +865,7 @@ class Network(object):
     def _shareNode_TestNode(self, lastCircuitNode, tests):
             
         if lastCircuitNode is None:
-            raise MyClipsBugException("NccNode can't be first in LHS")
+            raise MyClipsBugException("TestNode can't be first in LHS")
             
         for child in lastCircuitNode.children:
             

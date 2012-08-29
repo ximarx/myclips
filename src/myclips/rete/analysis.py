@@ -63,12 +63,12 @@ def analyzeFunction(theFunction, patternIndex, variables, inPatternVariables=Non
     @type vIndex: int
     '''
     
-    inPatternVariables = inPatternVariables or []
+    inPatternVariables = [] if inPatternVariables is None else inPatternVariables
     aNewFunctionCallArgs = []
-    fakeVariables = fakeVariables or {}
-    fakeNames = fakeNames or {}
-    realToFakeMap = realToFakeMap or {}
-    vIndex = vIndex or 0;
+    fakeVariables = {} if fakeVariables is None else fakeVariables
+    fakeNames = {} if fakeNames is None else fakeNames
+    realToFakeMap = {} if realToFakeMap is None else realToFakeMap
+    vIndex = [] if vIndex is None else vIndex;
     
     if isinstance(theFunction, types.FunctionCall):
         
@@ -95,8 +95,8 @@ def analyzeFunction(theFunction, patternIndex, variables, inPatternVariables=Non
                     varReference.reference = mainReference
                     varReference.relPatternIndex = mainReference.patternIndex - patternIndex
                     
-                    theFakeName = "%"+str(vIndex)
-                    vIndex += 1
+                    theFakeName = "%"+str(len(vIndex))
+                    vIndex.append(None)
                     
                     theFakeVar = aArg.__class__(types.Symbol(theFakeName)) 
                     
@@ -117,7 +117,7 @@ def analyzeFunction(theFunction, patternIndex, variables, inPatternVariables=Non
                 # recursion: replace arguments inside the function call
                 # fakeReferences are ignored because the dict is automatically
                 # updated by the recursion.
-                aInnerNewFunctionCall, _ = analyzeFunction(aArg, patternIndex, variables, inPatternVariables, fakeVariables, realToFakeMap, vIndex)
+                aInnerNewFunctionCall, _ = analyzeFunction(aArg, patternIndex, variables, inPatternVariables, fakeVariables, realToFakeMap, vIndex, fakeNames)
                 
                 # replace the old function call with a new one with fake variables
                 #theFunction.funcArgs[iArg] = aInnerNewFunctionCall

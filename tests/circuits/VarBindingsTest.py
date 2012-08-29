@@ -14,9 +14,8 @@ class Test(BaseCircuitTest):
         
         self.assertTrue(self.forCircuits(
             "(defrule R (A B ?c) (A ?c B) => (trigger-event test-succeeded ?c))",
-            #"(draw-circuit R)",
             "(assert (A B C) (A C B))"
-            ).success())
+            ).hasSuccess())
         
 
     def test_PatternIndexWithMultipleNot(self):
@@ -31,14 +30,13 @@ class Test(BaseCircuitTest):
                     (possible ?V ?G ?ID2&~?ID)
                     (not (impossible ?ID2 ?V ?P))
                 => (trigger-event test-succeeded))""",
-            "(draw-circuit R)",
             """(assert 
                     (phase match)
                     (rank P process-yes)
                     (technique aName P)
                     (possible V G ID)
                     (possible V G ID2))"""
-            ).success())
+            ).hasSuccess())
 
 
 
