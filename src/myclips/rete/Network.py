@@ -11,7 +11,6 @@ from myclips.rete.nodes.AlphaMemory import AlphaMemory
 from myclips.rete.nodes.RootNode import RootNode
 from myclips.rete.WME import WME
 from myclips.rete.nodes.BetaMemory import BetaMemory
-from myclips.rete.tests.VariableBindingTest import VariableBindingTest
 from myclips.rete.nodes.JoinNode import JoinNode
 from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
 from myclips.rete.nodes.NccNode import NccNode
@@ -29,7 +28,6 @@ import traceback
 from myclips.Settings import Settings
 from myclips.rete.tests.locations import VariableLocation
 from myclips.rete.nodes.ExistsNode import ExistsNode
-from myclips.rete.Memory import Memory
 
 
 class Network(object):
@@ -376,6 +374,12 @@ class Network(object):
                     
                     # use the moduleName from the deffact scope (or the current one)
                     self.assertFact(Fact(values, moduleName=deffact.scope.moduleName))
+                    
+        # reset globals value for each module
+        for module in self.modulesManager.getModulesNames():
+            aGlobalsMan = self.modulesManager.getScope(module).globalsvars
+            for defName in aGlobalsMan.definitions:
+                aGlobalsMan.getDefinition(defName).linkedType.runningValue = aGlobalsMan.getDefinition(defName).linkedType.value
                     
         # set current scope back to MAIN
         self.modulesManager.changeCurrentScope("MAIN")
