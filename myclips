@@ -1,0 +1,27 @@
+#!/usr/bin/python2.7
+
+import sys
+import os
+
+MYCLIPS_SRC_PATHS = ['./src/']
+
+pathIndex = -1
+while True:
+    try:
+        import myclips.main as launcher
+        launcher.main()
+        break
+    except ImportError:
+        if pathIndex > -1:
+            sys.path.pop()
+        pathIndex += 1
+        try:
+            sys.path.append(os.path.abspath( MYCLIPS_SRC_PATHS[pathIndex]))
+        except:
+            print >> sys.stderr, "MyCLIPS not found in:"
+            print >> sys.stderr, "    ", os.path.abspath( "." )
+            for p in MYCLIPS_SERVER_SRC_PATHS:
+                print >> sys.stderr, "    ", os.path.abspath(p)
+            exit(-2)
+
+
