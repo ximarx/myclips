@@ -61,7 +61,7 @@ def main():
         
     if theMode == "shell":
         Shell().loop()
-    elif (theMode == "batch" | theMode == "bench") and len(sys.argv) >= 3:
+    elif (theMode == "batch" or theMode == "bench") and len(sys.argv) >= 3:
         i = Interpreter(Network())
         i.evaluate("(batch \"%s\")"%sys.argv[2].strip('"'))
         if theMode == "batch":
