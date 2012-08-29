@@ -10,6 +10,8 @@ import os
 from myclips import FunctionManifestGenerator
 import unittest
 from genericpath import exists
+from myclips.shell.Interpreter import Interpreter
+from myclips.rete.Network import Network
 
 if sys.argv[0].endswith("__main__.py"):
     sys.argv[0] = "python -m myclips"
@@ -20,7 +22,7 @@ usage = {
     "modes" : "\n".join([
         "  shell                   Start a MyCLIPS's Shell",
         #"  xmlrpc                  Start a MyCLIPS XMLRPC server",
-        "  batch filename          Load a batch",
+        "  batch filename          Load a batch and then (run) it",
         "  functions               Search for System Function and compile the manifest",
         "  tests                   Run MyCLIPS's unittests",        
     ]),
@@ -40,10 +42,10 @@ Options:
   -b, --background        Background service
 %(options)s
 Examples:
-  %(progName)s                           - Show this message
-  %(progName)s shell                     - run a MyCLIPS shell
-  %(progName)s xmlrpc                    - run a MyCLIPS XMLRPC daemon
-  %(progName)s batch miss-manner.clp     - run a file in batch mode
+  %(progName)s                                   - Show this message
+  %(progName)s shell                             - run a MyCLIPS shell
+  %(progName)s xmlrpc                            - run a MyCLIPS XMLRPC daemon
+  %(progName)s batch benchmark/manners.clpbat    - run a file in batch mode
 
 """%usage
 
@@ -56,6 +58,9 @@ except:
     
 if theMode == "shell":
     Shell().loop()
+if theMode == "batch" and len(sys.argv) >= 3:
+    i = Interpreter(Network()).evaluate("(batch \"%s\")"%sys.argv[2].strip('"'))
+    i.evaluate("(run)")
 elif theMode == "functions":
     FunctionManifestGenerator.generate()
 elif theMode == "tests":
