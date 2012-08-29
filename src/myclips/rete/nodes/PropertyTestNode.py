@@ -25,6 +25,9 @@ class PropertyTestNode(Node, HasMemory, HasTests, AlphaInput):
         HasMemory.__init__(self, None)
         HasTests.__init__(self, tests)
         #Tester.__init__(self. tests)
+        
+    def isLeaf(self):
+        return not self.hasMemory() and Node.isLeaf(self)
 
     def rightActivation(self, wme):
         """

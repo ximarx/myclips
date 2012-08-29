@@ -53,10 +53,10 @@ class VariableBindingTest(BetaTest):
             # this means that the wme where the variable was found first
             # is the same where the variable was found again
             if reference.relPatternIndex != 0:
-                token = getTokenAnchestor(token, (-1 * reference.relPatternIndex) - 1)
+                nToken = getTokenAnchestor(token, (-1 * reference.relPatternIndex) - 1)
     
                 # get the exact wme value of the token where variable for used first
-                valueInTokenWme = reference.reference.toValue(token.wme)
+                valueInTokenWme = reference.reference.toValue(nToken.wme)
             else:
                 valueInTokenWme = reference.reference.toValue(wme)
             

@@ -21,7 +21,7 @@ class NegativeJoinNode(JoinNode, Memory):
         '''
         Constructor
         '''
-        JoinNode.__init__(self, rightParent, leftParent, tests)
+        JoinNode.__init__(self, rightParent=rightParent, leftParent=leftParent, tests=tests)
         Memory.__init__(self)
         
     def rightActivation(self, wme):

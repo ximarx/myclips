@@ -29,6 +29,7 @@ import traceback
 from myclips.Settings import Settings
 from myclips.rete.tests.locations import VariableLocation
 from myclips.rete.nodes.ExistsNode import ExistsNode
+from myclips.rete.Memory import Memory
 
 
 class Network(object):
@@ -602,7 +603,7 @@ class Network(object):
                     inPatternVariables = []
                     # add 1 to pattern index because the values are in the inner not pattern
                     # so the (not (condition)) count as 2
-                    alphaTests, joinTests = analysis.analyzePattern(patternCE.pattern, prevPatterns + 1, variables, inPatternVariables)
+                    alphaTests, joinTests = analysis.analyzePattern(patternCE.pattern, prevPatterns, variables, inPatternVariables)
                     
                     # merge inPatternVariables to variables
                     variables.update(dict([(var.name, var) for var in inPatternVariables]))
@@ -612,7 +613,7 @@ class Network(object):
                     alphaMemory = self._makeAlphaCircuit(alphaTests)
                     node = self._makeBetaNegativeJoinCircuit(node, alphaMemory, joinTests)
                     
-                    prevPatterns += 2
+                    prevPatterns += 1
 
                 
             elif isinstance(patternCE, types.TestPatternCE):
@@ -682,8 +683,8 @@ class Network(object):
 
     def _makeBetaNegativeJoinCircuit(self, lastBetaCircuitNode, alphaMemory, joinTests):
         
-        if lastBetaCircuitNode != None:
-            lastBetaCircuitNode = self._shareNode_BetaMemory(lastBetaCircuitNode)
+        #if lastBetaCircuitNode != None:
+        #    lastBetaCircuitNode = self._shareNode_BetaMemory(lastBetaCircuitNode)
             
         return self._shareNode_NegativeJoinNode(lastBetaCircuitNode, alphaMemory, joinTests )           
         
