@@ -48,6 +48,7 @@ def main():
       %(progName)s shell                             - run a MyCLIPS shell
       %(progName)s xmlrpc                            - run a MyCLIPS XMLRPC daemon
       %(progName)s batch benchmark/manners.clpbat    - run a file in batch mode
+      %(progName)s bench benchmark/manners.clpbat    - run a file in batch mode + bench-run
     
     """%usage
     
@@ -60,10 +61,13 @@ def main():
         
     if theMode == "shell":
         Shell().loop()
-    elif theMode == "batch" and len(sys.argv) >= 3:
+    elif (theMode == "batch" | theMode == "bench") and len(sys.argv) >= 3:
         i = Interpreter(Network())
         i.evaluate("(batch \"%s\")"%sys.argv[2].strip('"'))
-        i.evaluate("(run)")
+        if theMode == "batch":
+            i.evaluate("(run)")
+        else:
+            print i.evaluate("(bench-run)")
     elif theMode == "functions":
         FunctionManifestGenerator.generate()
     elif theMode == "tests":
