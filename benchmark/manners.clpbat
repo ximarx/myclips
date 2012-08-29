@@ -3,6 +3,6 @@
 ; (batch "benchmark/manners.clpbatch")
 
 (load "miss-manners/manners.clp")
-(load "miss-manners/manners16.clp")
+(load "miss-manners/manners8.clp")
 (reset)
 (printout t "All ready: type (bench-run)" crlf)
