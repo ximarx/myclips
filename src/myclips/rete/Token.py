@@ -220,7 +220,10 @@ class Token(MemoryItem):
         return not self.__eq__(other)
     
     def __str__(self):
-        return ", ".join(["f-"+str(wme.factId) if wme is not None else "NONE" for wme in self.linearize(True)])
+        return ", ".join(["f-"+str(wme.factId) if wme is not None else "" for wme in self.linearize(True)])
+    
+    def __repr__(self):
+        return "<Token:%s>"%", ".join(["f-"+str(wme.factId) if wme is not None else "None" for wme in self.linearize(True)])
     
 #    @wme.setter
 #    def wme(self, newWME):
