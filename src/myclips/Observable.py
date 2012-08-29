@@ -20,7 +20,11 @@ class Observable(object):
         
     def registerObserver(self, eventName, observer):
         if isinstance(observer, Observer):
-            self._observers[eventName].append(observer)
+            try:
+                self._observers[eventName].append(observer)
+            except KeyError:
+                # no observer for the event yet
+                self._observers[eventName] = [observer]
 
             myclips.logger.debug("Registering new observer %s\n\tfor event %s.%s",
                                         repr(observer),

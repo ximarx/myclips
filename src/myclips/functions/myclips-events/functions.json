@@ -1,0 +1,6 @@
+[
+    {
+        "class": "TriggerEvent", 
+        "module": "myclips.functions.myclips-events.TriggerEvent"
+    }
+]

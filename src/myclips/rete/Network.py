@@ -379,7 +379,8 @@ class Network(object):
         for module in self.modulesManager.getModulesNames():
             aGlobalsMan = self.modulesManager.getScope(module).globalsvars
             for defName in aGlobalsMan.definitions:
-                aGlobalsMan.getDefinition(defName).linkedType.runningValue = aGlobalsMan.getDefinition(defName).linkedType.value
+                aLinkedType = aGlobalsMan.getDefinition(defName).linkedType
+                aLinkedType.runningValue = aLinkedType.value
                     
         # set current scope back to MAIN
         self.modulesManager.changeCurrentScope("MAIN")
@@ -610,7 +611,7 @@ class Network(object):
                     alphaTests, joinTests = analysis.analyzePattern(patternCE.pattern, prevPatterns, variables, inPatternVariables)
                     
                     # merge inPatternVariables to variables
-                    variables.update(dict([(var.name, var) for var in inPatternVariables]))
+                    #variables.update(dict([(var.name, var) for var in inPatternVariables]))
                     
                     # requires a simple alpha circuit,
                     # then a join + beta node if needed (beta join circuit)
@@ -893,6 +894,7 @@ class Network(object):
        
     
     def _shareNode_NegativeJoinNode(self, lastCircuitNode, alphaMemory, tests):
+            
             
         # check if i can share looking at beta network first
         if lastCircuitNode is not None:
