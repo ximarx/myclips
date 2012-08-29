@@ -433,6 +433,13 @@ class Parser(object):
                                             - RPAR)\
                 .setParseAction(makeInstance(types.NotPatternCE, 1))
 
+        self.subparsers['ExistsCEParser'] = (LPAR 
+                                            + pp.Keyword("exists") 
+                                            - self._sb("ConditionalElementParser") 
+                                            - RPAR)\
+                .setParseAction(makeInstance(types.ExistsPatternCE, 1))
+
+
         self.subparsers['AndCEParser'] = (LPAR 
                                             + pp.Keyword("and") 
                                             - pp.Group(pp.OneOrMore(self._sb("ConditionalElementParser"))) 
@@ -456,7 +463,7 @@ class Parser(object):
                                                             | self._sb("TestCEParser") # test before pattern, or test will be parsed as template name
                                                             | self._sb("OrCEParser") # or before pattern-ce, or OR will be parsed as template name
                                                             #| self._sb("LogicalCEParser") 
-                                                            #| self._sb("ExistsCEParser")
+                                                            | self._sb("ExistsCEParser")
                                                             #| self._sb("ForallCEParser")
                                                             | self._sb("AssignedPatternCEParser") 
                                                             | self._sb("PatternCEParser") 

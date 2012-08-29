@@ -500,6 +500,9 @@ def normalizeLHS(lhs, MM):
     
     while _compactPatterns(lhs):
         continue
+    
+    while _existsToNotNot(lhs):
+        continue
 
     # then add a (initial-fact)
     # before (not or (test pattern
@@ -508,6 +511,22 @@ def normalizeLHS(lhs, MM):
         
     return lhs
 
+def _existsToNotNot(Or):
+    changed = False
+    for (index, inOrPattern) in enumerate(Or.patterns):
+        if isinstance(inOrPattern, (types.AndPatternCE, types.OrPatternCE)):
+            changed = _existsToNotNot(inOrPattern) or changed
+        if isinstance(inOrPattern, types.NotPatternCE):
+            if isinstance(inOrPattern.pattern, (types.AndPatternCE, types.OrPatternCE)):
+                changed = _existsToNotNot(inOrPattern.pattern) or changed
+            elif isinstance(inOrPattern.pattern, types.ExistsPatternCE):
+                inOrPattern.pattern = types.NotPatternCE(types.NotPatternCE(inOrPattern.pattern.pattern))
+                changed = True
+        if isinstance(inOrPattern, types.ExistsPatternCE):
+            Or.patterns[index] = types.NotPatternCE(types.NotPatternCE(inOrPattern.pattern))
+            changed = True
+            
+    return changed
             
 def _browseOr(Or):
     changed = False
@@ -612,7 +631,7 @@ def _compactPatterns(Combiner):
 
 def _initialFactNormalization(Combiner, MM):
     """
-    Add (initial-fact) pattern before (not or (test if they are first in a group
+    Add (initial-fact) pattern before (not or (test or (exists if they are first in a group
     """
     
     # check if the first pattern in the list is one 
@@ -660,18 +679,18 @@ def normalizeDeclarations(declarations):
 
 if __name__ == '__main__':
     
-    lhs = [types.AndPatternCE([
-                types.OrPatternCE(["A", "B"]),
-                types.OrPatternCE(["C", "D",
-                    types.AndPatternCE(["Z",
-                            types.OrPatternCE(["W", "X"]) 
-                        ])
-                    ])
+    lhs = [types.OrPatternCE([
+            types.ExistsPatternCE(types.AndPatternCE(["A", "B"])),
+            types.ExistsPatternCE("B")
         ])]
     
     import pprint
     
-    lhs = normalizeLHS(lhs)
+    from myclips.rete.Network import Network
+    
+    n = Network()
+    
+    lhs = normalizeLHS(lhs, n.modulesManager)
     
     pprint.pprint(lhs)
     

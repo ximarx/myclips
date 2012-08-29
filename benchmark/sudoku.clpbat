@@ -4,7 +4,7 @@
 
 (load "sudoku/sudoku.clp")
 (load "sudoku/solve.clp")
-(load "sudoku/output-simple.clp")
+(load "sudoku/output-frills.clp")
 (load "sudoku/puzzles/grid3x3-p13.clp")
 (reset)
 (printout t "All ready: type (bench-run)" crlf)

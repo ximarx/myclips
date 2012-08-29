@@ -31,12 +31,14 @@ class Printout(Function):
                 raise InvalidArgValueError("Resource with logical name %s cannot be found"%str(resourceId))
             else:
             
-                for fragment in args:
+#                for fragment in args:
+#                    
+#                    # revolve variables and function calls
+#                    fragment = self.resolve(funcEnv, self.semplify(funcEnv, fragment))
+#                    
+#                    resource.write(str(fragment))
                     
-                    # revolve variables and function calls
-                    fragment = self.resolve(funcEnv, self.semplify(funcEnv, fragment))
-                    
-                    resource.write(str(fragment))
+                resource.write("".join([str(self.resolve(funcEnv, self.semplify(funcEnv, x))) for x in args]))
                     
         return types.NullValue()
     

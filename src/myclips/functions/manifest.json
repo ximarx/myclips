@@ -12,6 +12,9 @@
         "import": "./io/functions.json"
     }, 
     {
+        "import": "./math/extended/functions.json"
+    }, 
+    {
         "import": "./math/standard/functions.json"
     }, 
     {

@@ -100,7 +100,7 @@
    
    (size ?s)
    
-   ?f1 <- (print-position ?r ?c&~=(* ?s ?s))
+   ?f1 <- (print-position ?r ?c&:(<> ?c (* ?s ?s)))
    
    ?f2 <- (position-printed ?r ?c)
       
@@ -128,7 +128,7 @@
    
    (size ?s)
    
-   ?f1 <- (print-position ?r&~=(* ?s ?s) ?c&=(* ?s ?s))
+   ?f1 <- (print-position ?r&:(<> ?r (* ?s ?s)) ?c&:(= ?c (* ?s ?s)))
       
    ?f2 <- (position-printed ?r ?c)
    
@@ -156,7 +156,7 @@
    
    (size ?s)
 
-   ?f2 <- (print-position ?r&=(* ?s ?s) ?c&=(* ?s ?s))
+   ?f2 <- (print-position ?r&:(= ?r (* ?s ?s)) ?c&:(= ?c (* ?s ?s)))
    
    ?f3 <- (position-printed ?r ?c)
    
@@ -182,7 +182,7 @@
    
    (size ?s)
    
-   ?f1 <- (print-position ?r&=(* ?s ?s) ?c&=(* ?s ?s))
+   ?f1 <- (print-position ?r&:(= ?r (* ?s ?s)) ?c&:(= ?c (* ?s ?s)))
    
    ?f2 <- (position-printed ?r ?c)
    
@@ -206,7 +206,7 @@
    
    (size ?s)
    
-   ?f1 <- (print-position ?r&=(* ?s ?s) ?c&=(* ?s ?s))
+   ?f1 <- (print-position ?r&:(= ?r (* ?s ?s)) ?c&:(= ?c (* ?s ?s)))
    
    ?f2 <- (position-printed ?r ?c)
          

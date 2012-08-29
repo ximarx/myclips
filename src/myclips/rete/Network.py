@@ -632,12 +632,13 @@ class Network(object):
                 
                 inPatternVariables = []
                 
-                alphaTests, joinTests = analysis.analyzePattern(patternCE, prevPatterns, variables, inPatternVariables)
+                alphaTests, joinTests = analysis.analyzePattern(patternCE.pattern, prevPatterns, variables, inPatternVariables)
 
                 alphaMemory = self._makeAlphaCircuit(alphaTests)
                 node = self._makeBetaExistsCircuit(node, alphaMemory)
-                    
+                
                 prevPatterns += 1
+
 
             # or and and ce must not be supported here
             # after lhs normalization

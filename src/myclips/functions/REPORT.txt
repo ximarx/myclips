@@ -1,4 +1,4 @@
-//:~ MyCLIPS system functions discovery report:  Wed Aug 29 12:04:15 2012
+//:~ MyCLIPS system functions discovery report:  Wed Aug 29 16:09:03 2012
 
 myclips.functions.agenda
 	|--- .Focus
@@ -62,6 +62,9 @@ myclips.functions.io
 	:   	|--- .Read (read)
 	|--- .Readline
 	:   	|--- .Readline (readline)
+myclips.functions.math.extended
+	|--- .Modulus
+	:   	|--- .Modulus (mod)
 myclips.functions.math.standard
 	|--- .Absolute
 	:   	|--- .Absolute (abs)
@@ -210,7 +213,7 @@ myclips.functions.string
 	:   	|--- .Upcase (upcase)
 
 ================================
-Number of groups: 13
+Number of groups: 14
   |- .io: 6
   |- .string: 10
   |- .myclips-debug: 4
@@ -220,15 +223,16 @@ Number of groups: 13
   |- .multifield: 14
   |- .procedural: 8
   |- .command: 10
+  |- .math.extended: 1
   |- .fact: 6
   |- .math.standard: 10
   |- .myclips-profile: 1
   |- .other: 2
 
-Number of functions: 99
+Number of functions: 100
 
 Main manifest file: `C:\Users\Ximarx\git\myclips\src\myclips\functions/manifest.json`
 Per-group manifest: `C:\Users\Ximarx\git\myclips\src\myclips\functions/{GROUP_NAME}/functions.json`
 ================================
 
-//:~  Wed Aug 29 12:04:16 2012
+//:~  Wed Aug 29 16:09:04 2012
