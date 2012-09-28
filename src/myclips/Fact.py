@@ -27,7 +27,7 @@ class Fact(object):
         if self._templateName is not None:
             return "(%s::%s %s)"%(self._moduleName, self._templateName,
                                   " ".join(["(%s %s)"%(str(s),str(v) if not isinstance(v, list)
-                                                                else " ".join(v) ) for (s,v) in self._values.items()]))
+                                                                else " ".join([str(x) for x in v]) ) for (s,v) in self._values.items()]))
         else:
             return "%s::(%s)"%(self._moduleName, " ".join([str(x) for x in self._values]))
     
