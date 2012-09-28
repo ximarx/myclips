@@ -174,7 +174,11 @@ def _analyzeTerm(atomLocation, aTerm, variables, inPatternVariables):
             varReference.isNegative = isNegative
             # calcolate the relPatternIndex
             if varLocation.patternIndex is not None:
-                varReference.relPatternIndex = mainReference.patternIndex - varLocation.patternIndex
+                if mainReference.patternIndex is not None:
+                    varReference.relPatternIndex = mainReference.patternIndex - varLocation.patternIndex
+                else:
+                    # TODO verificare!!!!
+                    varReference.relPatternIndex =  0 - varLocation.patternIndex
             else:
                 varReference.relPatternIndex = 0
             
@@ -379,7 +383,7 @@ def _patternToAtomLocations(aPatternCE, patternIndex):
             else:
                 
                 multifieldSequence = _toAtomSequence(slot.slotValue)
-                for atomLocation, _ in returnSequence:
+                for atomLocation, _ in multifieldSequence:
                     atomLocation.patternIndex = patternIndex
                     atomLocation.slotName = slot.slotName
                     
