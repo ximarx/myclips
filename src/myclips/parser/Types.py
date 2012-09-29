@@ -415,9 +415,14 @@ class TemplatePatternCE(PatternCE, HasScope):
                             valuesToScan = field.slotValue
 
                         for toScan in valuesToScan:
-                            valuesToCheck.append(toScan.constraint.term)
-                            if isinstance(toScan, ConnectedConstraint):
-                                valuesToCheck += [x[1].term for x in toScan.connectedConstraints]
+                            if isinstance(toScan, (ConnectedConstraint, Constraint)):
+                                valuesToCheck.append(toScan.constraint.term)
+                                if isinstance(toScan, ConnectedConstraint):
+                                    valuesToCheck += [x[1].term for x in toScan.connectedConstraints]
+                            elif isinstance(toScan, Term):
+                                valuesToCheck.append(toScan.term)
+                            else:
+                                valuesToCheck.append(toScan)
 
                         # check if ANY of the array is True:
                         #    True = term is not an allowedType or term (function call) return value is not an allowedType

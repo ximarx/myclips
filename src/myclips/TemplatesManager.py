@@ -108,7 +108,7 @@ class TemplateDefinition(RestrictedDefinition):
                 
                 if slotDef.hasSlotAttribute(Attribute_DefaultValue.attributeType):
                     defValue = slotDef.getSlotAttribute(Attribute_DefaultValue.attributeType).getDefaultValue()
-                    print defValue
+                    #print defValue
                     
                     if defValue is None:
                         return "Slot %s requires a value because of its (default ?NONE) attribute"%slotName

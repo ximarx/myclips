@@ -38,5 +38,5 @@ class Not(Function):
 Not.DEFINITION = FunctionDefinition("?SYSTEM?", "not", Not(), types.Symbol, Not.do ,
             [
                 Constraint_ExactArgsLength(1),
-                Constraint_ArgType(types.Symbol, 0)
+                #Constraint_ArgType(types.Symbol, 0)
             ],forward=False)
