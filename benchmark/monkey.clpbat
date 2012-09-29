@@ -1,0 +1,7 @@
+
+; To use
+; (batch "benchmark/monkey.clpbat")
+
+(load "monkey/monkey.clp")
+(reset)
+(printout t "All ready: type (bench-run)" crlf)

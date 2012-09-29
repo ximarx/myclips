@@ -14,6 +14,7 @@ class Parser(object):
         self.subparsers = {}
         self._initied = False
         self._debug = debug
+        #self._debug = True
         self._enableComments = enableComments
         self._enableDirectives = enableDirectives
         self._modulesManager = (ModulesManager()
@@ -234,11 +235,19 @@ class Parser(object):
         self.subparsers["ExpressionParser"] = pp.Forward()
         self.subparsers["RhsFunctionCallParser"] = pp.Forward()
         
-        self.subparsers["FunctionNameParser"] = (pp.oneOf(self.getModulesManager().currentScope.functions.systemFunctions )\
+#        self.subparsers["FunctionNameParser"] = (pp.oneOf(self.getModulesManager().currentScope.functions.systemFunctions )\
+#                                                    .setName("SystemFunctioName")\
+#                                                    .setParseAction(makeInstance(types.Symbol, 0))
+#                                                 | self.getSParser("VariableSymbolParser"))\
+#                .setParseAction(forwardParsed(key=0))
+
+        self.subparsers["FunctionNameParser"] = (self.getSParser("VariableSymbolParser")
+                                                 | pp.oneOf(self.getModulesManager().currentScope.functions.systemFunctions )\
                                                     .setName("SystemFunctioName")\
                                                     .setParseAction(makeInstance(types.Symbol, 0))
-                                                 | self.getSParser("VariableSymbolParser"))\
+                                                 )\
                 .setParseAction(forwardParsed(key=0))
+
         
         self.subparsers["FunctionCallParser"] = (LPAR + self.getSParser("FunctionNameParser") 
                                                     + pp.Group(pp.ZeroOrMore(self.getSParser("ExpressionParser"))) 

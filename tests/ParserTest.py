@@ -449,6 +449,43 @@ class ParserTest(MyClipsBaseTest):
         self.assertIsInstance(res[0], types.FunctionCall)
         self.assertIsInstance(res[0].funcArgs[0], types.TemplateRhsPattern)
 
+
+    def test_ActionParser_TemplateRhsPatternAsFunctionArg_WithPartialFuncName(self):
+        '''Check action parsed correct parsing when nested value in it'''
+        # need to add function definition first
+        self._testImpl('DefFunctionConstructParser', r"""
+        (deffunction ask_question (?question $?allowed_values)
+   (printout t ?question)
+   (bind ?answer (read))
+   (if (lexemep ?answer) 
+       then (bind ?answer (lowcase ?answer)))
+   (while (not (member ?answer ?allowed_values)) do
+      (printout t ?question)
+      (bind ?answer (read))
+      (if (lexemep ?answer) 
+          then (bind ?answer (lowcase ?answer))))
+   ?answer)
+        """)        
+
+        self._testImpl('DefFunctionConstructParser', r"""
+        (deffunction yes_or_no_p (?question)
+           (bind ?response (ask_question ?question yes no y n))
+               (if (or (eq ?response yes) (eq ?response y))
+                   then yes 
+                   else no))
+        """)        
+
+        
+        res = self._testImpl('ActionParser', r"""
+        (assert (runs_normally (yes_or_no_p "Does the engine run normally (yes/no)? ")))
+        """).asList()
+        
+        self.assertEqual(len(res), 1)
+        self.assertIsInstance(res[0], types.FunctionCall)
+        self.assertIsInstance(res[0].funcArgs[0], types.OrderedRhsPattern)
+        self.assertIsInstance(res[0].funcArgs[0].values[1], types.FunctionCall)
+
+
     def test_ActionParser_SimpleFunctionCall(self):
         '''Check action parsed correct parsing when nested value in it'''
         res = self._testImpl('ActionParser', r"""

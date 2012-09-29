@@ -16,7 +16,7 @@ class Not(Function):
     def __init__(self, *args, **kwargs):
         Function.__init__(self, *args, **kwargs)
         
-    def do(self, theEnv, theExpression, *args, **kargs):
+    def do(self, theEnv, theArg, *args, **kargs):
         """
         handler of the function
         """
@@ -26,8 +26,8 @@ class Not(Function):
 
         # resolve the real value
         # before comparison
-        if isinstance(theExpression, (types.FunctionCall, types.Variable)):
-            theArg = self.resolve(theEnv, theExpression)
+        theArg = self.semplify(theEnv, theArg)
+            
         # types + value comparison
         if theValue == theArg:
             return types.Symbol("TRUE") # return <Symbol:TRUE>
