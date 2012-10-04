@@ -19,11 +19,11 @@ except ImportError:
     
 else:
 
-    class Semplicity(Strategy):
+    class Simplicity(Strategy):
         '''
         Adds new activations using a FIFO strategy 
         '''
-        NAME = "semplicity"
+        NAME = "simplicity"
         
         def newContainer(self):
             return blist.sortedlist(key=lambda x: x[0].getProperty('specificity', 0))

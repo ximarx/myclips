@@ -9,7 +9,7 @@ class factory(object):
         'lex': 'myclips.strategies.Lex.Lex',
         'mea': 'myclips.strategies.Mea.Mea',
         'complexity': 'myclips.strategies.Complexity.Complexity',
-        'semplicity': 'myclips.strategies.Semplicity.Semplicity',
+        'simplicity': 'myclips.strategies.Simplicity.Simplicity',
         'random': 'myclips.strategies.Random.Random'
     }
     
