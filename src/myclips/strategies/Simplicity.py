@@ -11,7 +11,7 @@ try:
 
 except ImportError:
     
-    from myclips.strategies.Depth import Depth as Mea
+    from myclips.strategies.Depth import Depth as Simplicity
     import myclips
     
     myclips.logger.warning("BList library is required by Semplicity strategy. Depth will be used in place of Semplicity")
@@ -21,7 +21,8 @@ else:
 
     class Simplicity(Strategy):
         '''
-        Adds new activations using a FIFO strategy 
+        Adds new activations using the specificity:
+            more specificity = less priority
         '''
         NAME = "simplicity"
         

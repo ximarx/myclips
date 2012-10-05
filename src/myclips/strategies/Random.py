@@ -8,7 +8,7 @@ import random
 
 class Random(Strategy):
     '''
-    Add new activation using a LIFO strategy 
+    Add new activation using a Random order. Who knows how??!? 
     '''
     NAME = "random"
     

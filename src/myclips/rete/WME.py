@@ -7,7 +7,7 @@ from myclips.rete.MemoryItem import MemoryItem
 
 class WME(MemoryItem):
     '''
-    WME: a working memory element. Rappresent a fact
+    WME: a working memory element. Wrap a fact
         inside the rete network
     '''
 
@@ -17,11 +17,17 @@ class WME(MemoryItem):
         Constructor
         '''
         self._alphaMemories = []
+        '''store references to alpha-memories storing this wme'''
         self._tokens = {}
+        '''store references to tokens where this wme is a leader'''
         self._negativeJoinResults = []
+        '''store negative join results where this wme is stored'''
         self._factId = factId
+        '''the fact-id of this wme'''
         self._fact = fact
+        '''the fact wrapped'''
         self._existsNode = []
+        '''store references of exists node where this wme is counted'''
         
         
     def delete(self):

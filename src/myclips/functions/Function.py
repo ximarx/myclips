@@ -77,7 +77,7 @@ class Function(object):
         Resolve the python value of a BaseParsedType
         or a a BaseParsedType for FunctionCall and Variables
         
-        This function could be used in conjuction with the semplify
+        This function could be used in conjuction with the simplify
         to alway return a python value from an arg
         """
         # String is a special value, have to trim out quotes
@@ -101,11 +101,11 @@ class Function(object):
         else:
             return arg
         
-    def semplify(self, theEnv, arg, checkType=None, errorFormat=None):
+    def simplify(self, theEnv, arg, checkType=None, errorFormat=None):
         '''
-        Execute a semplification of the arg if the arg
+        Execute a simplification of the arg if the arg
         is a function or a variable and return the BaseParsedType
-        result of the semplification
+        result of the simplification
         
         Optionally, it could execute some type check and return
         an error in the format of
@@ -115,16 +115,16 @@ class Function(object):
             
         @param theEnv: the system environment for the function execution
         @type theEnv: FunctionEnv
-        @param arg: the arg to semplify
+        @param arg: the arg to simplify
         @type arg: BaseParsedType|FunctionCall|Variable
         @param checkType: a type or a tuple of types to check the
-            semplified arg type against to
+            simplified arg type against to
         @type checkType: ParsedType|tuple|None
         @param errorFormat: a tuple with error parameters or None
         @type errorFormat: tuple
-        @return: the semplified value if type constraints are ok (if any)
+        @return: the simplified value if type constraints are ok (if any)
         @rtype: BaseParsedType
-        @raise InvalidArgTypeError: if semplified value is not of the expected type(s)
+        @raise InvalidArgTypeError: if simplified value is not of the expected type(s)
         '''
         if isinstance(arg, (types.FunctionCall, types.Variable)):
             theResolved = self.resolve(theEnv, arg)
@@ -141,7 +141,9 @@ class Function(object):
                     raise InvalidArgTypeError("Expected %s, found %s"%(str(checkType), theResolved.__class__.__name__))
                 
         return theResolved
-
+    
+    #: Alias
+    semplify = simplify
 
 class FunctionImplError(MyClipsException):
     """

@@ -21,7 +21,7 @@ else:
 
     class Lex(Strategy):
         '''
-        Adds new activations using a FIFO strategy 
+        Adds new activations using a LEX strategy 
         '''
         NAME = "lex"
         

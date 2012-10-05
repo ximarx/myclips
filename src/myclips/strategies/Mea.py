@@ -21,7 +21,7 @@ else:
 
     class Mea(Strategy):
         '''
-        Adds new activations using a FIFO strategy 
+        Adds new activations using a MEA strategy 
         '''
         NAME = "mea"
         
