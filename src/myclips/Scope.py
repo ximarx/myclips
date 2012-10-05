@@ -13,7 +13,7 @@ from myclips.ModulesManager import UnknownModuleError
 class Scope(Observer):
     '''
     Describe and give access to all construct available
-    in a specific scope while parsing
+    in a specific scope/module 
     '''
 
     PROMISE_TYPE_TEMPLATE = 'deftemplate'
@@ -24,7 +24,18 @@ class Scope(Observer):
 
     def __init__(self, moduleName, mManager, imports=None, exports=None):
         '''
-        All managers are relative to this instance only
+        Initialize the Scope, create instanced of all
+        needed restricted managers of definitions and
+        automatically registering this scope in the
+        modulesManager. Import and Export are parsed to
+        define importable/exportable definition. Promise
+        will be used if possible
+        
+        @raise ScopeDefinitionConflict: if a module import the
+            two different definitions with the same name from two modules
+        @raise ScopeDefinitionNotFound: trying to import from
+            an unknown module? :)
+        @raise ValueError: if import/export are not valid instances 
         '''
         self._templates = TemplatesManager(self)
         self._globals = GlobalsManager(self)
@@ -166,6 +177,13 @@ class Scope(Observer):
         
             
     def notify(self, eventName, *args, **kargs):
+        '''
+        Get new definition signal and register definition
+        in the right manager for the promise
+        @param eventName: the event name
+        @type eventName: string
+        @param arg[0]: the new definition
+        '''
         if eventName == TemplatesManager.EVENT_NEW_DEFINITION:
             self._handleEventNewDefinition(self.templates, args[0])
             
@@ -176,6 +194,13 @@ class Scope(Observer):
             self._handleEventNewDefinition(self.functions, args[0])
             
     def _handleEventNewDefinition(self, manager, definition):
+        '''
+        Handle the new definition forwarding to the right manager
+        @param manager: the manager to use
+        @type manager: RestrictedManager
+        @param definition: the definition
+        @type definition: RestrictedDefinition
+        '''
         
         assert isinstance(definition, RestrictedDefinition)
         assert isinstance(manager, RestrictedManager)
@@ -217,14 +242,23 @@ class Scope(Observer):
             
     @property
     def moduleName(self):
+        '''
+        Get the module name for the scope
+        '''
         return self._moduleName
     
     @property
     def modules(self):
+        '''
+        Get the modulesManager instance for this scope
+        '''
         return self._moduleManager
     
     @property
     def templates(self):
+        '''
+        Get the templates manager
+        '''
         return self._templates
     
 #    @templates.setter
@@ -233,6 +267,9 @@ class Scope(Observer):
         
     @property
     def globalsvars(self):
+        '''
+        Get the globals manager
+        '''
         return self._globals
     
 #    @globalsvars.setter
@@ -241,13 +278,31 @@ class Scope(Observer):
 
     @property
     def functions(self):
+        '''
+        Get the functions manager
+        '''
         return self._functions
 
 
     def isImportable(self, eType, eName):
+        '''
+        Check if a definition of this scope 
+        is importable from an other scope
+        @param eType: definition type
+        @type eType: string
+        @param eName: definition name
+        @type eName: string
+        '''
         return self._exports.canExport(eType, eName)
     
     def getExports(self, eType, eName=None):
+        '''
+        Get the list of export definition for this scope
+        @param eType: for a type
+        @type eType: string
+        @param eName: and a def name
+        @type eName: string
+        '''
         exDefs = self._exports.getExports(eType)
         
         typeMap = {
@@ -301,6 +356,9 @@ class Scope(Observer):
         
         
 class _ScopeExportPromise(object):
+    '''
+    Export promise manager for "not definited yet" definitions
+    '''
     
     _typeMap = {
             Scope.PROMISE_TYPE_TEMPLATE   : '_pTemplates',
@@ -357,43 +415,93 @@ class _ScopeExportPromise(object):
         return "\n".join(retStr)
 
 class ScopeImport(object):
+    '''
+    Describe an import definition
+    '''
 
     def __init__(self, importModule, importType, importName):
+        '''
+        Create the definition
+        @param importModule: the module to import to
+        @type importModule: string
+        @param importType: the def type to import to
+        @type importType: string
+        @param importName: the def name to import to
+        @type importName: string
+        '''
         self._importType = importType
         self._importName = importName
         self._importModule = importModule
     
     @property
     def iModule(self):
+        '''
+        Get the module for this import definition
+        @rtype: string        
+        '''
         return self._importModule
     
     @property
     def iType(self):
+        '''
+        Get the definition type for this import definition
+        @rtype: string        
+        '''
         return self._importType
 
     @property
     def iName(self):
+        '''
+        Get the definition name for this import definition
+        @rtype: string        
+        '''
         return self._importName
     
     def __str__(self, *args, **kwargs):
         return "<ScopeImport: from {0} {1} {2}>".format(self.iModule, self.iType, self.iName)
 
 class ScopeExport(object):
+    '''
+    Describes an export definition
+    '''
     
     def __init__(self, exportType, exportName):
+        '''
+        Create a new definition
+        @param exportType: the definition type
+        @type exportType: string
+        @param exportName: the definition name
+        @type exportName: string
+        '''
         self._exportType = exportType
         self._exportName = exportName
     
     @property
     def eType(self):
+        '''
+        Get the definition type for this export instance
+        @rtype: string
+        '''
         return self._exportType
 
     @property
     def eName(self):
+        '''
+        Get the definition name for this export instance
+        @rtype: string
+        '''
         return self._exportName
 
 class ScopeDefinitionNotFound(ValueError):
-    pass
+    '''
+    Sorry bro, the scope is not valid
+    '''
 
 class ScopeDefinitionConflict(Exception):
+    '''
+    Sorry bro, import two DIFFERENT construct with the same name
+    from two DIFFERENT modules. If the definition was the same,
+    maybe I.. but.. you know... I can't!!!
+    '''
     pass
+

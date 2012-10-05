@@ -12,6 +12,22 @@ from myclips.rete.BetaInput import BetaInput
 from myclips.rete.nodes.NccNode import NccNode
 
 def show_wme_details(stream, wme, indent=4, explodeToken=False, maxDepth=3, explodeAMem=False):
+    '''
+    Write the stream a group of details about a wme
+    
+    @param stream: the stream to write to
+    @type stream: stream like instance
+    @param wme: a wme
+    @type wme: L{WME}
+    @param indent: number of white space before the text
+    @type indent: integer
+    @param explodeToken: show details about linked tokens
+    @type explodeToken: boolean
+    @param maxDepth: a depth bound for recursions
+    @type maxDepth: integer
+    @param explodeAMem: show details about linked amem
+    @type explodeAMem: boolean
+    '''
     
     assert isinstance(wme, WME)
 
@@ -34,6 +50,20 @@ def show_wme_details(stream, wme, indent=4, explodeToken=False, maxDepth=3, expl
             show_alphamemory_details(stream, am, indent+8, False, maxDepth-1)
             
 def show_alphamemory_details(stream, am, indent=4, explodeWme=False, maxDepth=2):
+    '''
+    Write to stream info about the alpha memory contents
+    
+    @param stream: the stream to write to
+    @type stream: stream
+    @param am: the alpha memory
+    @type am: L{AlphaMemory}
+    @param indent: number of whitespace before the text
+    @type indent: integer
+    @param explodeWme: show info about linked wme
+    @type explodeWme: boolean
+    @param maxDepth: max depth bound for recursion
+    @type maxDepth: integer
+    '''
     
     IP = "".rjust(indent, ' ')
     if maxDepth <= 0:
@@ -59,6 +89,20 @@ def show_alphamemory_details(stream, am, indent=4, explodeWme=False, maxDepth=2)
         
     
 def show_token_details(stream, token, indent=4, explodeWme=False, maxDepth=2):
+    '''
+    Write to stream infos about a Token
+    
+    @param stream: the stream to write to
+    @type stream: stream
+    @param token: a token
+    @type token: L{Token}
+    @param indent: whitespaces before the text
+    @type indent: integer
+    @param explodeWme: show info about linked wmes
+    @type explodeWme: boolean
+    @param maxDepth: max recursions bound
+    @type maxDepth: integer
+    '''
     
     IP = "".rjust(indent, ' ')
     
@@ -94,6 +138,15 @@ def show_token_details(stream, token, indent=4, explodeWme=False, maxDepth=2):
         print >> stream, IP, "     :  |- token: ", res.token
     
 def prepare_network_fragment_plotter(pnodes):
+    '''
+    Navigates circuits of pnode in pnodes
+    preparing a new instance of network plotter
+    
+    @param pnodes: a list of L{PNode}
+    @type pnodes: list
+    @rtype: NetworkPlotter
+    @raise Exception: if no plotter class is available 
+    '''
 
     try:
         from myclips.listeners._NetworkPlotterAdapter_NetworkX import _NetworkXWrapper as Plotter
@@ -154,6 +207,12 @@ def prepare_network_fragment_plotter(pnodes):
     return g
 
 def draw_network_fragment(pnodes):
+    '''
+    Draw circuits of pnode in pnodes
+    @param pnodes: a list of L{PNode}
+    @type pnodes: list
+    '''
+    
     
     prepare_network_fragment_plotter(pnodes).draw()
         

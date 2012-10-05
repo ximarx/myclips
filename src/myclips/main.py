@@ -14,6 +14,11 @@ from myclips.shell.Interpreter import Interpreter
 from myclips.rete.Network import Network
 
 def main():
+    '''
+    MyCLIPS main function!!!
+    Show usage info for invalid params in sys.argv :)
+    Read it for more info
+    '''
 
     if sys.argv[0].endswith("__main__.py"):
         sys.argv[0] = "python -m myclips"
@@ -46,7 +51,8 @@ def main():
     Examples:
       %(progName)s                                   - Show this message
       %(progName)s shell                             - run a MyCLIPS shell
-      %(progName)s xmlrpc                            - run a MyCLIPS XMLRPC daemon
+      %(progName)s functions                         - run the system function manifest generator
+      %(progName)s tests                             - run MyCLIPS env tests
       %(progName)s batch benchmark/manners.clpbat    - run a file in batch mode
       %(progName)s bench benchmark/manners.clpbat    - run a file in batch mode + bench-run
     

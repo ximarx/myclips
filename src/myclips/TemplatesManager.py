@@ -10,14 +10,20 @@ from myclips.Fact import FactInvalidSlotName
 
 class TemplatesManager(RestrictedManager, Observable):
     '''
-    Stores the list of allowed globals definitions for the scope
+    Stores the list of allowed templates definitions for the scope
     '''
     instance = None
     EVENT_NEW_DEFINITION = "EVENT_TemplatesManager_NewDefinition"
+    """Event sign used when new definition is added, observer will
+    be notified with this sign!"""
+    
 
     def __init__(self, scope):
         '''
-        Constructor
+        Create a new TemplatesManager for the scope
+
+        @param scope: the scope owner of this manager
+        @type scope: L{Scope}
         '''
         Observable.__init__(self, [
                 TemplatesManager.EVENT_NEW_DEFINITION
@@ -25,6 +31,12 @@ class TemplatesManager(RestrictedManager, Observable):
         RestrictedManager.__init__(self, scope)
         
     def addDefinition(self, definition):
+        '''
+        Add a new definition and notify observers about this
+        @param definition: a new function definition
+        @type definition: L{TemplateDefinition}
+        '''
+        
         RestrictedManager.addDefinition(self, definition)
         
         # after i added the definition, i need to fire the event
@@ -32,18 +44,52 @@ class TemplatesManager(RestrictedManager, Observable):
         
         
 class TemplateDefinition(RestrictedDefinition):
+    '''
+    Describes a template definition
+    '''
     def __init__(self, moduleName, defName, linkedType, slots=None):
+        '''
+        Create a new definition from params
+        @param moduleName: the owner module's name
+        @type moduleName: string
+        @param defName: the template name
+        @type defName: string
+        @param linkedType: the DefTemplateConstruct linked to this!
+        @type linkedType: L{DefTemplateConstruct}
+        @param slots: a list of slot definitions
+        @type slots: list of L{SlotDefinition}
+        '''
         RestrictedDefinition.__init__(self, moduleName, defName, "deftemplate", linkedType)
         self._slots = {} if slots is None else slots
         
     @property
     def slots(self):
+        '''
+        Get the list of slot definitions
+        '''
         return self._slots
     
     def getSlot(self, slotName):
+        '''
+        Get a slot def by name
+        @param slotName: the name of slot
+        @type slotName: string
+        '''
         return self._slots[slotName]
     
     def isValidFact(self, fact):
+        '''
+        Check if a Template-Fact is valid for this template,
+        using templates definitions. Valid =
+            - fact template name is the same for this def
+            - fact has all slot values for required slots
+            - fact has not slot not definited in this def
+            - fact slots type is ok for this definition
+            - values in fact slots are ok for this def
+        @param fact: the fact to check
+        @type fact: L{Fact}
+        @rtype: boolean
+        '''
         from myclips.Fact import Fact
         
         assert isinstance(fact, Fact)
@@ -131,38 +177,85 @@ class TemplateDefinition(RestrictedDefinition):
         return True
         
 class SlotDefinition(object):
+    '''
+    Describes a slot definition
+    '''
     TYPE_SINGLE = "single-slot"
     TYPE_MULTI = "multi-slot"
     
     def __init__(self, slotName, slotType, slotAttributes=None):
+        '''
+        Create the definition from params
+        @param slotName: the slot key name
+        @type slotName: string
+        @param slotType: the slot type (single or multi?)
+        @type slotType: "single-slot"|"multi-slot"
+        @param slotAttributes: a list of attributes for the slots
+        @type slotAttributes: list of L{Attribute}
+        '''
         self._slotName = slotName
+        '''store the name'''
         self._slotType = slotType
+        '''store the type'''
         self._slotAttributes = dict([(attribute.attributeType, attribute) for attribute 
                                         in (slotAttributes 
                                                 if isinstance(slotAttributes, list) 
-                                            else [])]) if not isinstance(slotAttributes, dict) else slotAttributes 
+                                            else [])]) if not isinstance(slotAttributes, dict) else slotAttributes
+        '''store the attributes using a dict''' 
         
         
     def getSlotName(self):
+        '''
+        get the slot name
+        '''
         return self._slotName
     
     def getSlotType(self):
+        '''
+        get the type
+        '''
         return self._slotType
     
     def getSlotAttributes(self):
+        '''
+        Get all attributes
+        '''
         return self._slotAttributes.values()
     
     def addSlotAttribute(self, attribute):
+        '''
+        Add a new attribute
+        @param attribute: an attribute
+        @type attribute: L{Attribute}
+        '''
         self._slotAttributes[attribute.attributeType] = attribute
     
     def getSlotAttribute(self, attrName):
+        '''
+        Get an attribute by attribute type name
+        @param attrName: the type
+        @type attrName: string
+        '''
         return self._slotAttributes[attrName]
     
     def hasSlotAttribute(self, attrName):
+        '''
+        Check if an attribute is already defined
+        @param attrName: the name
+        @type attrName: string
+        '''
         return self._slotAttributes.has_key(attrName)
     
     @staticmethod
     def fromParserSlotDefinition(psl):
+        '''
+        Helper method: create a slot-definition
+        from a parsed types.SlotDefinition, setting attributes
+        and other magic things
+        @param psl: a parsed types.SlotDefinition
+        @type psl: L{myclips.parser.types.SlotDefinition}
+        @rtype: L{SlotDefinition}
+        '''
         import myclips.parser.Types as types
         
         sType = SlotDefinition.TYPE_SINGLE
@@ -188,19 +281,37 @@ class SlotDefinition(object):
         return SlotDefinition(psl.slotName, sType, attrs)
 
 class Attribute(object):
+    '''
+    Base class for attributes
+    '''
     attributeType = ""
+    '''attribute type key'''
     pass
 
 class Attribute_DefaultValue(Attribute):
+    '''
+    Descrive a default attribute for a slot
+    '''
     attributeType = "default"
     
     def __init__(self, defaultValue):
+        '''
+        Setup the default type for a slot
+        @param defaultValue: the default type
+        @type defaultValue: L{BaseParsedType}
+        '''
         self.defaultValue = defaultValue
         
     def getDefaultValue(self):
+        '''
+        Get the default type!
+        '''
         return self.defaultValue
 
 class Attribute_TypeConstraint(Attribute):
+    '''
+    Descrive a type attribute for a slot
+    '''
     attributeType = "type"
     
     def __init__(self, allowedTypes):
@@ -210,6 +321,9 @@ class Attribute_TypeConstraint(Attribute):
         self.allowedTypes = allowedTypes
         
     def getAllowedTypes(self):
+        '''
+        Get valid types
+        '''
         return self.allowedTypes
         
         

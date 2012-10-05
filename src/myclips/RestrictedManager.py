@@ -9,31 +9,60 @@ class RestrictedManager(object):
     '''
     Define an interface for all constructs
     manager that are under a scope visibility
-    constraints
+    constraint
     '''
 
     def __init__(self, scope):
         '''
-        Constructor
+        Initialize the manager
         '''
         self._scope = scope
+        '''the scope owner of this instance'''
         self._definitions = {}
+        '''the definitions container'''
         
     @property
     def scope(self):
+        '''
+        Get the scope
+        @rtype: L{Scope}
+        '''
         return self._scope
         
     @property
     def definitions(self):
+        '''
+        Get registerd definition names
+        @rtype: list of string
+        '''
         return self._definitions.keys()
     
     def getDefinition(self, defName):
+        '''
+        Get a single definition by defName
+        @param defName: the definition name
+        @type defName: string
+        @rtype: RestrictedDefinition
+        '''
         return self._definitions[defName]
 
     def has(self, definitionName):
+        '''
+        Check if a definition name is already used
+        @param definitionName: a def name to check
+        @type definitionName: string
+        @rtype: boolean
+        '''
         return self._definitions.has_key(definitionName)
 
     def addDefinition(self, definition):
+        '''
+        Add a new definition, using RestrictedManager.has
+        to check if definition can be added
+        @param definition: the definition
+        @type definition: RestrictedDefinition
+        @raise MultipleDefinitionError: is def name is used
+        '''
         if self.has(definition.name):
             raise MultipleDefinitionError("Cannot redefine {0} {2}::{1} while it is in use".format(
                         definition.definitionType,
@@ -47,8 +76,22 @@ class RestrictedManager(object):
         return "::".join((self.scope.moduleName, self.__class__.__name__))
     
 class RestrictedDefinition(object):
+    '''
+    Represents a definition stored in a RestrictedManager
+    '''
     
     def __init__(self, moduleName, defName, defType, linkedType ):
+        '''
+        Init the definition
+        @param moduleName: the owner module's name
+        @type moduleName: string
+        @param defName: the def name
+        @type defName: string
+        @param defType: the def type symbolic rappresentation
+        @type defType: string
+        @param linkedType: a custom instance linked to the definition
+        @type linkedType: object
+        '''
         self._defName = defName
         self._moduleName = moduleName
         self._defType = defType
@@ -119,5 +162,7 @@ class RestrictedDefinition(object):
     
     
 class MultipleDefinitionError(Exception):
-    pass
+    '''
+    Raised on redefinition error
+    '''
     

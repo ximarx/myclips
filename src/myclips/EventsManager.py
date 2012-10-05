@@ -7,6 +7,9 @@ from myclips.Observable import Observable
 
 
 class EventsManager(Observable):
+    '''
+    Manage events and listener
+    '''
     
     # args: complete-main-rulename, complete-rulename, token linearized (no-None)
     E_RULE_FIRED = 'rule-fired'
@@ -57,10 +60,25 @@ class EventsManager(Observable):
     default = None
     
     def __init__(self, events=None):
+        '''
+        Create a new instance of EventsManager
+        
+        @param events: a list of custom events to add to standard ones
+        @type events: list of string
+        '''
         Observable.__init__(self, events=EventsManager.__EVENTS__ + (events if isinstance(events, list) else []))
     
     @classmethod
     def _registerMainEvents(cls):
+        '''
+        Register all E_xxx attributes as standard events
+        
+        @note this method is called on module initialization,
+            before any instance could be created. Do not call
+            this method manually (it's useless also)
+        @param cls: this class type
+        @type cls: type
+        '''
         if len(cls.__EVENTS__) == 0:
             cls.__EVENTS__ = [getattr(cls, x) for x in dir(cls) if x[0:2] == "E_" and not callable(getattr(cls, x))]
     

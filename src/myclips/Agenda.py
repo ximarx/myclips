@@ -9,27 +9,41 @@ from myclips.MyClipsException import MyClipsException
 
 class Agenda(object):
     '''
-    myclips actiovations Agenda
+    MyCLIPS activations agenda:
+    store and manage strategy and strategy's activations
+    containers. Track fired activation to avoid refire
+    and manage the focusStack
     '''
 
     def __init__(self, network):
         '''
-        Constructor
+        Create a new instance of agenda linked to
+        a network instance
+        
+        @param network: a Network instance for this agenda
+        @type network: L{Network}
         '''
         self._network = network
-        # Keep all activations organized
-        # as a dict of per-module dicts of
-        # strategy's activation container
-        # using module's name as top dict
-        # index and salience as
-        # inner dicts's keys
+        '''the network instance linked to this agenda'''
+        
         self._activations = {}
-        # Keep sets of fired activation
-        # using a per-complete-rule-name based index
+        ''' Keep all activations organized
+        as a dict of per-module dicts of
+        strategy's activation container
+        using module's name as top dict
+        index and salience as inner dicts's keys'''
+        
         self._fired_activations = {}
+        '''
+        Keep sets of fired activation
+        using a per-complete-rule-name based index
+        '''
         self._strategy = strategies.factory.newInstance()
+        '''Instance of the current strategy used'''
         self._ignored_activations = {}
+        '''manage fired but still available activations'''
         self._focusStack = []
+        '''the focusStack'''
         try:
             self._focusStack.append(network.modulesManager.currentScope.moduleName)
         except:
@@ -46,6 +60,11 @@ class Agenda(object):
         '''
         Add a new activation inside the agenda
         (only if a same activation wasn't fired in past)        
+        
+        @param pnode: a pnode of the rule
+        @type pnode: L{PNode}
+        @param token: a token for the activation
+        @type token: L{Token}
         '''
         from myclips.rete.nodes.PNode import PNode
         assert isinstance(pnode, PNode)
@@ -98,7 +117,12 @@ class Agenda(object):
     def getActivation(self):
         '''
         Get the max priority activation for the
-        currentScope to be executed
+        currentScope to be executed and
+        remove it from the activations stack
+        
+        @rtype: tuple of pnode,token
+        @return: an activation
+        @raise AgendaNoMoreActivationError: if no activation left
         '''
         # get the current module activations container
         try:
@@ -181,6 +205,9 @@ class Agenda(object):
         '''
         Reset the fired activations history
         for the rule with ruleName
+        
+        @param completeRuleName: the complete rulename for the rule
+        @type completeRuleName: string
         '''
         try:
             # remove the memory for the completeRuleName
@@ -204,6 +231,11 @@ class Agenda(object):
     def remove(self, pnode, token):
         '''
         Remove an activation from the agenda
+        
+        @param pnode: pnode of the activation
+        @type pnode: L{PNode}
+        @param token: the token
+        @type token: L{Token]
         '''
         
         salience = pnode.getSalience()
@@ -280,6 +312,9 @@ class Agenda(object):
         '''
         Check if the activation queue is empty for the 
         current module
+        
+        @rtype: boolean
+        @return: true if no activation left for the current module
         '''
         try:
             return len(self._activations[self._network.modulesManager.currentScope.moduleName]) == 0
@@ -291,18 +326,30 @@ class Agenda(object):
     def isEmptyAllModules(self):
         '''
         Check if the activation queue is empty for all modules
+        
+        @rtype: boolean
+        @return: true if agenda is empty
         '''
         return len(self._activations) == 0
     
     @property
     def strategy(self):
+        '''
+        Get the current strategy id
+        '''
         return self._strategy.getName()
     
     def changeStrategy(self, strategy):
-        """
-        Change the current strategy with a new one
-        resorting the activations with the strategy 
-        """
+        '''
+        Changes the current strategy with a newer one
+        resorting activations with the new strategy.
+        and returns the old strategy id
+        
+        @param strategy: the new strategy instance
+        @type strategy: L{Strategy}
+        @return: the old strategy id
+        @rtype: string
+        '''
         if self._strategy != strategy:
             self._network.eventsManager.fire(EventsManager.E_STRATEGY_CHANGED, self._strategy.getName(), strategy.getName())
             oldStrategy = self._strategy
@@ -324,6 +371,14 @@ class Agenda(object):
                             
                     
     def activations(self, moduleName=None):
+        '''
+        Get the list of activations for the moduleName
+        If moduleName is not set, current scope will be used
+        @param moduleName: a module name
+        @type moduleName: string
+        @return: list of activations 
+        @rtype: list of tuple (salience, pnode, token)
+        '''
         moduleName = moduleName if moduleName is not None else self._network.modulesManager.currentScope.moduleName
         try:
             saliences = sorted(self._activations[moduleName].keys())
@@ -337,6 +392,14 @@ class Agenda(object):
             return []
     
     def _isInFired(self, completeRuleName, tokenHashString):
+        '''
+        Check if an activation has already been fired 
+        @param completeRuleName: the rule name
+        @type completeRuleName: string
+        @param tokenHashString: the token hash string
+        @type tokenHashString: string
+        @rtype: boolean
+        '''
         try:
             return (tokenHashString in self._fired_activations[completeRuleName])
         except KeyError:
@@ -345,4 +408,8 @@ class Agenda(object):
             return False
     
 class AgendaNoMoreActivationError(MyClipsException):
+    '''
+    Exception raised when no more activations left
+    but Agenda.getActivation is used 
+    '''
     pass

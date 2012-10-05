@@ -21,6 +21,7 @@ class MyClipsException(Exception):
 class MyClipsBugException(MyClipsException):
     """
     Special exception class to raise if
-    myclips is in an unrecoverable failure state
+    myclips is in an unrecoverable failure state,
+    and reason is a implementation error
     """
     pass

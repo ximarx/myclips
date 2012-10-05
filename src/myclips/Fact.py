@@ -15,8 +15,16 @@ class Fact(object):
 
     def __init__(self, values=None, templateName=None, moduleName="MAIN"):
         '''
-        Constructor
+        Create a new fact, wit scope moduleName using values
+        
+        @param values: a list or a dict of values
+        @type values: list|dict
+        @param templateName: a template name for template-facts
+        @type templateName: string
+        @param moduleName: name of the module owning this fact
+        @type moduleName: string
         '''
+        
         self._templateName = templateName
         self._moduleName = moduleName
         # normalize values to [] (if ordered fact) or to {} (if template)
@@ -24,6 +32,13 @@ class Fact(object):
         self._values = values
         
     def __str__(self):
+        '''
+        Return a string serialization of the fact.
+        For ordered-fact:
+            MODULE_NAME::(VAL1 VAL2 VAL3)
+        for template-fact:
+            (MODULE_NAME::TEMPLATE_NAME (SLOT1 VAL) (SLOT2 VAL))
+        '''
         if self._templateName is not None:
             return "(%s::%s %s)"%(self._moduleName, self._templateName,
                                   " ".join(["(%s %s)"%(str(s),str(v) if not isinstance(v, list)
@@ -62,9 +77,19 @@ class Fact(object):
             raise FactLengthNotComputableException()
         
     def isTemplateFact(self):
+        '''
+        Check if fact is a Template-Fact one
+        @rtype: boolean 
+        '''
         return (self.templateName is not None)
     
     def slots(self):
+        '''
+        Get the list of fact's slots
+        @rtype: list of string
+        @return: the list of slots names for a template-fact
+        @raise FactSlotsNotComputableException: if fact isn't a template-fact 
+        '''
         if self.isTemplateFact():
             return self._values.keys()
         else:
@@ -72,22 +97,46 @@ class Fact(object):
         
     @property
     def values(self):
+        '''
+        Get all values of this fact.
+        Use Fact.isTemplateFact to know
+        if is list or dict :)
+        @rtype: list|dict
+        '''
         return self._values
         
     @property
     def templateName(self):
+        '''
+        Get the template name for this fact (if any)
+        or None for Ordered-Fact
+        '''
         return self._templateName
     
     @templateName.setter
     def templateName(self, value):
+        '''
+        Set a new template name for this fact
+        @param value: a template name
+        @type value: string
+        '''
         self._templateName = value
         
     @property
     def moduleName(self):
+        '''
+        Get the module name for the owner of this fact
+        @rtype: string
+        '''
         return self._moduleName
     
     @moduleName.setter
     def moduleName(self, value):
+        '''
+        Set a module name as owner of this fact
+        @param value: the module name
+        @type value: string
+        '''
         self._moduleName = value
     
     def __getitem__(self, item):
@@ -106,28 +155,55 @@ class Fact(object):
             
     
     def __setitem__(self, item, value):
+        '''
+        Override [] = setter operator
+        to forward definition to Fact.values container
+        @param item: slot name or index
+        @type item: string|index
+        @param value: the value to set
+        @type value: mixed
+        @raise FactSlotValueCannotBeSetException: if fact is not Template-Fact
+        '''
         if not self.isTemplateFact():
             raise FactSlotValueCannotBeSetException()
         
         self._values[item] = value
         
     def __delitem__(self, item):
+        '''
+        Override del operator to remove
+        Fact.values items
+        @param item: item to remove
+        @type item: string
+        @raise FactSlotValueCannotBeSetException: if fact is not Template-Fact
+        '''
         if not self.isTemplateFact():
             raise FactSlotValueCannotBeSetException()
         
         del self._values[item]
     
 class FactLengthNotComputableException(MyClipsException):
-    pass
+    '''
+    Trying to compute len of a Template-Fact? You'll get this!
+    '''
 
 class FactSlotValueCannotBeSetException(MyClipsException):
-    pass
+    '''
+    Trying to set a slot for an Ordered-Fact? You'll get this!
+    '''
+    
 
 class FactSlotsNotComputableException(MyClipsException):
-    pass
+    '''
+    Trying to get slots list for an Ordered-Fact? You'll get this!
+    '''
 
 class FactInvalidIndex(MyClipsException):
-    pass
+    '''
+    Trying to get an invalid index for a Ordered-Fact? You'll get this!
+    '''
 
 class FactInvalidSlotName(MyClipsException):
-    pass
+    '''
+    Trying to get an invalid slot for a Template-Fact? You'll get this!
+    '''

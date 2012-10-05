@@ -2,6 +2,10 @@
 Created on 05/ago/2012
 
 @author: Francesco Capozzo
+
+Search in myclips.functions.FUNCTIONS_DIR path
+for valid myclips.functions.Function subclasses
+and generate the system-functions-manifest
 '''
 from genericpath import exists, isfile, isdir
 from dircache import listdir
@@ -14,15 +18,28 @@ import time
 
 
 class Logger(object):
-        def __init__(self, filename="REPORT.txt"):
-            self.terminal = sys.stdout
-            self.log = open(filename, "w")
+    '''
+    Forward info about manifest generation
+    to a file and stdout too
+    '''
+    def __init__(self, filename="REPORT.txt"):
+        self.terminal = sys.stdout
+        self.log = open(filename, "w")
 
-        def write(self, message):
-            self.terminal.write(message)
-            self.log.write(message)
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
 
 def getPaths(basePath, pathsVector):
+    '''
+    Insert a complete list of sub-dirs for a path in
+    a vector of paths
+    @param basePath: the base path to search into
+    @type basePath: string
+    @param pathsVector: the sub-path vector
+    @type pathsVector: list
+    @rtype: list
+    '''
     
     thisDirPaths = [basePath + "/" + x for x in listdir(basePath) if isdir(basePath + "/" + x)]
     for path in thisDirPaths:
@@ -35,6 +52,11 @@ def getPaths(basePath, pathsVector):
     
 
 def generate():
+    '''
+    Search in myclips.functions.FUNCTIONS_DIR path
+    for valid myclips.functions.Function subclasses
+    and generate the system-functions-manifest
+    '''
     
     FUNCS_DIR = myclips.functions.FUNCTIONS_DIR
     

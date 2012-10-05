@@ -15,10 +15,24 @@ class Observable(object):
     '''
     
     def __init__(self, events=None):
+        '''
+        Initialize the observable
+        @param events: a tuple of watchable events
+        @type events: tuple
+        '''
         self._events = tuple(events) if isinstance(events, (list, tuple)) else ()
+        '''store the events'''
         self._observers = dict([(event, []) for event in self._events])
+        '''store the observer, using event-name as index'''
         
     def registerObserver(self, eventName, observer):
+        '''
+        Register a new observer for an event
+        @param eventName: the event name
+        @type eventName: string
+        @param observer: the observer instance
+        @type observer: L{Observer}
+        '''
         if isinstance(observer, Observer):
             try:
                 self._observers[eventName].append(observer)
@@ -32,6 +46,15 @@ class Observable(object):
                                         eventName)
             
     def unregisterObserver(self, eventName=None, observer=None):
+        '''
+        Unregister a single or a group of observer
+        from an event (or all events)
+        @param eventName: an event name or None for everything
+        @type eventName: string
+        @param observer: a single observer for a single event. This params
+            is ignored if eventName is None
+        @type observer: L{Observer}
+        '''
         if eventName is None:
             self._observers = dict([(event, []) for event in self._events])
         else:
@@ -53,12 +76,26 @@ class Observable(object):
 
     @property
     def events(self):
+        '''
+        Get watchable events
+        '''
         return self._events
     
     def getObservers(self, eventName):
+        '''
+        Get the list of observer for an event
+        @param eventName: the event
+        @type eventName: string
+        '''
         return self._observers[eventName]
     
     def cleanupObserver(self, observer):
+        '''
+        Remove an observer from all events where
+        it's registered
+        @param observer: the observer
+        @type observer: L{Observer}
+        '''
         for eventObs in self._observers.values():
             try:
                 eventObs.remove(observer)
@@ -66,6 +103,11 @@ class Observable(object):
                 pass
     
     def fire(self, event, *args, **kargs):
+        '''
+        Fire an event with custom args
+        @param event: the event
+        @type event: string
+        '''
         try:
             observers = self._observers[event]
         except:

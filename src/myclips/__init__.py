@@ -5,8 +5,10 @@ import myclips.parser.Types as types
 
 import logging as _logging
 
-VERSION="0.0-dev"
+#: MyCLIPS Version
+VERSION="1.0"
 
+#: Log format
 FORMAT = '[%(levelname).3s %(module)s::%(funcName)s:%(lineno)d] %(message)s'
 _logging.basicConfig(format=FORMAT)
 
@@ -18,6 +20,13 @@ logger.setLevel(_logging.WARNING)
 STRICT_MODE=False
 
 def newInstance_fromCanonicalClassname(qclass, constrParams=None):
+    '''
+    Creates a new instance of qclass using constrParams
+    as constructor params. qclass have to be a complete
+    class canonical name (package.module.class)
+    @param qclass: the class canonical name
+    @param constrParams: constructor params
+    '''
     
     if constrParams == None:
         constrParams = []
@@ -32,6 +41,13 @@ def newInstance_fromCanonicalClassname(qclass, constrParams=None):
     #chain2 = globals()['OrChain']()
     
 def newInstance(classname, constrParams=None, modulename=None):
+    '''
+    Creates a new instance of a class classname
+    using constrParams for constructor, from the modulename
+    @param classname: the class name
+    @param constrParams: a list or a dict of params
+    @param modulename: the path of a module
+    '''
     
     if constrParams == None:
         constrParams = []
