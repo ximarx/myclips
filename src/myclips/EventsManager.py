@@ -54,6 +54,11 @@ class EventsManager(Observable):
     E_NETWORK_CLEAR_POST = 'network-reset-post'
     E_NETWORK_READY = 'network-ready'
     E_NETWORK_SHUTDOWN = 'network-shutdown'
+    
+    E_RUN_START = "run-start"
+    E_RUN_STOP = "run-stop"
+    E_RUN_PAUSE = "run-pause"
+    E_RUN_RESUME = "run-resume"
 
     __EVENTS__ = []
     

@@ -455,6 +455,8 @@ class Network(object):
             theRuns = int(steps)
         else:
             theRuns = True
+
+        self.eventsManager.fire(EventsManager.E_RUN_START)
             
         try:
             while theRuns:
@@ -483,6 +485,8 @@ class Network(object):
             
         except HaltException:
             pass
+        
+        self.eventsManager.fire(EventsManager.E_RUN_STOP)
 
     
     @property

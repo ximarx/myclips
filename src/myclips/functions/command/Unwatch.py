@@ -11,7 +11,7 @@ class Unwatch(Function):
     '''
     This function disables the effect of the watch command.
     
-    (unwatch (all|network|facts|activations|rules|focus|actions|strategy)*)
+    (unwatch (all|network|facts|activations|rules|focus|actions|strategy|statistics)*)
     
     @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-13.2.html#Heading418
     '''
@@ -68,6 +68,12 @@ class Unwatch(Function):
             if args.has_key("all") or args.has_key("strategy"):
                 try:
                     theEnv.network.settings.delSetting("_funcs.Watch.strategy").uninstall()
+                except:
+                    pass
+
+            if args.has_key("all") or args.has_key("statistics"):
+                try:
+                    theEnv.network.settings.delSetting("_funcs.Watch.statistics").uninstall()
                 except:
                     pass
         

@@ -14,12 +14,13 @@ from myclips.listeners.FocusWatcher import FocusWatcher
 from myclips.listeners.ActivationsWatcher import ActivationsWatcher
 from myclips.listeners.ActionsWatcher import ActionsWatcher
 from myclips.listeners.StrategyWatcher import StrategyWatcher
+from myclips.listeners.StatisticsWatcher import StatisticsWatcher
 
 class Watch(Function):
     '''
     This function causes messages to be displayed when certain MyCLIPS operations take place
     
-    (watch all|network|facts|activations|rules|focus|actions|strategy*)
+    (watch all|network|facts|activations|rules|focus|actions|strategy|statistics*)
     
     @see: http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-13.2.html#Heading417
     '''
@@ -86,6 +87,12 @@ class Watch(Function):
                     theEnv.network.settings.setSetting("_funcs.Watch.strategy", 
                                                        StrategyWatcher(theEnv.RESOURCES['wtrace']).install(theEnv.network.eventsManager))
 
+            if args.has_key("all") or args.has_key("statistics"):
+                try:
+                    theEnv.network.settings.getSetting("_funcs.Watch.statistics")
+                except KeyError:
+                    theEnv.network.settings.setSetting("_funcs.Watch.statistics", 
+                                                       StatisticsWatcher(theEnv.RESOURCES['wtrace'], theEnv.network).install(theEnv.network.eventsManager))
         
         return types.NullValue()
     
