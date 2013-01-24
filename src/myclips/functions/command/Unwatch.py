@@ -67,7 +67,7 @@ class Unwatch(Function):
                 
             if args.has_key("all") or args.has_key("strategy"):
                 try:
-                    theEnv.network.settings.delSetting("_funcs.Watch.actions").uninstall()
+                    theEnv.network.settings.delSetting("_funcs.Watch.strategy").uninstall()
                 except:
                     pass
         
