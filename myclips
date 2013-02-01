@@ -20,7 +20,7 @@ while True:
         except:
             print >> sys.stderr, "MyCLIPS not found in:"
             print >> sys.stderr, "    ", os.path.abspath( "." )
-            for p in MYCLIPS_SERVER_SRC_PATHS:
+            for p in MYCLIPS_SRC_PATHS:
                 print >> sys.stderr, "    ", os.path.abspath(p)
             exit(-2)
 

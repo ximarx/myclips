@@ -150,8 +150,8 @@ def prepare_network_fragment_plotter(pnodes):
 
     try:
         from myclips.listeners._NetworkPlotterAdapter_NetworkX import _NetworkXWrapper as Plotter
-    except ImportError:
-        raise Exception()
+    except ImportError, e:
+        raise Exception("Matplotlib missing!")
     
     g = Plotter()
     
