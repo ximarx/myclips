@@ -5,7 +5,7 @@ Created on 17/lug/2012
 '''
 from myclips.Observable import Observable
 from myclips.RestrictedManager import RestrictedManager, RestrictedDefinition
-from myclips.Fact import FactInvalidSlotName
+from myclips.facts.Fact import FactInvalidSlotName
 
 
 class TemplatesManager(RestrictedManager, Observable):
@@ -90,12 +90,12 @@ class TemplateDefinition(RestrictedDefinition):
         @type fact: L{Fact}
         @rtype: boolean
         '''
-        from myclips.Fact import Fact
+        from myclips.facts.TemplateFact import TemplateFact
         
-        assert isinstance(fact, Fact)
+        assert isinstance(fact, TemplateFact)
         
         # fast check first
-        if not fact.isTemplateFact() \
+        if not isinstance(fact, TemplateFact) \
             or fact.templateName != self.name \
             or fact.moduleName != self.moduleName:
             

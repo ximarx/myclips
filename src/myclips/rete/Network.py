@@ -18,7 +18,6 @@ from myclips.rete import analysis
 from myclips.rete.nodes.PNode import PNode
 from myclips.EventsManager import EventsManager
 from myclips.ModulesManager import ModulesManager, UnknownModuleError
-from myclips.Fact import Fact
 from myclips.TemplatesManager import TemplateDefinition
 import sys
 from myclips.functions.Function import HaltException
@@ -28,6 +27,8 @@ import traceback
 from myclips.Settings import Settings
 from myclips.rete.tests.locations import VariableLocation
 from myclips.rete.nodes.ExistsNode import ExistsNode
+from myclips.facts.TemplateFact import TemplateFact
+from myclips.facts.OrderedFact import OrderedFact
 
 
 class Network(object):
@@ -78,7 +79,7 @@ class Network(object):
         
         try:
             # assert the first fact: initial-fact
-            self.assertFact(Fact({}, "initial-fact", "MAIN"))
+            self.assertFact(TemplateFact("initial-fact", {}, "MAIN"))
         except:
             import myclips
             myclips.logger.warning("initial-fact redefinition")
@@ -110,8 +111,8 @@ class Network(object):
         @rtype: tuple 
         """
         
-        if not isinstance(fact, Fact):
-            raise InvalidFactFormatError("fact is expected to be a %s instance, %s passed"%(str(Fact), str(fact.__class__)))
+        if not isinstance(fact, (TemplateFact, OrderedFact)):
+            raise InvalidFactFormatError("fact is expected to be a %s or %s instance, %s passed"%(str(TemplateFact), str(OrderedFact), str(fact.__class__)))
 
         # check if a facts with the same features is already available
         # in the working memory
@@ -128,7 +129,7 @@ class Network(object):
                 raise UnknownModuleError("Fact module is unknown: %s"%fact.moduleName)
             
             # if fact is a template one
-            if fact.isTemplateFact():
+            if isinstance(fact, TemplateFact):
                 # other validations are required for:
                 #    templateName is valid?
                 #    templateName is available in this scope?
@@ -345,7 +346,7 @@ class Network(object):
         self._agenda = Agenda(self)
         
         # push the MAIN::initial-fact
-        self.assertFact(Fact({}, templateName="initial-fact", moduleName="MAIN"))
+        self.assertFact(TemplateFact(values={}, templateName="initial-fact", moduleName="MAIN"))
         
         # push all fact in deffacts again
         for deffact in self._deffacts.values():
@@ -364,7 +365,7 @@ class Network(object):
                     
                     # use the module name of the scope in the template,
                     # not the current one
-                    self.assertFact(Fact(values, pattern.templateName, pattern.scope.moduleName))
+                    self.assertFact(TemplateFact(values=values, templateName=pattern.templateName, moduleName=pattern.scope.moduleName))
                     
                 elif isinstance(pattern, types.OrderedRhsPattern):
                     assert isinstance(pattern, types.OrderedRhsPattern)
@@ -373,7 +374,7 @@ class Network(object):
                     values = pattern.values
                     
                     # use the moduleName from the deffact scope (or the current one)
-                    self.assertFact(Fact(values, moduleName=deffact.scope.moduleName))
+                    self.assertFact(OrderedFact(values=values, moduleName=deffact.scope.moduleName))
                     
         # reset globals value for each module
         for module in self.modulesManager.getModulesNames():
@@ -433,7 +434,7 @@ class Network(object):
         
         try:
             # assert the first fact: initial-fact
-            self.assertFact(Fact({}, "initial-fact", "MAIN"))
+            self.assertFact(TemplateFact(values={}, templateName="initial-fact", moduleName="MAIN"))
         except:
             import myclips
             myclips.logger.warning("initial-fact redefinition")

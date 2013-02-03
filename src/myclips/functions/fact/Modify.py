@@ -8,6 +8,7 @@ from myclips.FunctionsManager import FunctionDefinition,\
 import myclips.parser.Types as types
 from myclips.rete.WME import WME
 from myclips.functions.Function import Function, InvalidArgValueError
+from myclips.facts.TemplateFact import TemplateFact
 
 class Modify(Function):
     '''
@@ -45,7 +46,7 @@ class Modify(Function):
         theFact = self.resolveFact(theEnv, self.semplify(theEnv, theFact, (WME, types.Integer), ('1', "fact-address or integer" )))
         
         # 2) check if it's a template fact
-        if not theFact.fact.isTemplateFact():
+        if not isinstance(theFact.fact, TemplateFact):
             raise InvalidArgValueError("")
         
         # 3) get a copy of the fact inside the wme

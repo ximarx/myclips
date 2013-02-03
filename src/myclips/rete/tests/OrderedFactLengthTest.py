@@ -6,7 +6,7 @@ Created on 24/lug/2012
 from myclips.rete.tests.AlphaTest import AlphaTest
 from myclips.rete.WME import WME
 import myclips
-from myclips.Fact import FactLengthNotComputableException
+from myclips.facts.Fact import FactLengthNotComputableException
 
 class OrderedFactLengthTest(AlphaTest):
     '''

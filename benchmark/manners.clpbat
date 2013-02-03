@@ -2,7 +2,9 @@
 ; To use
 ; (batch "benchmark/manners.clpbatch")
 
+(watch statistics)
 (load "miss-manners/manners.clp")
-(load "miss-manners/manners8.clp")
+(load "miss-manners/manners64.clp")
 (reset)
 (printout t "All ready: type (bench-run)" crlf)
+(run)

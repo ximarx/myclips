@@ -9,7 +9,7 @@ import myclips.parser.Types as types
 from myclips.functions.Function import InvalidArgTypeError
 from myclips.functions.string.StringConcat import StringConcat
 from myclips.rete.WME import WME
-from myclips.Fact import Fact
+from myclips.facts.OrderedFact import OrderedFact
 
 
 class StringConcatTest(BaseFunctionTest):
@@ -21,7 +21,7 @@ class StringConcatTest(BaseFunctionTest):
 
     def test_Concatenation(self):
         
-        theWme = WME(1, Fact([]))
+        theWme = WME(1, OrderedFact([]))
         
         self.assertTrue(self.forInput(types.Symbol("ciao"), types.String("mucca"), types.Integer(1), types.Float(1.5), theWme)
                         .expect(types.String("ciaomucca11.5"+str(theWme))))

@@ -8,7 +8,8 @@ from myclips.FunctionsManager import FunctionDefinition,\
 import myclips.parser.Types as types
 from myclips.rete.WME import WME
 from myclips.functions.Function import Function, InvalidArgValueError
-from myclips.Fact import Fact
+from myclips.facts.OrderedFact import OrderedFact
+from myclips.facts.TemplateFact import TemplateFact
 
 class Assert(Function):
     '''
@@ -39,17 +40,20 @@ class Assert(Function):
             
     def createFact(self, theEnv, arg):
         if isinstance(arg, types.OrderedRhsPattern):
-            # convert it in a new Ordered Fact
-            return Fact([self.semplify(theEnv, v) # resolve to BaseParsedTypes if needed
-                            for v in arg.values], templateName=None, moduleName=theEnv.modulesManager.currentScope.moduleName)
+            
+            return OrderedFact(values=[self.semplify(theEnv, v) # resolve to BaseParsedTypes if needed
+                            for v in arg.values], moduleName=theEnv.modulesManager.currentScope.moduleName)
+            
         elif isinstance(arg, types.TemplateRhsPattern):
             # convert it in a new Template Fact
             # the fact value is a dict with (slotName, slotValue) where slotValue
                                 # need to be resolved
-            return Fact(dict([(v.slotName, self.semplify(theEnv, v.slotValue))
-                                for v in arg.templateSlots]),
-                        templateName=arg.templateName, 
-                        moduleName=theEnv.modulesManager.currentScope.templates.getDefinition(arg.templateName).moduleName)
+                                
+            return TemplateFact(templateName=arg.templateName, 
+                                values=dict([(v.slotName, self.semplify(theEnv, v.slotValue))
+                                             for v in arg.templateSlots]), 
+                                moduleName=theEnv.modulesManager.currentScope.templates.getDefinition(arg.templateName).moduleName)
+                                
         else:
             raise InvalidArgValueError("Invalid fact format")
             

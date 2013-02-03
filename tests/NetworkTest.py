@@ -19,15 +19,27 @@ from myclips.rete.nodes.NegativeJoinNode import NegativeJoinNode
 from myclips.rete.nodes.NccNode import NccNode
 from myclips.rete.nodes.NccPartnerNode import NccPartnerNode
 from myclips.EventsManager import EventsManager
-from myclips.Fact import Fact
+
 from MyClipsBaseTest import MyClipsBaseTest
 from myclips.rete.Memory import Memory
+from myclips.facts.OrderedFact import OrderedFact
+from myclips.facts.TemplateFact import TemplateFact
 #from myclips.TemplatesManager import TemplateDefinition, SlotDefinition
 
 # disable all logging from modules
 #logging.disable(logging.CRITICAL)
 
-fact = Fact
+def fact(theValues=None, theTemplateName=None, theModuleName="MAIN"):
+    theArgs = {"moduleName": theModuleName,
+               "values": theValues}
+    if theTemplateName is None:
+        theClass = OrderedFact
+    else:
+        theClass = TemplateFact
+        theArgs["templateName"] = theTemplateName
+    return theClass(**theArgs)
+    
+theFactClasses = (OrderedFact, TemplateFact)
 
 #class fact(object):
 #    def __init__(self, v, template=None):
@@ -147,7 +159,7 @@ class NetworkTest(MyClipsBaseTest):
 
         self.assertEqual(len(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items), 1)
         self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items[0], WME)
-        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items[0].fact, fact)
+        self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items[0].fact, theFactClasses)
         self.assertIsInstance(self.network._root.children[0].children[0].children[0].children[0].children[0].memory.items[0].fact[0], types.Symbol)
 
     def test_RetractFact(self):

@@ -6,7 +6,7 @@ import myclips.parser.Types as types
 import logging as _logging
 
 #: MyCLIPS Version
-VERSION="1.0"
+VERSION="1.0.1"
 
 #: Log format
 FORMAT = '[%(levelname).3s %(module)s::%(funcName)s:%(lineno)d] %(message)s'

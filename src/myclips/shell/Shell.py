@@ -12,6 +12,7 @@ import re
 import traceback
 from myclips.shell.Interpreter import Interpreter
 from myclips.MyClipsException import MyClipsException
+import platform
 
 
 class Completer(object):
@@ -98,6 +99,7 @@ class Shell(object):
         print
         print "#--------------------------------------------------------#"
         print "|    MyCLIPS ({0})".format(myclips.VERSION).ljust(57, " ") + "|"
+        print "|        {0} {1}".format(platform.python_implementation(), platform.python_version()).ljust(57, " ") + "|"
         print "|        <Ctrl>+D or (exit) to Exit                      |"
         print "|        <TAB> for functions and variables suggestion    |"
         print "|        (help) for help                                 |"
